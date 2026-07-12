@@ -203,7 +203,7 @@ intro:function(){ return ''
   +'<div class="pt"><span class="e">📥</span><div><div class="t">지원자 바로 확인</div><div class="d">면허·차량·경력을 한눈에 보고 연락</div></div></div>'
   +'<div class="pt"><span class="e">🔎</span><div><div class="t">기사에게 먼저 제안</div><div class="d">조건에 맞는 기사를 찾아 제안 발송</div></div></div>'
   +'</div>'
-  +'<div style="margin-top:26px;"><a href="index.html" style="font-size:13.5px;color:var(--ink-soft);">기사이신가요? 기사 회원으로 →</a></div>'
+  +'<div style="margin-top:26px;"><a href="javascript:switchRole()" style="font-size:13.5px;color:var(--ink-soft);">← 기사이신가요? 처음 화면으로</a></div>'
   +'</div>'; },
 phone:function(){ return demoBar()
   +'<h2 class="step-title">휴대폰 번호를<br>입력해 주세요</h2>'
@@ -657,14 +657,20 @@ function sendOffer(jobId, driverId, driverName, driverPhone){
     .catch(function(e){ toast('제안 실패: '+(e.code||e.message)); });
 }
 
+function switchRole(){
+  try{ localStorage.removeItem('rc_role'); }catch(e){}
+  location.href='index.html';
+}
 function logout(){
   if(live()){ window._fb.signOut(window._auth); }
   localStorage.removeItem('rc_company');
+  try{ localStorage.removeItem('rc_role'); }catch(e){}
   location.reload();
 }
 
 /* ── 부팅 ── */
 function boot(){
+  try{ localStorage.setItem('rc_role','company'); }catch(e){}
   if(!live()){ render(); return; }
   window._fb.onAuthStateChanged(window._auth, function(u){
     if(!u){ mode='signup'; render(); return; }

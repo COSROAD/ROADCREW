@@ -170,6 +170,10 @@ function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.st
 
 function go(i){ step=i; render(); window.scrollTo(0,0); }
 function next(){ if(step<STEPS.length-1) go(step+1); }
+
+/* ── 첫 화면: 역할 선택 (입구는 하나, 들어가면 별개) ── */
+function pickDriver(){ try{ localStorage.setItem('rc_role','driver'); }catch(e){} next(); }
+function pickCompany(){ try{ localStorage.setItem('rc_role','company'); }catch(e){} location.href='company.html'; }
 function prev(){ if(step>0) go(step-1); }
 function render(){
   if(isMain()){ renderMain(); return; }
@@ -189,15 +193,34 @@ function demoBar(){ return live()? '' : '<div class="demo">⚠️ 시안 모드 
 
 var VIEWS = {
 intro:function(){ return ''
-  +'<div class="hero">'
+  +'<div class="hero" style="padding:44px 0 20px;">'
   +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADCREW</span></div>'
-  +'<p class="sub">일감도 받고, 일자리도 구하고.<br>기사의 수입을 한곳에서.</p>'
-  +'<div class="pts">'
-  +'<div class="pt"><span class="e">💼</span><div><div class="t">일자리 찾기</div><div class="d">셔틀·택배·물류·소형화물 기사 채용 공고</div></div></div>'
-  +'<div class="pt"><span class="e">🚚</span><div><div class="t">단건 일감 <span class="badge">준비 중</span></div><div class="d">퀵·소형화물 배송 건별 수입</div></div></div>'
-  +'<div class="pt"><span class="e">✅</span><div><div class="t">실적이 곧 이력서</div><div class="d">수행 실적·평점으로 검증되는 기사</div></div></div>'
+  +'<p class="sub">기사와 일자리를 잇는 곳.<br>구인 · 구직 · 퀵을 한곳에서.</p>'
   +'</div>'
-  +'<div style="margin-top:26px;"><a href="company.html" style="font-size:13.5px;color:var(--ink-soft);">기사를 채용하시나요? 업체 회원으로 →</a></div>'
+  +'<div style="display:grid;gap:12px;">'
+  +'<div onclick="pickDriver()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
+  +'onmouseover="this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
+  +'<span style="font-size:38px;">🚚</span>'
+  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">기사예요</div>'
+  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">일자리를 찾고 있어요</div></div>'
+  +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
+
+  +'<div onclick="pickCompany()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
+  +'onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
+  +'<span style="font-size:38px;">🏢</span>'
+  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">업체예요</div>'
+  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">기사를 구하고 있어요</div></div>'
+  +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
+
+  +'<div style="background:#fff;border:2px dashed var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;opacity:.6;">'
+  +'<span style="font-size:38px;">📦</span>'
+  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">보낼 게 있어요 <span class="badge">준비 중</span></div>'
+  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">퀵 · 소형화물 배송</div></div></div>'
+  +'</div>'
+
+  +'<div class="pts" style="margin-top:26px;">'
+  +'<div class="pt"><span class="e">💼</span><div><div class="t">일자리 찾기</div><div class="d">셔틀·택배·물류·소형화물 기사 채용 공고</div></div></div>'
+  +'<div class="pt"><span class="e">✅</span><div><div class="t">실적이 곧 이력서</div><div class="d">수행 실적·평점으로 검증되는 기사</div></div></div>'
   +'</div>'; },
 phone:function(){ return demoBar()
   +'<h2 class="step-title">휴대폰 번호를<br>입력해 주세요</h2>'
@@ -274,7 +297,7 @@ done:function(){ return ''
 };
 
 var FOOT = {
-intro:function(){ return '<button class="btn btn-main" onclick="next()">기사로 시작하기</button>'; },
+intro:function(){ return ''; },
 phone:function(){ return '<button class="btn btn-main" id="nx" onclick="sendCode()" '+(valid()?'':'disabled')+'>인증번호 받기</button>'; },
 code: function(){ return '<button class="btn btn-main" id="nx" onclick="verifyCode()" '+(valid()?'':'disabled')+'>확인</button>'; },
 agree:function(){ return '<button class="btn btn-main" id="nx" onclick="next()" '+(valid()?'':'disabled')+'>동의하고 계속</button>'; },
@@ -623,6 +646,12 @@ function logout(){
 }
 /* ── 로그인 상태에 따라 진입 분기 ── */
 function boot(){
+  /* 전에 업체로 들어온 사람은 바로 업체 화면으로 */
+  try{
+    if(localStorage.getItem('rc_role')==='company' && !localStorage.getItem('rc_driver')){
+      location.replace('company.html'); return;
+    }
+  }catch(e){}
   if(!live()){ render(); return; }
   window._fb.onAuthStateChanged(window._auth, function(u){
     if(!u){ window._mode='signup'; render(); return; }
