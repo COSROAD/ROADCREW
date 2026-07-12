@@ -296,22 +296,35 @@ function valid(){
 function chk(){ var b=document.getElementById('nx'); if(b) b.disabled=!valid()||busy; save(); }
 function setBusy(v,label){ busy=v; var b=document.getElementById('nx'); if(b){ b.disabled=v||!valid(); if(label) b.textContent=label; } }
 
+// reCAPTCHA를 매번 깨끗하게 새로 만든다 (재시도 시 'already been rendered' 오류 방지)
+function makeRecaptcha(){
+  try{ if(recaptcha) recaptcha.clear(); }catch(e){}
+  recaptcha = null;
+  var host = document.getElementById('recaptcha');
+  if(host && host.parentNode){
+    var fresh = document.createElement('div');
+    fresh.id = 'recaptcha';
+    host.parentNode.replaceChild(fresh, host);
+  }
+  recaptcha = new window._fb.RecaptchaVerifier(window._auth, 'recaptcha', { size:'invisible' });
+  return recaptcha;
+}
 function sendCode(){
   if(!valid()||busy) return;
   save();
   if(!live()){ next(); return; }
   setBusy(true,'발송 중...');
   try{
-    if(!recaptcha){ recaptcha = new window._fb.RecaptchaVerifier(window._auth,'recaptcha',{size:'invisible'}); }
+    var verifier = makeRecaptcha();
     var intl = '+82' + D.phone.replace(/^0/,'');
-    window._fb.signInWithPhoneNumber(window._auth, intl, recaptcha)
+    window._fb.signInWithPhoneNumber(window._auth, intl, verifier)
       .then(function(res){ confirmResult=res; setBusy(false,'인증번호 받기'); next(); })
       .catch(function(e){
         setBusy(false,'인증번호 받기');
         toast('발송 실패: '+(e.code||e.message));
-        try{ recaptcha.clear(); }catch(_){} recaptcha=null;
+        try{ verifier.clear(); }catch(_){} recaptcha=null;
       });
-  }catch(e){ setBusy(false,'인증번호 받기'); toast('오류: '+e.message); }
+  }catch(e){ setBusy(false,'인증번호 받기'); toast('오류: '+e.message); recaptcha=null; }
 }
 function verifyCode(){
   if(!valid()||busy) return;
