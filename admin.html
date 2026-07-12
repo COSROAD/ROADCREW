@@ -152,6 +152,7 @@ function render(){
   document.getElementById('progbar').style.width='0';
   document.getElementById('view').innerHTML = V[view]();
   document.getElementById('foot').innerHTML = F[view]();
+  setTimeout(focusIn,30);
 }
 
 var V = {
@@ -160,12 +161,12 @@ login:function(){ return ''
   +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADCREW</span></div>'
   +'<p class="sub" style="font-weight:800;color:var(--navy);">관리자</p></div>'
   +'<div class="field"><label class="lb">관리자 휴대폰 번호</label>'
-  +'<input type="tel" inputmode="numeric" placeholder="01012345678" value="'+phone+'" oninput="phone=this.value.replace(/[^0-9]/g,\'\');this.value=phone;chk()"></div>'
+  +'<input type="tel" id="f-phone" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="01012345678" value="'+phone+'" oninput="phone=this.value.replace(/[^0-9]/g,\'\');this.value=phone;chk()" onkeydown="if(event.key===\'Enter\'&&/^01[0-9]{8,9}$/.test(phone))sendCode()"></div>'
   +(live()?'':'<div class="demo">⚠️ 시안 모드 — 웹(https)에서만 로그인됩니다.</div>'); },
 
 code:function(){ return ''
   +'<h2 class="step-title">인증번호</h2><p class="step-desc">'+fmtPhone(phone)+' 로 발송했습니다.</p>'
-  +'<div class="field"><input type="tel" id="f-code" inputmode="numeric" maxlength="6" placeholder="000000" oninput="chk()"></div>'; },
+  +'<div class="field"><input type="tel" id="f-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" oninput="chk()" onkeydown="if(event.key===\'Enter\')verifyCode()"></div>'; },
 
 noauth:function(){ return ''
   +'<div style="text-align:center;padding:50px 0 20px;"><div style="font-size:48px;">🔒</div>'
@@ -223,7 +224,13 @@ main: function(){
   }).join('')+'</div>';
 }
 };
-function chk(){ render(); }
+function chk(){
+  var b=document.getElementById('nx'); if(!b) return;
+  if(view==='login'){ b.disabled = !/^01[0-9]{8,9}$/.test(phone) || busy; }
+  else if(view==='code'){ var e=document.getElementById('f-code');
+    b.disabled = !(e && e.value.replace(/[^0-9]/g,'').length===6) || busy; }
+}
+function focusIn(){ var el=document.getElementById(view==='login'?'f-phone':(view==='code'?'f-code':'')); if(el) el.focus(); }
 
 /* ── 인증 ── */
 function makeRecaptcha(){
