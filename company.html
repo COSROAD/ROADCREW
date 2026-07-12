@@ -433,7 +433,101 @@ function notifySMS(appId, kind){
 }
 
 /* ── 공고 등록 ── */
-var JF = { title:'', jobType:'', area:'', workType:'', license:'무관', vehicle:'회사 차량 제공', hours:'', count:'1명', deadline:'', desc:'' };
+var DAYS = ['월','화','수','목','금','토','일'];
+var HOURS_OPT = (function(){ var a=[]; for(var h=0;h<24;h++){ for(var m=0;m<60;m+=30){
+  a.push((h<10?'0':'')+h+':'+(m===0?'00':'30')); } } return a; })();
+var JF = { title:'', jobType:'', area:'', workType:'', license:'무관', vehicle:'회사 차량 제공',
+           days:[], slots:[{s:'',e:''}], hours:'', count:'1명',
+           deadline:'', deadlineOpen:true, desc:'' };
+
+/* ── 근무시간 위젯 ── */
+function jToggleDay(d){
+  var i=JF.days.indexOf(d);
+  if(i<0) JF.days.push(d); else JF.days.splice(i,1);
+  JF.days.sort(function(a,b){ return DAYS.indexOf(a)-DAYS.indexOf(b); });
+  openJobForm();
+}
+function jWeekdays(){
+  var all = ['월','화','수','목','금'].every(function(d){ return JF.days.indexOf(d)>=0; });
+  JF.days = all ? [] : ['월','화','수','목','금'];
+  openJobForm();
+}
+function jAddSlot(){ if(JF.slots.length<2){ JF.slots.push({s:'',e:''}); openJobForm(); } }
+function jDelSlot(i){ JF.slots.splice(i,1); if(!JF.slots.length) JF.slots=[{s:'',e:''}]; openJobForm(); }
+function jSlot(i,which,v){ JF.slots[i][which]=v; }
+
+/* 요일을 '평일', '월·수·금' 처럼 보기 좋게 */
+function jDayText(){
+  var d=JF.days;
+  if(!d.length) return '';
+  var wd=['월','화','수','목','금'], we=['토','일'];
+  var isWd = wd.every(function(x){return d.indexOf(x)>=0;}) && !we.some(function(x){return d.indexOf(x)>=0;});
+  if(isWd) return '평일';
+  if(d.length===7) return '매일';
+  return d.join('·');
+}
+/* 저장용 문자열 만들기: "평일 08:00~10:00, 14:00~19:00" */
+function jHoursText(){
+  var t = jDayText();
+  var ss = JF.slots.filter(function(x){ return x.s && x.e; })
+                   .map(function(x){ return x.s+'~'+x.e; });
+  if(!t || !ss.length) return '';
+  return t+' '+ss.join(', ');
+}
+function jTimeSel(i,which){
+  var cur = JF.slots[i][which]||'';
+  return '<select onchange="jSlot('+i+',\''+which+'\',this.value)" style="padding:12px 8px;">'
+    +'<option value="">'+(which==='s'?'시작':'종료')+'</option>'
+    + HOURS_OPT.map(function(h){ return '<option'+(cur===h?' selected':'')+'>'+h+'</option>'; }).join('')
+    +'</select>';
+}
+function jHoursUI(){
+  var wdOn = ['월','화','수','목','금'].every(function(d){ return JF.days.indexOf(d)>=0; });
+  var h = '<div class="field"><label class="lb">근무시간 <span class="req">*</span></label>'
+    +'<div style="display:flex;gap:5px;margin-bottom:8px;">'
+    + DAYS.map(function(d){
+        var on = JF.days.indexOf(d)>=0;
+        var we = (d==='토'||d==='일');
+        return '<div onclick="jToggleDay(\''+d+'\')" style="flex:1;text-align:center;padding:11px 0;border-radius:10px;cursor:pointer;font-weight:800;font-size:14px;border:1.5px solid '
+          +(on?'var(--navy);background:var(--navy);color:#fff;':'var(--line);background:#fff;color:'+(we?'#F04438':'var(--ink-soft)')+';')
+          +'">'+d+'</div>';
+      }).join('')
+    +'</div>'
+    +'<button class="btn btn-ghost" style="padding:9px;font-size:13px;margin-bottom:12px;'+(wdOn?'background:var(--navy-soft);':'')+'" onclick="jWeekdays()">'
+    +(wdOn?'✓ 평일 전체 (월~금)':'평일 전체 선택 (월~금)')+'</button>';
+
+  JF.slots.forEach(function(sl,i){
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">'
+      + '<div style="flex:1;">'+jTimeSel(i,'s')+'</div>'
+      + '<span style="color:var(--ink-soft);font-weight:800;">~</span>'
+      + '<div style="flex:1;">'+jTimeSel(i,'e')+'</div>'
+      + (JF.slots.length>1
+          ? '<button onclick="jDelSlot('+i+')" style="flex:none;width:38px;height:44px;border:1.5px solid var(--line);background:#fff;border-radius:10px;color:#F04438;font-size:18px;font-weight:800;cursor:pointer;">−</button>'
+          : '<span style="flex:none;width:38px;"></span>')
+      + '</div>';
+  });
+
+  if(JF.slots.length<2){
+    h += '<button class="btn btn-ghost" style="padding:10px;font-size:13.5px;" onclick="jAddSlot()">+ 시간대 추가 (오전·오후 나눠 근무)</button>';
+  }
+  var prev = jHoursText();
+  h += prev
+    ? '<div style="margin-top:10px;background:var(--orange-soft);color:var(--orange);border-radius:10px;padding:11px;font-size:13.5px;font-weight:800;text-align:center;">'+esc(prev)+'</div>'
+    : '<div class="hint">요일과 시간을 선택하세요. 예) 평일 08:00~10:00, 14:00~19:00</div>';
+  return h+'</div>';
+}
+
+/* ── 마감일 위젯 ── */
+function jToggleOpen(){ JF.deadlineOpen=!JF.deadlineOpen; if(JF.deadlineOpen) JF.deadline=''; openJobForm(); }
+function jDeadlineUI(){
+  return '<div class="field"><label class="lb">마감일</label>'
+   +'<div class="agree" style="border:1.5px solid '+(JF.deadlineOpen?'var(--navy)':'var(--line)')+';border-radius:12px;padding:13px;margin-bottom:10px;" onclick="jToggleOpen()">'
+   +'<div class="chk'+(JF.deadlineOpen?' on':'')+'">✓</div>'
+   +'<div class="tx" style="font-weight:700;">채용시 마감 (날짜 없음)</div></div>'
+   +(JF.deadlineOpen ? ''
+     : '<input type="date" id="j-deadline" min="'+new Date().toISOString().slice(0,10)+'" value="'+esc(JF.deadline)+'" onchange="JF.deadline=this.value">')
+   +'</div>';
+}
 function openJobForm(){
   document.getElementById('mTitle').textContent='공고 등록';
   document.getElementById('mBody').innerHTML =
@@ -453,10 +547,13 @@ function openJobForm(){
    + LICENSE_REQ.map(function(v){return '<div class="opt '+(JF.license===v?'on':'')+'" onclick="JF.license=\''+v+'\';openJobForm()">'+v+'</div>';}).join('')+'</div></div>'
    +'<div class="field"><label class="lb">차량</label><div class="opts col2">'
    + VEHICLE_REQ.map(function(v){return '<div class="opt '+(JF.vehicle===v?'on':'')+'" onclick="JF.vehicle=\''+v+'\';openJobForm()">'+v+'</div>';}).join('')+'</div></div>'
-   +'<div class="field"><label class="lb">근무시간 <span class="req">*</span></label><input type="text" id="j-hours" placeholder="예) 평일 14:00~19:00" value="'+esc(JF.hours)+'" oninput="JF.hours=this.value"></div>'
+   + jHoursUI()
    +'<div class="field"><label class="lb">급여</label><input type="text" value="협의" readonly style="background:#F2F4F7;color:var(--ink-soft);"><div class="hint">급여는 기사와 협의로 진행됩니다.</div></div>'
-   +'<div class="field"><label class="lb">모집 인원</label><input type="text" id="j-count" placeholder="예) 1명" value="'+esc(JF.count)+'" oninput="JF.count=this.value"></div>'
-   +'<div class="field"><label class="lb">마감일</label><input type="text" id="j-deadline" placeholder="예) 2026-08-31 또는 채용시 마감" value="'+esc(JF.deadline)+'" oninput="JF.deadline=this.value"></div>'
+   +'<div class="field"><label class="lb">모집 인원</label><select onchange="JF.count=this.value">'
+   + ['1명','2명','3명','4명','5명','6명','7명','8명','9명','10명 이상','인원 미정']
+       .map(function(v){ return '<option'+(JF.count===v?' selected':'')+'>'+v+'</option>'; }).join('')
+   +'</select></div>'
+   + jDeadlineUI()
    +'<div class="field"><label class="lb">상세 설명</label><textarea id="j-desc" placeholder="업무 내용, 우대사항 등을 적어주세요." oninput="JF.desc=this.value">'+esc(JF.desc)+'</textarea></div>'
    +'<button class="btn btn-main" onclick="saveJob()">공고 등록하기</button>';
   document.getElementById('modal').classList.add('on');
@@ -471,18 +568,23 @@ function jSetArea(){
   JF.area = sd+' '+gg+(em?' '+em:''); openJobForm();
 }
 function saveJob(){
-  if(!JF.title.trim()||!JF.jobType||!JF.area||!JF.workType||!JF.hours.trim()){
-    toast('제목·직종·지역·근무형태·근무시간은 필수입니다.'); return;
+  var hoursText = jHoursText();
+  if(!JF.title.trim()||!JF.jobType||!JF.area||!JF.workType){
+    toast('제목·직종·지역·근무형태는 필수입니다.'); return;
   }
+  if(!JF.days.length){ toast('근무 요일을 선택해 주세요.'); return; }
+  if(!hoursText){ toast('근무 시작·종료 시간을 선택해 주세요.'); return; }
   if(!live()){ toast('시안 모드에서는 등록할 수 없습니다.'); return; }
   var u=window._auth.currentUser, fb=window._fb;
   fb.addDoc(fb.collection(window._db,'jobs'), {
     companyId:u.uid, company:C.company, title:JF.title, jobType:JF.jobType, area:JF.area,
-    workType:JF.workType, license:JF.license, vehicle:JF.vehicle, hours:JF.hours,
-    pay:'협의', count:JF.count, deadline:JF.deadline, desc:JF.desc,
+    workType:JF.workType, license:JF.license, vehicle:JF.vehicle, hours:hoursText,
+    days:JF.days.slice(), slots:JF.slots.filter(function(x){return x.s&&x.e;}),
+    pay:'협의', count:JF.count,
+    deadline:(JF.deadlineOpen ? '채용시 마감' : JF.deadline), desc:JF.desc,
     status:'open', createdAt: fb.serverTimestamp()
   }).then(function(){
-    JF={title:'',jobType:'',area:'',workType:'',license:'무관',vehicle:'회사 차량 제공',hours:'',count:'1명',deadline:'',desc:''};
+    JF={title:'',jobType:'',area:'',workType:'',license:'무관',vehicle:'회사 차량 제공',days:[],slots:[{s:'',e:''}],hours:'',count:'1명',deadline:'',deadlineOpen:true,desc:''};
     closeModal(); toast('✅ 공고가 등록되었습니다!'); loadAll();
   }).catch(function(e){ toast('등록 실패: '+(e.code||e.message)); });
 }
