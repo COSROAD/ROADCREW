@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F2A47">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ROADCREW 관리자">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>ROADCREW 관리자</title>
+<style>
+:root{--navy:#0F2A47;--navy-soft:#E8EEF5;--orange:#EA580C;--orange-soft:#FFF4ED;
+--ink:#1A2233;--ink-soft:#5A6478;--line:#E4E8EF;--bg:#F6F8FB;--white:#fff;--ok:#12B76A;--err:#F04438;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;}
+.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+.top{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:14px 16px;}
+.back{border:none;background:none;font-size:22px;color:var(--ink-soft);cursor:pointer;padding:0 4px;}
+.top h1{font-size:16px;font-weight:800;margin:0;flex:1;}
+.prog{height:4px;background:var(--line);}
+.prog i{display:block;height:100%;background:var(--orange);width:0;transition:.3s;}
+.wrap{flex:1;padding:22px 18px 120px;}
+.step-title{font-size:24px;font-weight:850;letter-spacing:-.02em;margin:0 0 8px;}
+.step-desc{font-size:15px;color:var(--ink-soft);margin:0 0 24px;}
+.field{margin-bottom:20px;}
+label.lb{display:block;font-size:14px;font-weight:700;margin-bottom:8px;}
+.req{color:var(--orange);}
+input[type=text],input[type=tel],select,textarea{width:100%;padding:15px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:16px;background:var(--white);color:var(--ink);font-family:inherit;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);}
+textarea{min-height:90px;resize:vertical;}
+.hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+.opts{display:grid;gap:8px;}
+.opts.col2{grid-template-columns:1fr 1fr;}
+.opt{border:1.5px solid var(--line);background:var(--white);border-radius:12px;padding:14px 12px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;transition:.15s;}
+.opt.on{border-color:var(--navy);background:var(--navy);color:#fff;}
+.opt .ico{display:block;font-size:22px;margin-bottom:4px;}
+.foot{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--white);border-top:1px solid var(--line);padding:14px 18px calc(14px + env(safe-area-inset-bottom));}
+.btn{width:100%;padding:17px;border:none;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;}
+.btn-main{background:var(--navy);color:#fff;}
+.btn-main:disabled{background:#C4CBD6;cursor:not-allowed;}
+.btn-ghost{background:var(--white);color:var(--navy);border:1.5px solid var(--navy);}
+.agree-all{border:1.5px solid var(--navy);background:var(--navy-soft);border-radius:12px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;cursor:pointer;font-weight:800;font-size:16px;}
+.agree{display:flex;align-items:flex-start;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+.agree:last-child{border-bottom:none;}
+.chk{flex:none;width:24px;height:24px;border:2px solid #C4CBD6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:transparent;font-size:14px;font-weight:900;transition:.15s;}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#fff;}
+.agree .tx{flex:1;font-size:14.5px;}
+.tag-req{font-size:11px;color:var(--orange);font-weight:800;}
+.tag-opt{font-size:11px;color:var(--ink-soft);font-weight:800;}
+.viewmore{font-size:12.5px;color:var(--ink-soft);text-decoration:underline;background:none;border:none;cursor:pointer;padding:4px 0 0;}
+.upload{display:block;border:2px dashed #C4CBD6;border-radius:14px;padding:28px 16px;text-align:center;background:var(--white);cursor:pointer;}
+.upload .big{font-size:34px;}
+.upload p{margin:8px 0 0;font-size:14px;color:var(--ink-soft);}
+.preview{position:relative;border-radius:14px;overflow:hidden;border:1.5px solid var(--line);}
+.preview img{width:100%;display:block;}
+.preview .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+.done{text-align:center;padding:40px 0 10px;}
+.done .mark{width:76px;height:76px;border-radius:50%;background:var(--ok);color:#fff;font-size:38px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px;text-align:left;}
+.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px;}
+.row:last-child{border-bottom:none;}
+.row .k{color:var(--ink-soft);}
+.row .v{font-weight:700;text-align:right;}
+.badge{display:inline-block;background:var(--orange-soft);color:var(--orange);font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;margin-left:6px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;}
+.modal.on{display:flex;}
+.sheet{background:#fff;width:100%;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));max-height:80vh;overflow-y:auto;}
+.sheet h3{margin:0 0 14px;font-size:18px;font-weight:850;}
+.sheet .body{font-size:14px;color:var(--ink-soft);line-height:1.8;}
+.sheet .body b{color:var(--ink);}
+.brand{display:flex;align-items:center;justify-content:center;gap:2px;font-weight:900;letter-spacing:-.02em;}
+.brand .cos{font-size:15px;color:var(--orange);opacity:.9;}
+.brand .rc{font-size:26px;color:var(--navy);}
+.hero{text-align:center;padding:56px 0 30px;}
+.hero .sub{font-size:15px;color:var(--ink-soft);margin-top:10px;}
+.hero .pts{margin-top:30px;display:grid;gap:10px;text-align:left;}
+.pt{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;display:flex;gap:12px;align-items:center;}
+.pt .e{font-size:24px;}
+.pt .t{font-size:14.5px;font-weight:700;}
+.pt .d{font-size:13px;color:var(--ink-soft);}
+.demo{background:#FFF7E6;border:1px solid #FFE0A3;color:#8A5A00;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:16px;}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(20,28,42,.94);color:#fff;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:700;z-index:200;display:none;max-width:88%;text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="topbar"></div>
+  <div class="prog"><i id="progbar"></i></div>
+  <div class="wrap" id="view"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<div id="recaptcha"></div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <h3 id="mTitle"></h3>
+    <div class="body" id="mBody"></div>
+    <button class="btn btn-main" style="margin-top:18px;" onclick="closeModal()">확인</button>
+  </div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyBUed_pgSzq6kmtZ3y5fPexV-7mEGzJSuw",
+  authDomain: "roadcrew-1e9cd.firebaseapp.com",
+  projectId: "roadcrew-1e9cd",
+  storageBucket: "roadcrew-1e9cd.firebasestorage.app",
+  messagingSenderId: "869624922493",
+  appId: "1:869624922493:web:575506c8896ba28743cc14"
+};
+try{
+  const app = initializeApp(firebaseConfig);
+  window._auth = getAuth(app);
+  window._auth.languageCode = 'ko';
+  window._db = getFirestore(app);
+  window._st = getStorage(app);
+  window._fb = { RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut,
+                 doc, getDoc, updateDoc, collection, query, where, getDocs,
+                 ref, getDownloadURL, deleteObject };
+  window._live = (location.protocol === 'http:' || location.protocol === 'https:');
+}catch(e){ window._live = false; console.log('Firebase 초기화 실패', e); }
+window._fbLoaded = true;
+document.dispatchEvent(new Event('fbready'));
+</script>
+<script>
+/* ═══════════ ROADCREW 관리자 ═══════════ */
+var phone='', code='', busy=false, confirmResult=null, recaptcha=null;
+var view='login';          // login | code | noauth | main
+var tab='license';         // license | stats
+var pending=[], stats={drivers:0,companies:0,jobs:0,apps:0};
+var myUid='';
+
+function live(){ return window._live===true; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.style.display='block';
+  clearTimeout(window._tt); window._tt=setTimeout(function(){t.style.display='none';},3000); }
+function fmtPhone(p){ if(!p) return ''; return String(p).replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3'); }
+function row(k,v){ return '<div class="row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'; }
+function setBusy(v,l){ busy=v; var b=document.getElementById('nx'); if(b){ b.disabled=v; if(l) b.textContent=l; } }
+
+function render(){
+  var top=document.getElementById('topbar');
+  top.innerHTML = (view==='main')
+    ? '<div class="top"><h1>ROADCREW 관리자</h1><button class="back" style="font-size:13px;font-weight:800;color:var(--ink-soft);" onclick="logout()">로그아웃</button></div>'
+    : '';
+  document.getElementById('progbar').style.width='0';
+  document.getElementById('view').innerHTML = V[view]();
+  document.getElementById('foot').innerHTML = F[view]();
+}
+
+var V = {
+login:function(){ return ''
+  +'<div class="hero" style="padding:48px 0 24px;">'
+  +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADCREW</span></div>'
+  +'<p class="sub" style="font-weight:800;color:var(--navy);">관리자</p></div>'
+  +'<div class="field"><label class="lb">관리자 휴대폰 번호</label>'
+  +'<input type="tel" inputmode="numeric" placeholder="01012345678" value="'+phone+'" oninput="phone=this.value.replace(/[^0-9]/g,\'\');this.value=phone;chk()"></div>'
+  +(live()?'':'<div class="demo">⚠️ 시안 모드 — 웹(https)에서만 로그인됩니다.</div>'); },
+
+code:function(){ return ''
+  +'<h2 class="step-title">인증번호</h2><p class="step-desc">'+fmtPhone(phone)+' 로 발송했습니다.</p>'
+  +'<div class="field"><input type="tel" id="f-code" inputmode="numeric" maxlength="6" placeholder="000000" oninput="chk()"></div>'; },
+
+noauth:function(){ return ''
+  +'<div style="text-align:center;padding:50px 0 20px;"><div style="font-size:48px;">🔒</div>'
+  +'<h2 class="step-title" style="text-align:center;margin-top:16px;">관리자 권한이 없습니다</h2>'
+  +'<p class="step-desc" style="text-align:center;">아래 UID를 Firestore의 <b>admins</b> 컬렉션에<br>문서 ID로 추가하면 관리자가 됩니다.</p></div>'
+  +'<div class="card" style="text-align:center;">'
+  +'<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px;">내 UID</div>'
+  +'<div style="font-size:14px;font-weight:800;word-break:break-all;line-height:1.6;">'+esc(myUid)+'</div>'
+  +'<button class="btn btn-ghost" style="margin-top:14px;" onclick="copyUid()">UID 복사</button></div>'
+  +'<div style="background:var(--navy-soft);border-radius:14px;padding:16px;margin-top:16px;font-size:13.5px;color:var(--navy);line-height:1.8;">'
+  +'<b>등록 방법</b><br>Firebase 콘솔 → Firestore → <b>컬렉션 시작</b> → 컬렉션 ID <b>admins</b> → 문서 ID에 위 UID 붙여넣기 → 아무 필드나 하나(예: role="admin") 넣고 저장</div>'; },
+
+main:function(){
+  if(tab==='stats'){
+    return '<div class="card" style="margin-top:0;">'
+      + row('등록 기사', stats.drivers+'명') + row('등록 업체', stats.companies+'개')
+      + row('전체 공고', stats.jobs+'건') + row('지원·제안', stats.apps+'건')
+      + '</div>';
+  }
+  if(!pending.length){
+    return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);">'
+      +'<div style="font-size:46px;">✅</div>'
+      +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">검수할 면허증이 없습니다</p>'
+      +'<p style="font-size:13.5px;">기사가 면허증을 올리면 여기에 표시됩니다.</p></div>';
+  }
+  return pending.map(function(d,i){
+    return '<div class="card" style="margin-top:0;margin-bottom:14px;">'
+     +'<div style="font-size:17px;font-weight:850;margin-bottom:8px;">'+esc(d.name)+' 기사님</div>'
+     + row('연락처', fmtPhone(d.phone)) + row('면허', esc(d.license||'-'))
+     + row('보유 차량', esc((d.vehicles||[]).join(', ')||'-')) + row('경력', esc(d.career||'-'))
+     + (d.imgUrl
+        ? '<div class="preview" style="margin-top:12px;"><img src="'+d.imgUrl+'"></div>'
+        : '<div class="hint" style="margin-top:12px;">면허증 이미지를 불러오지 못했습니다.</div>')
+     +'<div style="display:flex;gap:8px;margin-top:14px;">'
+     +'<button class="btn btn-main" style="background:#12B76A;padding:13px;font-size:15px;" onclick="review('+i+',\'verified\')">✅ 승인</button>'
+     +'<button class="btn btn-ghost" style="padding:13px;font-size:15px;color:#F04438;border-color:#FECDCA;" onclick="review('+i+',\'rejected\')">거절</button>'
+     +'</div>'
+     +'<div class="hint" style="margin-top:10px;">승인·거절 시 <b>면허증 사진은 즉시 파기</b>됩니다.</div>'
+     +'</div>';
+  }).join('');
+}
+};
+
+var F = {
+login:function(){ return '<button class="btn btn-main" id="nx" onclick="sendCode()" '+(/^01[0-9]{8,9}$/.test(phone)?'':'disabled')+'>인증번호 받기</button>'; },
+code: function(){ var e=document.getElementById('f-code'); return '<button class="btn btn-main" id="nx" onclick="verifyCode()" '+((e&&e.value.length===6)?'':'disabled')+'>확인</button>'; },
+noauth:function(){ return '<button class="btn btn-ghost" onclick="location.reload()">다시 확인</button>'; },
+main: function(){
+  var t=[['license','📄','면허 검수'],['stats','📊','통계']];
+  return '<div style="display:flex;">'+t.map(function(x){
+    var on=tab===x[0];
+    return '<div onclick="tab=\''+x[0]+'\';render()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;'
+      +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
+      +'<div style="font-size:20px;">'+x[1]+'</div><div style="font-size:11.5px;margin-top:2px;">'+x[2]+'</div></div>';
+  }).join('')+'</div>';
+}
+};
+function chk(){ render(); }
+
+/* ── 인증 ── */
+function makeRecaptcha(){
+  try{ if(recaptcha) recaptcha.clear(); }catch(e){}
+  recaptcha=null;
+  var h=document.getElementById('recaptcha');
+  if(h&&h.parentNode){ var f=document.createElement('div'); f.id='recaptcha'; h.parentNode.replaceChild(f,h); }
+  recaptcha = new window._fb.RecaptchaVerifier(window._auth,'recaptcha',{size:'invisible'});
+  return recaptcha;
+}
+function sendCode(){
+  if(!live()){ toast('웹(https)에서만 로그인됩니다.'); return; }
+  if(busy) return;
+  setBusy(true,'발송 중...');
+  try{
+    var v=makeRecaptcha();
+    window._fb.signInWithPhoneNumber(window._auth,'+82'+phone.replace(/^0/,''),v)
+      .then(function(r){ confirmResult=r; busy=false; view='code'; render(); })
+      .catch(function(e){ setBusy(false,'인증번호 받기'); toast('발송 실패: '+(e.code||e.message)); try{v.clear();}catch(_){} recaptcha=null; });
+  }catch(e){ setBusy(false,'인증번호 받기'); toast('오류: '+e.message); recaptcha=null; }
+}
+function verifyCode(){
+  if(busy) return;
+  setBusy(true,'확인 중...');
+  confirmResult.confirm(document.getElementById('f-code').value)
+    .then(function(){ busy=false; })   // onAuthStateChanged 가 이어받음
+    .catch(function(){ setBusy(false,'확인'); toast('인증번호가 올바르지 않습니다.'); });
+}
+function copyUid(){
+  try{ navigator.clipboard.writeText(myUid); toast('UID를 복사했습니다.'); }
+  catch(e){ toast('복사 실패 — 직접 선택해 복사해 주세요.'); }
+}
+function logout(){ window._fb.signOut(window._auth); location.reload(); }
+
+/* ── 데이터 ── */
+function loadPending(){
+  var fb=window._fb;
+  fb.getDocs(fb.query(fb.collection(window._db,'drivers'), fb.where('licenseVerify','==','pending')))
+    .then(function(s){
+      pending=[]; var jobs=[];
+      s.forEach(function(d){ var o=d.data(); o.id=d.id; pending.push(o); });
+      pending.forEach(function(p){
+        if(p.licenseImgPath){
+          jobs.push(fb.getDownloadURL(fb.ref(window._st, p.licenseImgPath))
+            .then(function(u){ p.imgUrl=u; }).catch(function(){}));
+        }
+      });
+      return Promise.all(jobs);
+    })
+    .then(loadStats)
+    .then(render)
+    .catch(function(e){ toast('불러오기 실패: '+(e.code||e.message)); render(); });
+}
+function loadStats(){
+  var fb=window._fb, db=window._db;
+  return Promise.all([
+    fb.getDocs(fb.collection(db,'drivers')),
+    fb.getDocs(fb.collection(db,'companies')),
+    fb.getDocs(fb.collection(db,'jobs')),
+    fb.getDocs(fb.collection(db,'applications'))
+  ]).then(function(r){
+    stats={drivers:r[0].size, companies:r[1].size, jobs:r[2].size, apps:r[3].size};
+  }).catch(function(){});
+}
+
+/* ── 검수: 승인/거절 → 사진 즉시 파기 ── */
+function review(i, result){
+  var d=pending[i]; if(!d) return;
+  var fb=window._fb;
+  var msg = result==='verified' ? '이 기사님의 면허를 승인할까요?\n(면허증 사진은 즉시 파기됩니다)'
+                                : '이 기사님의 면허 인증을 거절할까요?\n(면허증 사진은 즉시 파기됩니다)';
+  if(!confirm(msg)) return;
+  var task = Promise.resolve();
+  if(d.licenseImgPath){
+    task = fb.deleteObject(fb.ref(window._st, d.licenseImgPath)).catch(function(){});  // 이미 없으면 무시
+  }
+  task.then(function(){
+      return fb.updateDoc(fb.doc(window._db,'drivers',d.id), {
+        licenseVerify: result,
+        licenseImgPath: '',            // 경로도 제거
+        licenseReviewedAt: new Date().toISOString()
+      });
+    })
+    .then(function(){
+      toast(result==='verified' ? '✅ 승인했습니다. 사진을 파기했습니다.' : '거절했습니다. 사진을 파기했습니다.');
+      loadPending();
+    })
+    .catch(function(e){ toast('처리 실패: '+(e.code||e.message)); });
+}
+
+/* ── 부팅 ── */
+function boot(){
+  if(!live()){ render(); return; }
+  window._fb.onAuthStateChanged(window._auth, function(u){
+    if(!u){ view='login'; render(); return; }
+    myUid = u.uid;
+    var fb=window._fb;
+    fb.getDoc(fb.doc(window._db,'admins',u.uid)).then(function(s){
+      if(s.exists()){ view='main'; loadPending(); }
+      else { view='noauth'; render(); }
+    }).catch(function(){ view='noauth'; render(); });
+  });
+}
+document.addEventListener('fbready', boot);
+setTimeout(function(){ if(!document.getElementById('view').innerHTML) boot(); }, 1400);
+</script>
+</body>
+</html>
