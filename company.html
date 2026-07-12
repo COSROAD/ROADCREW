@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F2A47">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ROADCREW 업체">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>ROADCREW 업체 — 기사 채용</title>
+<style>
+:root{--navy:#0F2A47;--navy-soft:#E8EEF5;--orange:#EA580C;--orange-soft:#FFF4ED;
+--ink:#1A2233;--ink-soft:#5A6478;--line:#E4E8EF;--bg:#F6F8FB;--white:#fff;--ok:#12B76A;--err:#F04438;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;}
+.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+.top{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:14px 16px;}
+.back{border:none;background:none;font-size:22px;color:var(--ink-soft);cursor:pointer;padding:0 4px;}
+.top h1{font-size:16px;font-weight:800;margin:0;flex:1;}
+.prog{height:4px;background:var(--line);}
+.prog i{display:block;height:100%;background:var(--orange);width:0;transition:.3s;}
+.wrap{flex:1;padding:22px 18px 120px;}
+.step-title{font-size:24px;font-weight:850;letter-spacing:-.02em;margin:0 0 8px;}
+.step-desc{font-size:15px;color:var(--ink-soft);margin:0 0 24px;}
+.field{margin-bottom:20px;}
+label.lb{display:block;font-size:14px;font-weight:700;margin-bottom:8px;}
+.req{color:var(--orange);}
+input[type=text],input[type=tel],select,textarea{width:100%;padding:15px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:16px;background:var(--white);color:var(--ink);font-family:inherit;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);}
+textarea{min-height:90px;resize:vertical;}
+.hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+.opts{display:grid;gap:8px;}
+.opts.col2{grid-template-columns:1fr 1fr;}
+.opt{border:1.5px solid var(--line);background:var(--white);border-radius:12px;padding:14px 12px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;transition:.15s;}
+.opt.on{border-color:var(--navy);background:var(--navy);color:#fff;}
+.opt .ico{display:block;font-size:22px;margin-bottom:4px;}
+.foot{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--white);border-top:1px solid var(--line);padding:14px 18px calc(14px + env(safe-area-inset-bottom));}
+.btn{width:100%;padding:17px;border:none;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;}
+.btn-main{background:var(--navy);color:#fff;}
+.btn-main:disabled{background:#C4CBD6;cursor:not-allowed;}
+.btn-ghost{background:var(--white);color:var(--navy);border:1.5px solid var(--navy);}
+.agree-all{border:1.5px solid var(--navy);background:var(--navy-soft);border-radius:12px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;cursor:pointer;font-weight:800;font-size:16px;}
+.agree{display:flex;align-items:flex-start;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+.agree:last-child{border-bottom:none;}
+.chk{flex:none;width:24px;height:24px;border:2px solid #C4CBD6;border-radius:50%;display:flex;align-items:center;justify-content:center;color:transparent;font-size:14px;font-weight:900;transition:.15s;}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#fff;}
+.agree .tx{flex:1;font-size:14.5px;}
+.tag-req{font-size:11px;color:var(--orange);font-weight:800;}
+.tag-opt{font-size:11px;color:var(--ink-soft);font-weight:800;}
+.viewmore{font-size:12.5px;color:var(--ink-soft);text-decoration:underline;background:none;border:none;cursor:pointer;padding:4px 0 0;}
+.upload{display:block;border:2px dashed #C4CBD6;border-radius:14px;padding:28px 16px;text-align:center;background:var(--white);cursor:pointer;}
+.upload .big{font-size:34px;}
+.upload p{margin:8px 0 0;font-size:14px;color:var(--ink-soft);}
+.preview{position:relative;border-radius:14px;overflow:hidden;border:1.5px solid var(--line);}
+.preview img{width:100%;display:block;}
+.preview .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;}
+.done{text-align:center;padding:40px 0 10px;}
+.done .mark{width:76px;height:76px;border-radius:50%;background:var(--ok);color:#fff;font-size:38px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px;text-align:left;}
+.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px;}
+.row:last-child{border-bottom:none;}
+.row .k{color:var(--ink-soft);}
+.row .v{font-weight:700;text-align:right;}
+.badge{display:inline-block;background:var(--orange-soft);color:var(--orange);font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;margin-left:6px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;}
+.modal.on{display:flex;}
+.sheet{background:#fff;width:100%;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));max-height:80vh;overflow-y:auto;}
+.sheet h3{margin:0 0 14px;font-size:18px;font-weight:850;}
+.sheet .body{font-size:14px;color:var(--ink-soft);line-height:1.8;}
+.sheet .body b{color:var(--ink);}
+.brand{display:flex;align-items:center;justify-content:center;gap:2px;font-weight:900;letter-spacing:-.02em;}
+.brand .cos{font-size:15px;color:var(--orange);opacity:.9;}
+.brand .rc{font-size:26px;color:var(--navy);}
+.hero{text-align:center;padding:56px 0 30px;}
+.hero .sub{font-size:15px;color:var(--ink-soft);margin-top:10px;}
+.hero .pts{margin-top:30px;display:grid;gap:10px;text-align:left;}
+.pt{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;display:flex;gap:12px;align-items:center;}
+.pt .e{font-size:24px;}
+.pt .t{font-size:14.5px;font-weight:700;}
+.pt .d{font-size:13px;color:var(--ink-soft);}
+.demo{background:#FFF7E6;border:1px solid #FFE0A3;color:#8A5A00;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:16px;}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(20,28,42,.94);color:#fff;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:700;z-index:200;display:none;max-width:88%;text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="topbar"></div>
+  <div class="prog"><i id="progbar"></i></div>
+  <div class="wrap" id="view"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<div id="recaptcha"></div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <h3 id="mTitle"></h3>
+    <div class="body" id="mBody"></div>
+    <button class="btn btn-main" style="margin-top:18px;" onclick="closeModal()">확인</button>
+  </div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyBUed_pgSzq6kmtZ3y5fPexV-7mEGzJSuw",
+  authDomain: "roadcrew-1e9cd.firebaseapp.com",
+  projectId: "roadcrew-1e9cd",
+  storageBucket: "roadcrew-1e9cd.firebasestorage.app",
+  messagingSenderId: "869624922493",
+  appId: "1:869624922493:web:575506c8896ba28743cc14"
+};
+try{
+  const app = initializeApp(firebaseConfig);
+  window._auth = getAuth(app);
+  window._auth.languageCode = 'ko';
+  window._db = getFirestore(app);
+  window._fb = { RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut,
+                 doc, setDoc, getDoc, addDoc, updateDoc, collection, query, where, getDocs, serverTimestamp };
+  window._live = (location.protocol === 'http:' || location.protocol === 'https:');
+}catch(e){
+  window._live = false;
+  console.log('Firebase 초기화 실패 → 시안 모드', e);
+}
+window._fbLoaded = true;
+document.dispatchEvent(new Event('fbready'));
+</script>
+<script>
+/* ═══════════ ROADCREW 업체 앱 ═══════════ */
+var SIDO = {
+ '서울':['종로구','중구','용산구','성동구','광진구','동대문구','중랑구','성북구','강북구','도봉구','노원구','은평구','서대문구','마포구','양천구','강서구','구로구','금천구','영등포구','동작구','관악구','서초구','강남구','송파구','강동구'],
+ '부산':['중구','서구','동구','영도구','부산진구','동래구','남구','북구','강서구','해운대구','사하구','금정구','연제구','수영구','사상구','기장군'],
+ '대구':['중구','동구','서구','남구','북구','수성구','달서구','달성군','군위군'],
+ '인천':['중구','동구','미추홀구','연수구','남동구','부평구','계양구','서구','강화군','옹진군'],
+ '광주':['동구','서구','남구','북구','광산구'],
+ '대전':['동구','중구','서구','유성구','대덕구'],
+ '울산':['중구','남구','동구','북구','울주군'],
+ '세종':['세종시'],
+ '경기':['수원시','성남시','의정부시','안양시','부천시','광명시','평택시','동두천시','안산시','고양시','과천시','구리시','남양주시','오산시','시흥시','군포시','의왕시','하남시','용인시','파주시','이천시','안성시','김포시','화성시','광주시','양주시','포천시','여주시','연천군','가평군','양평군'],
+ '강원':['춘천시','원주시','강릉시','동해시','태백시','속초시','삼척시','홍천군','횡성군','영월군','평창군','정선군','철원군','화천군','양구군','인제군','고성군','양양군'],
+ '충북':['청주시','충주시','제천시','보은군','옥천군','영동군','증평군','진천군','괴산군','음성군','단양군'],
+ '충남':['천안시','공주시','보령시','아산시','서산시','논산시','계룡시','당진시','금산군','부여군','서천군','청양군','홍성군','예산군','태안군'],
+ '전북':['전주시','군산시','익산시','정읍시','남원시','김제시','완주군','진안군','무주군','장수군','임실군','순창군','고창군','부안군'],
+ '전남':['목포시','여수시','순천시','나주시','광양시','담양군','곡성군','구례군','고흥군','보성군','화순군','장흥군','강진군','해남군','영암군','무안군','함평군','영광군','장성군','완도군','진도군','신안군'],
+ '경북':['포항시','경주시','김천시','안동시','구미시','영주시','영천시','상주시','문경시','경산시','의성군','청송군','영양군','영덕군','청도군','고령군','성주군','칠곡군','예천군','봉화군','울진군','울릉군'],
+ '경남':['창원시','진주시','통영시','사천시','김해시','밀양시','거제시','양산시','의령군','함안군','창녕군','고성군','남해군','하동군','산청군','함양군','거창군','합천군'],
+ '제주':['제주시','서귀포시']
+};
+var JOBTYPE = ['소형화물 배송','셔틀 기사(학원·복지)','택배','물류 배송','일용·대타'];
+var WORKTYPE = ['정규직','계약직','일용직','파트타임','스팟(1회성)'];
+var LICENSE_REQ = ['무관','2종 보통','1종 보통','1종 대형'];
+var VEHICLE_REQ = ['회사 차량 제공','본인 차량 지참'];
+var BIZTYPE = ['학원·유치원','복지·요양센터','물류·유통','택배','용달·화물','기타'];
+
+var STEPS = ['intro','phone','code','agree','c1','done'];
+var step = 0, busy = false, confirmResult = null, recaptcha = null;
+var mode = 'signup', tab = 'jobs';
+var myJobs = [], apps = [], drivers = [], curJob = null, curApp = null;
+
+var C = JSON.parse(localStorage.getItem('rc_company')||'null') || {
+  phone:'', company:'', manager:'', bizType:'', area:'', agree1:false
+};
+function save(){ localStorage.setItem('rc_company', JSON.stringify(C)); }
+function live(){ return window._live === true; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.style.display='block';
+  clearTimeout(window._tt); window._tt=setTimeout(function(){t.style.display='none';},2600); }
+function fmtPhone(p){ if(!p) return ''; return p.replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3'); }
+function row(k,v){ return '<div class="row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'; }
+function tag(t){ return '<span style="font-size:12.5px;font-weight:700;color:var(--ink-soft);background:#F2F4F7;border-radius:8px;padding:6px 10px;">'+t+'</span>'; }
+
+/* ── 렌더 ── */
+function go(i){ step=i; render(); window.scrollTo(0,0); }
+function next(){ if(step<STEPS.length-1) go(step+1); }
+function prev(){ if(step>0) go(step-1); }
+function render(){
+  if(mode==='main'){ renderMain(); return; }
+  var s = STEPS[step];
+  var top = document.getElementById('topbar');
+  if(s==='intro'||s==='done'){ top.innerHTML=''; }
+  else {
+    var T={phone:'휴대폰 인증',code:'인증번호 입력',agree:'약관 동의',c1:'업체 정보'};
+    top.innerHTML='<div class="top"><button class="back" onclick="prev()">‹</button><h1>'+T[s]+'</h1></div>';
+  }
+  document.getElementById('progbar').style.width=(step/(STEPS.length-1)*100)+'%';
+  document.getElementById('view').innerHTML = VIEWS[s]();
+  document.getElementById('foot').innerHTML = FOOT[s]();
+  if(s==='c1') fillSido();
+}
+function demoBar(){ return live()? '' : '<div class="demo">⚠️ 시안 모드 — 웹(https)에 올려야 실제 인증이 됩니다.</div>'; }
+
+var VIEWS = {
+intro:function(){ return ''
+  +'<div class="hero">'
+  +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADCREW</span></div>'
+  +'<p class="sub" style="font-weight:700;color:var(--navy);">업체 회원</p>'
+  +'<p class="sub">기사가 필요하신가요?<br>검증된 기사에게 바로 닿습니다.</p>'
+  +'<div class="pts">'
+  +'<div class="pt"><span class="e">📢</span><div><div class="t">공고 등록 <span class="badge" style="background:#ECFDF3;color:#12B76A;">무료</span></div><div class="d">몇 분이면 채용 공고를 올릴 수 있어요</div></div></div>'
+  +'<div class="pt"><span class="e">📥</span><div><div class="t">지원자 바로 확인</div><div class="d">면허·차량·경력을 한눈에 보고 연락</div></div></div>'
+  +'<div class="pt"><span class="e">🔎</span><div><div class="t">기사에게 먼저 제안</div><div class="d">조건에 맞는 기사를 찾아 제안 발송</div></div></div>'
+  +'</div>'
+  +'<div style="margin-top:26px;"><a href="index.html" style="font-size:13.5px;color:var(--ink-soft);">기사이신가요? 기사 회원으로 →</a></div>'
+  +'</div>'; },
+phone:function(){ return demoBar()
+  +'<h2 class="step-title">휴대폰 번호를<br>입력해 주세요</h2>'
+  +'<p class="step-desc">담당자 본인 확인에 사용됩니다.</p>'
+  +'<div class="field"><label class="lb">휴대폰 번호 <span class="req">*</span></label>'
+  +'<input type="tel" inputmode="numeric" placeholder="01012345678" value="'+C.phone+'" oninput="C.phone=this.value.replace(/[^0-9]/g,\'\');this.value=C.phone;chk()">'
+  +'<div class="hint">숫자만 입력하세요 (- 없이)</div></div>'; },
+code:function(){ return demoBar()
+  +'<h2 class="step-title">인증번호를<br>입력해 주세요</h2>'
+  +'<p class="step-desc">'+fmtPhone(C.phone)+' 로 발송했습니다.</p>'
+  +'<div class="field"><label class="lb">인증번호 6자리 <span class="req">*</span></label>'
+  +'<input type="tel" id="f-code" inputmode="numeric" maxlength="6" placeholder="000000" oninput="chk()"></div>'; },
+agree:function(){ return ''
+  +'<h2 class="step-title">약관에 동의해 주세요</h2>'
+  +'<p class="step-desc">서비스 이용을 위해 필요합니다.</p>'
+  +'<div class="agree" onclick="C.agree1=!C.agree1;save();render()"><span class="chk '+(C.agree1?'on':'')+'">✓</span>'
+  +'<span class="tx"><span class="tag-req">[필수]</span> 개인정보 수집·이용 동의'
+  +'<br><button class="viewmore" onclick="event.stopPropagation();showTerm()">전문 보기</button></span></div>'; },
+c1:function(){ return ''
+  +'<h2 class="step-title">업체 정보</h2><p class="step-desc">공고에 표시될 정보입니다.</p>'
+  +'<div class="field"><label class="lb">업체명 <span class="req">*</span></label>'
+  +'<input type="text" placeholder="예) 으뜸태권도" value="'+esc(C.company)+'" oninput="C.company=this.value;chk()"></div>'
+  +'<div class="field"><label class="lb">담당자 이름 <span class="req">*</span></label>'
+  +'<input type="text" placeholder="홍길동" value="'+esc(C.manager)+'" oninput="C.manager=this.value;chk()"></div>'
+  +'<div class="field"><label class="lb">업종 <span class="req">*</span></label><div class="opts col2">'
+  + BIZTYPE.map(function(v){return '<div class="opt '+(C.bizType===v?'on':'')+'" onclick="C.bizType=\''+v+'\';save();render()">'+v+'</div>';}).join('')
+  +'</div></div>'
+  +'<div class="field"><label class="lb">사업장 지역 <span class="req">*</span></label>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+  +'<select id="f-sido" onchange="fillGugun()"></select><select id="f-gugun"><option value="">시/군/구</option></select></div>'
+  +'<div style="margin-top:8px;"><input type="text" id="f-emd" placeholder="읍/면/동 (선택)"></div>'
+  +'<button class="btn btn-ghost" style="margin-top:10px;padding:13px;font-size:15px;" onclick="setArea()">지역 설정</button>'
+  +(C.area?'<div style="margin-top:10px;"><span style="display:inline-block;background:var(--navy);color:#fff;border-radius:20px;padding:8px 14px;font-size:13.5px;font-weight:700;">'+esc(C.area)+'</span></div>':'')
+  +'</div>'; },
+done:function(){ return ''
+  +'<div class="done"><div class="mark">✓</div>'
+  +'<h2 class="step-title" style="text-align:center;">가입 완료!</h2>'
+  +'<p class="step-desc" style="text-align:center;">이제 채용 공고를 올려보세요.</p></div>'
+  +'<div class="card">'+row('업체명',esc(C.company))+row('담당자',esc(C.manager))
+  + row('업종',esc(C.bizType))+row('지역',esc(C.area))+row('연락처',fmtPhone(C.phone))+'</div>'; }
+};
+var FOOT = {
+intro:function(){ return '<button class="btn btn-main" onclick="next()">업체로 시작하기</button>'; },
+phone:function(){ return '<button class="btn btn-main" id="nx" onclick="sendCode()" '+(valid()?'':'disabled')+'>인증번호 받기</button>'; },
+code: function(){ return '<button class="btn btn-main" id="nx" onclick="verifyCode()" '+(valid()?'':'disabled')+'>확인</button>'; },
+agree:function(){ return '<button class="btn btn-main" id="nx" onclick="next()" '+(valid()?'':'disabled')+'>동의하고 계속</button>'; },
+c1:   function(){ return '<button class="btn btn-main" id="nx" onclick="finish()" '+(valid()?'':'disabled')+'>가입 완료</button>'; },
+done: function(){ return '<button class="btn btn-main" onclick="enterMain()">공고 올리러 가기</button>'; }
+};
+function valid(){
+  var s=STEPS[step];
+  if(s==='phone') return /^01[0-9]{8,9}$/.test(C.phone);
+  if(s==='code'){ var e=document.getElementById('f-code'); return !!e && e.value.length===6; }
+  if(s==='agree') return C.agree1;
+  if(s==='c1') return C.company.trim() && C.manager.trim() && C.bizType && C.area;
+  return true;
+}
+function chk(){ var b=document.getElementById('nx'); if(b) b.disabled=!valid()||busy; save(); }
+function setBusy(v,label){ busy=v; var b=document.getElementById('nx'); if(b){ b.disabled=v||!valid(); if(label) b.textContent=label; } }
+function fillSido(){ var s=document.getElementById('f-sido'); if(!s)return;
+  s.innerHTML='<option value="">시/도</option>'+Object.keys(SIDO).map(function(k){return '<option>'+k+'</option>';}).join(''); }
+function fillGugun(){ var sd=document.getElementById('f-sido').value, g=document.getElementById('f-gugun');
+  g.innerHTML='<option value="">시/군/구</option>'+(SIDO[sd]||[]).map(function(k){return '<option>'+k+'</option>';}).join(''); }
+function setArea(){
+  var sd=document.getElementById('f-sido').value, gg=document.getElementById('f-gugun').value, em=document.getElementById('f-emd').value.trim();
+  if(!sd||!gg){ toast('시/도와 시/군/구를 선택해 주세요.'); return; }
+  C.area = sd+' '+gg+(em?' '+em:''); save(); render();
+}
+function showTerm(){
+  document.getElementById('mTitle').textContent='개인정보 수집·이용 동의 [필수]';
+  document.getElementById('mBody').innerHTML='<b>수집 항목</b><br>업체명, 담당자 이름, 휴대폰번호, 업종, 사업장 지역<br><br>'
+   +'<b>수집·이용 목적</b><br>회원 식별, 채용 공고 게시 및 지원자 연결<br><br><b>보유 기간</b><br>회원 탈퇴 시까지';
+  document.getElementById('modal').classList.add('on');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+
+/* ── 인증 ── */
+function makeRecaptcha(){
+  try{ if(recaptcha) recaptcha.clear(); }catch(e){}
+  recaptcha=null;
+  var host=document.getElementById('recaptcha');
+  if(host && host.parentNode){ var f=document.createElement('div'); f.id='recaptcha'; host.parentNode.replaceChild(f,host); }
+  recaptcha = new window._fb.RecaptchaVerifier(window._auth,'recaptcha',{size:'invisible'});
+  return recaptcha;
+}
+function sendCode(){
+  if(!valid()||busy) return; save();
+  if(!live()){ next(); return; }
+  setBusy(true,'발송 중...');
+  try{
+    var v=makeRecaptcha();
+    window._fb.signInWithPhoneNumber(window._auth, '+82'+C.phone.replace(/^0/,''), v)
+      .then(function(r){ confirmResult=r; setBusy(false,'인증번호 받기'); next(); })
+      .catch(function(e){ setBusy(false,'인증번호 받기'); toast('발송 실패: '+(e.code||e.message)); try{v.clear();}catch(_){} recaptcha=null; });
+  }catch(e){ setBusy(false,'인증번호 받기'); toast('오류: '+e.message); recaptcha=null; }
+}
+function verifyCode(){
+  if(!valid()||busy) return;
+  if(!live()){ next(); return; }
+  setBusy(true,'확인 중...');
+  confirmResult.confirm(document.getElementById('f-code').value)
+    .then(function(){ setBusy(false,'확인'); next(); })
+    .catch(function(){ setBusy(false,'확인'); toast('인증번호가 올바르지 않습니다.'); });
+}
+function finish(){
+  save();
+  if(!live()){ next(); return; }
+  var u=window._auth.currentUser;
+  if(!u){ toast('인증 정보가 없습니다. 다시 시도해 주세요.'); return; }
+  setBusy(true,'저장 중...');
+  var fb=window._fb;
+  fb.setDoc(fb.doc(window._db,'companies',u.uid), {
+    uid:u.uid, phone:C.phone, company:C.company, manager:C.manager,
+    bizType:C.bizType, area:C.area, agreePrivacy:C.agree1, createdAt: fb.serverTimestamp()
+  }).then(function(){ setBusy(false); next(); })
+    .catch(function(e){ setBusy(false,'가입 완료'); toast('저장 실패: '+(e.code||e.message)); });
+}
+
+/* ═══════════ 업체 메인 ═══════════ */
+function enterMain(){ mode='main'; tab='jobs'; loadAll(); }
+function renderMain(){
+  var titles={jobs:'내 공고',apps:'지원자',find:'기사 찾기',me:'내 정보'};
+  document.getElementById('topbar').innerHTML =
+    '<div class="top"><h1>'+titles[tab]+'</h1>'
+    + (tab==='jobs' ? '<button class="back" style="font-size:14px;font-weight:800;color:var(--navy);" onclick="openJobForm()">+ 공고 등록</button>' : '')
+    + '</div>';
+  document.getElementById('progbar').style.width='0';
+  document.getElementById('view').innerHTML = MAIN[tab]();
+  document.getElementById('foot').innerHTML = tabbar();
+}
+function tabbar(){
+  var t=[['jobs','📢','내 공고'],['apps','📥','지원자'],['find','🔎','기사 찾기'],['me','👤','내 정보']];
+  return '<div style="display:flex;">'+t.map(function(x){
+    var on=tab===x[0];
+    return '<div onclick="tab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;'
+      +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
+      +'<div style="font-size:20px;">'+x[1]+'</div><div style="font-size:11px;margin-top:2px;">'+x[2]+'</div></div>';
+  }).join('')+'</div>';
+}
+function empty(icon,t,d,btn){
+  return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);"><div style="font-size:46px;">'+icon+'</div>'
+   +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">'+t+'</p>'
+   +'<p style="font-size:13.5px;">'+d+'</p>'+(btn||'')+'</div>';
+}
+
+var MAIN = {
+jobs:function(){
+  if(!myJobs.length) return empty('📢','등록한 공고가 없습니다','첫 채용 공고를 올려보세요.',
+    '<button class="btn btn-main" style="margin-top:22px;" onclick="openJobForm()">+ 공고 등록하기</button>');
+  return myJobs.map(function(j,i){
+    var cnt = apps.filter(function(a){return a.jobId===j.id;}).length;
+    var open = j.status==='open';
+    return '<div class="card" style="margin-top:0;margin-bottom:12px;">'
+     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+     +'<div style="font-size:16.5px;font-weight:800;line-height:1.4;">'+esc(j.title)+'</div>'
+     +'<span class="badge" style="flex:none;background:'+(open?'#ECFDF3':'#F2F4F7')+';color:'+(open?'#12B76A':'#98A2B3')+';">'+(open?'모집중':'마감')+'</span></div>'
+     +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">'
+     + tag('📍 '+esc(j.area)) + tag('🚗 '+esc(j.jobType)) + tag('👤 '+esc(j.workType))
+     +'</div>'
+     +'<div style="display:flex;gap:8px;margin-top:14px;">'
+     +'<button class="btn btn-ghost" style="padding:11px;font-size:14px;" onclick="tab=\'apps\';renderMain()">지원자 '+cnt+'명</button>'
+     +(open?'<button class="btn btn-ghost" style="padding:11px;font-size:14px;color:var(--ink-soft);border-color:var(--line);" onclick="closeJob(\''+j.id+'\')">마감하기</button>':'')
+     +'</div></div>';
+  }).join('');
+},
+apps:function(){
+  if(!apps.length) return empty('📥','아직 지원자가 없습니다','공고를 올리면 기사님들이 지원합니다.');
+  var ST={applied:['새 지원','#1570EF','#EFF8FF'],viewed:['열람함','#7C3AED','#F4EBFF'],
+          contact:['연락중','#EA580C','#FFF4ED'],hired:['채용확정','#12B76A','#ECFDF3'],rejected:['미선정','#98A2B3','#F2F4F7']};
+  return apps.map(function(a,i){
+    var s=ST[a.status]||ST.applied;
+    return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;" onclick="openApp('+i+')">'
+     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+     +'<div><div style="font-size:16.5px;font-weight:800;">'+esc(a.driverName)+' 기사님</div>'
+     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:4px;">'+esc(a.jobTitle)+'</div></div>'
+     +'<span style="flex:none;font-size:12px;font-weight:800;padding:5px 11px;border-radius:20px;color:'+s[1]+';background:'+s[2]+';">'+s[0]+'</span></div>'
+     +'</div>';
+  }).join('');
+},
+find:function(){
+  if(!drivers.length) return empty('🔎','등록된 기사가 없습니다','기사님이 가입하면 여기에 표시됩니다.');
+  return drivers.map(function(d,i){
+    return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;" onclick="openDriver('+i+')">'
+     +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+     +'<div style="font-size:16.5px;font-weight:800;">'+esc(d.name)+' 기사님'
+     +(d.licenseVerify==='verified'?'<span class="badge" style="background:#ECFDF3;color:#12B76A;">✅ 인증</span>':'')+'</div></div>'
+     +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">'
+     + tag('📍 '+esc((d.areas||[]).join(', ')||'-')) + tag('🚗 '+esc((d.vehicles||[]).join(', ')||'-')) + tag('📅 '+esc(d.career||'-'))
+     +'</div></div>';
+  }).join('');
+},
+me:function(){
+  return '<div class="card" style="margin-top:0;">'
+   +'<div style="font-size:19px;font-weight:850;margin-bottom:6px;">'+esc(C.company)+'</div>'
+   + row('담당자',esc(C.manager)) + row('연락처',fmtPhone(C.phone))
+   + row('업종',esc(C.bizType)) + row('지역',esc(C.area))+'</div>'
+   +'<button class="viewmore" style="display:block;margin:20px auto 0;" onclick="logout()">로그아웃</button>';
+}
+};
+
+/* ── 데이터 ── */
+function loadAll(){
+  if(!live()){ renderMain(); return; }
+  var u=window._auth.currentUser; if(!u) return;
+  var fb=window._fb;
+  fb.getDocs(fb.query(fb.collection(window._db,'jobs'), fb.where('companyId','==',u.uid)))
+   .then(function(s){ myJobs=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; myJobs.push(o); });
+     return fb.getDocs(fb.query(fb.collection(window._db,'applications'), fb.where('companyId','==',u.uid))); })
+   .then(function(s){ apps=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; apps.push(o); });
+     return fb.getDocs(fb.collection(window._db,'drivers')); })
+   .then(function(s){ drivers=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; drivers.push(o); }); renderMain(); })
+   .catch(function(e){ toast('불러오기 실패: '+(e.code||e.message)); renderMain(); });
+}
+
+/* ── 공고 등록 ── */
+var JF = { title:'', jobType:'', area:'', workType:'', license:'무관', vehicle:'회사 차량 제공', hours:'', count:'1명', deadline:'', desc:'' };
+function openJobForm(){
+  document.getElementById('mTitle').textContent='공고 등록';
+  document.getElementById('mBody').innerHTML =
+    '<div class="field"><label class="lb">제목 <span class="req">*</span></label><input type="text" id="j-title" placeholder="예) 학원 셔틀 기사 모집 (오전·오후)" value="'+esc(JF.title)+'" oninput="JF.title=this.value"></div>'
+   +'<div class="field"><label class="lb">직종 <span class="req">*</span></label><div class="opts">'
+   + JOBTYPE.map(function(v){return '<div class="opt '+(JF.jobType===v?'on':'')+'" onclick="JF.jobType=\''+v+'\';openJobForm()">'+v+'</div>';}).join('')+'</div></div>'
+   +'<div class="field"><label class="lb">근무 지역 <span class="req">*</span></label>'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+   +'<select id="j-sido" onchange="jFillGugun()"></select><select id="j-gugun"><option value="">시/군/구</option></select></div>'
+   +'<div style="margin-top:8px;"><input type="text" id="j-emd" placeholder="읍/면/동 (선택)"></div>'
+   +'<button class="btn btn-ghost" style="margin-top:10px;padding:12px;font-size:14px;" onclick="jSetArea()">지역 설정</button>'
+   +(JF.area?'<div style="margin-top:10px;"><span style="display:inline-block;background:var(--navy);color:#fff;border-radius:20px;padding:7px 13px;font-size:13px;font-weight:700;">'+esc(JF.area)+'</span></div>':'')
+   +'</div>'
+   +'<div class="field"><label class="lb">근무형태 <span class="req">*</span></label><div class="opts col2">'
+   + WORKTYPE.map(function(v){return '<div class="opt '+(JF.workType===v?'on':'')+'" onclick="JF.workType=\''+v+'\';openJobForm()">'+v+'</div>';}).join('')+'</div></div>'
+   +'<div class="field"><label class="lb">필요 면허</label><div class="opts col2">'
+   + LICENSE_REQ.map(function(v){return '<div class="opt '+(JF.license===v?'on':'')+'" onclick="JF.license=\''+v+'\';openJobForm()">'+v+'</div>';}).join('')+'</div></div>'
+   +'<div class="field"><label class="lb">차량</label><div class="opts col2">'
+   + VEHICLE_REQ.map(function(v){return '<div class="opt '+(JF.vehicle===v?'on':'')+'" onclick="JF.vehicle=\''+v+'\';openJobForm()">'+v+'</div>';}).join('')+'</div></div>'
+   +'<div class="field"><label class="lb">근무시간 <span class="req">*</span></label><input type="text" id="j-hours" placeholder="예) 평일 14:00~19:00" value="'+esc(JF.hours)+'" oninput="JF.hours=this.value"></div>'
+   +'<div class="field"><label class="lb">급여</label><input type="text" value="협의" readonly style="background:#F2F4F7;color:var(--ink-soft);"><div class="hint">급여는 기사와 협의로 진행됩니다.</div></div>'
+   +'<div class="field"><label class="lb">모집 인원</label><input type="text" id="j-count" placeholder="예) 1명" value="'+esc(JF.count)+'" oninput="JF.count=this.value"></div>'
+   +'<div class="field"><label class="lb">마감일</label><input type="text" id="j-deadline" placeholder="예) 2026-08-31 또는 채용시 마감" value="'+esc(JF.deadline)+'" oninput="JF.deadline=this.value"></div>'
+   +'<div class="field"><label class="lb">상세 설명</label><textarea id="j-desc" placeholder="업무 내용, 우대사항 등을 적어주세요." oninput="JF.desc=this.value">'+esc(JF.desc)+'</textarea></div>'
+   +'<button class="btn btn-main" onclick="saveJob()">공고 등록하기</button>';
+  document.getElementById('modal').classList.add('on');
+  var s=document.getElementById('j-sido');
+  s.innerHTML='<option value="">시/도</option>'+Object.keys(SIDO).map(function(k){return '<option>'+k+'</option>';}).join('');
+}
+function jFillGugun(){ var sd=document.getElementById('j-sido').value, g=document.getElementById('j-gugun');
+  g.innerHTML='<option value="">시/군/구</option>'+(SIDO[sd]||[]).map(function(k){return '<option>'+k+'</option>';}).join(''); }
+function jSetArea(){
+  var sd=document.getElementById('j-sido').value, gg=document.getElementById('j-gugun').value, em=document.getElementById('j-emd').value.trim();
+  if(!sd||!gg){ toast('시/도와 시/군/구를 선택해 주세요.'); return; }
+  JF.area = sd+' '+gg+(em?' '+em:''); openJobForm();
+}
+function saveJob(){
+  if(!JF.title.trim()||!JF.jobType||!JF.area||!JF.workType||!JF.hours.trim()){
+    toast('제목·직종·지역·근무형태·근무시간은 필수입니다.'); return;
+  }
+  if(!live()){ toast('시안 모드에서는 등록할 수 없습니다.'); return; }
+  var u=window._auth.currentUser, fb=window._fb;
+  fb.addDoc(fb.collection(window._db,'jobs'), {
+    companyId:u.uid, company:C.company, title:JF.title, jobType:JF.jobType, area:JF.area,
+    workType:JF.workType, license:JF.license, vehicle:JF.vehicle, hours:JF.hours,
+    pay:'협의', count:JF.count, deadline:JF.deadline, desc:JF.desc,
+    status:'open', createdAt: fb.serverTimestamp()
+  }).then(function(){
+    JF={title:'',jobType:'',area:'',workType:'',license:'무관',vehicle:'회사 차량 제공',hours:'',count:'1명',deadline:'',desc:''};
+    closeModal(); toast('✅ 공고가 등록되었습니다!'); loadAll();
+  }).catch(function(e){ toast('등록 실패: '+(e.code||e.message)); });
+}
+function closeJob(id){
+  if(!confirm('이 공고를 마감할까요?')) return;
+  var fb=window._fb;
+  fb.updateDoc(fb.doc(window._db,'jobs',id), { status:'closed' })
+    .then(function(){ toast('공고를 마감했습니다.'); loadAll(); })
+    .catch(function(e){ toast('실패: '+(e.code||e.message)); });
+}
+
+/* ── 지원자 ── */
+function openApp(i){
+  curApp = apps[i];
+  var d = drivers.filter(function(x){ return x.uid===curApp.driverId; })[0] || {};
+  var STS=[['viewed','열람함'],['contact','연락중'],['hired','채용확정'],['rejected','미선정']];
+  document.getElementById('mTitle').textContent = curApp.driverName+' 기사님';
+  document.getElementById('mBody').innerHTML =
+     '<div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:12px;">'+esc(curApp.jobTitle)+' 지원</div>'
+    + row('연락처','<a href="tel:'+esc(curApp.driverPhone)+'" style="color:var(--navy);font-weight:800;">'+fmtPhone(curApp.driverPhone)+'</a>')
+    + row('면허', esc(d.license||'-')) + row('보유 차량', esc((d.vehicles||[]).join(', ')||'-'))
+    + row('경력', esc(d.career||'-')) + row('활동 지역', esc((d.areas||[]).join(' · ')||'-'))
+    + row('희망 근무형태', esc((d.worktypes||[]).join(', ')||'-'))
+    + row('면허 인증', d.licenseVerify==='verified'?'✅ 인증됨':(d.licenseVerify==='pending'?'검수중':'미인증'))
+    + (d.intro? '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);white-space:pre-wrap;">'+esc(d.intro)+'</div>':'')
+    + '<div class="field" style="margin-top:18px;"><label class="lb">상태 변경</label><div class="opts col2">'
+    + STS.map(function(s){ return '<div class="opt '+(curApp.status===s[0]?'on':'')+'" onclick="setAppStatus(\''+s[0]+'\')">'+s[1]+'</div>'; }).join('')
+    + '</div></div>'
+    + '<a class="btn btn-main" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;" href="tel:'+esc(curApp.driverPhone)+'">📞 전화하기</a>';
+  document.getElementById('modal').classList.add('on');
+}
+function setAppStatus(s){
+  if(!curApp) return;
+  var fb=window._fb;
+  fb.updateDoc(fb.doc(window._db,'applications',curApp.id), { status:s })
+    .then(function(){ curApp.status=s; toast('상태를 변경했습니다.'); loadAll(); closeModal(); })
+    .catch(function(e){ toast('실패: '+(e.code||e.message)); });
+}
+
+/* ── 기사 상세 · 제안 ── */
+function openDriver(i){
+  var d = drivers[i];
+  document.getElementById('mTitle').textContent = (d.name||'기사')+' 기사님';
+  var openJobs = myJobs.filter(function(j){ return j.status==='open'; });
+  document.getElementById('mBody').innerHTML =
+     row('면허', esc(d.license||'-')) + row('보유 차량', esc((d.vehicles||[]).join(', ')||'-'))
+   + row('경력', esc(d.career||'-')) + row('활동 지역', esc((d.areas||[]).join(' · ')||'-'))
+   + row('희망 근무형태', esc((d.worktypes||[]).join(', ')||'-'))
+   + row('면허 인증', d.licenseVerify==='verified'?'✅ 인증됨':(d.licenseVerify==='pending'?'검수중':'미인증'))
+   + (d.intro? '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);white-space:pre-wrap;">'+esc(d.intro)+'</div>':'')
+   + '<div class="field" style="margin-top:18px;"><label class="lb">제안할 공고 선택</label>'
+   + (openJobs.length
+      ? '<div class="opts">'+openJobs.map(function(j){ return '<div class="opt" onclick="sendOffer(\''+j.id+'\',\''+d.uid+'\',\''+esc(d.name)+'\',\''+esc(d.phone)+'\')">'+esc(j.title)+'</div>'; }).join('')+'</div>'
+      : '<div class="hint">모집중인 공고가 없습니다. 먼저 공고를 등록해 주세요.</div>')
+   + '</div>';
+  document.getElementById('modal').classList.add('on');
+}
+function sendOffer(jobId, driverId, driverName, driverPhone){
+  var u=window._auth.currentUser, fb=window._fb;
+  var j = myJobs.filter(function(x){ return x.id===jobId; })[0];
+  var dup = apps.some(function(a){ return a.jobId===jobId && a.driverId===driverId; });
+  if(dup){ toast('이미 지원/제안된 기사입니다.'); return; }
+  fb.addDoc(fb.collection(window._db,'applications'), {
+    jobId:jobId, jobTitle:j.title, company:C.company, companyId:u.uid,
+    driverId:driverId, driverName:driverName, driverPhone:driverPhone,
+    direction:'offer', status:'applied', createdAt: fb.serverTimestamp()
+  }).then(function(){ closeModal(); toast('✅ 제안을 보냈습니다!'); loadAll(); })
+    .catch(function(e){ toast('제안 실패: '+(e.code||e.message)); });
+}
+
+function logout(){
+  if(live()){ window._fb.signOut(window._auth); }
+  localStorage.removeItem('rc_company');
+  location.reload();
+}
+
+/* ── 부팅 ── */
+function boot(){
+  if(!live()){ render(); return; }
+  window._fb.onAuthStateChanged(window._auth, function(u){
+    if(!u){ mode='signup'; render(); return; }
+    var fb=window._fb;
+    fb.getDoc(fb.doc(window._db,'companies',u.uid)).then(function(s){
+      if(s.exists()){
+        var p=s.data();
+        C.company=p.company; C.manager=p.manager; C.phone=p.phone; C.bizType=p.bizType; C.area=p.area;
+        save(); enterMain();
+      } else { mode='signup'; render(); }
+    }).catch(function(){ mode='signup'; render(); });
+  });
+}
+document.addEventListener('fbready', boot);
+setTimeout(function(){ if(!document.getElementById('view').innerHTML) boot(); }, 1400);
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+</script>
+</body>
+</html>

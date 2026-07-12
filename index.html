@@ -196,7 +196,9 @@ intro:function(){ return ''
   +'<div class="pt"><span class="e">💼</span><div><div class="t">일자리 찾기</div><div class="d">셔틀·택배·물류·소형화물 기사 채용 공고</div></div></div>'
   +'<div class="pt"><span class="e">🚚</span><div><div class="t">단건 일감 <span class="badge">준비 중</span></div><div class="d">퀵·소형화물 배송 건별 수입</div></div></div>'
   +'<div class="pt"><span class="e">✅</span><div><div class="t">실적이 곧 이력서</div><div class="d">수행 실적·평점으로 검증되는 기사</div></div></div>'
-  +'</div></div>'; },
+  +'</div>'
+  +'<div style="margin-top:26px;"><a href="company.html" style="font-size:13.5px;color:var(--ink-soft);">기사를 채용하시나요? 업체 회원으로 →</a></div>'
+  +'</div>'; },
 phone:function(){ return demoBar()
   +'<h2 class="step-title">휴대폰 번호를<br>입력해 주세요</h2>'
   +'<p class="step-desc">본인 확인과 일자리 연락에 사용됩니다.</p>'
@@ -473,7 +475,6 @@ jobs:function(){
       +'<div style="font-size:46px;">📭</div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">등록된 공고가 없습니다</p>'
       +'<p style="font-size:13.5px;">업체가 공고를 올리면 여기에 표시됩니다.</p>'
-      +(live()?'<button class="btn btn-ghost" style="margin-top:22px;" onclick="seedJobs()">테스트 공고 3개 만들기</button>':'')
       +'</div>';
   }
   return chips + list.map(function(j,i){
@@ -573,7 +574,7 @@ function applyJob(){
   var u=window._auth.currentUser; if(!u||!curJob) return;
   var fb=window._fb;
   fb.addDoc(fb.collection(window._db,'applications'), {
-    jobId:curJob.id, jobTitle:curJob.title, company:curJob.company,
+    jobId:curJob.id, jobTitle:curJob.title, company:curJob.company, companyId:curJob.companyId,
     driverId:u.uid, driverName:D.name, driverPhone:D.phone,
     direction:'apply', status:'applied', createdAt: fb.serverTimestamp()
   }).then(function(){
@@ -605,24 +606,6 @@ function logout(){
   localStorage.removeItem('rc_driver');
   location.reload();
 }
-function seedJobs(){
-  var fb=window._fb, c=fb.collection(window._db,'jobs');
-  var S=[
-   {title:'학원 셔틀 기사 모집 (오전·오후)', company:'으뜸태권도', jobType:'셔틀 기사(학원·복지)', area:'인천 연수구 송도1동',
-    workType:'파트타임', hours:'평일 14:00~19:00', pay:'협의', license:'1종 보통', vehicle:'회사 차량 제공', count:'1명',
-    desc:'학원 통학 차량 운행입니다.\n아이들을 안전하게 등·하원 시켜주실 분을 찾습니다.', status:'open'},
-   {title:'소형화물 배송 기사 (다마스·라보)', company:'한빛물류', jobType:'소형화물 배송', area:'인천 남동구 만수동',
-    workType:'정규직', hours:'평일 08:00~17:00', pay:'협의', license:'2종 보통', vehicle:'본인 차량 지참', count:'2명',
-    desc:'고정 거래처 일배송입니다. 성실하신 분 환영합니다.', status:'open'},
-   {title:'오늘 하루 대타 기사 급구', company:'번개택배', jobType:'일용·대타', area:'서울 강서구 화곡동',
-    workType:'스팟(1회성)', hours:'09:00~18:00', pay:'협의', license:'2종 보통', vehicle:'회사 차량 제공', count:'1명',
-    desc:'금일 대타 기사님 급하게 구합니다.', status:'open'}
-  ];
-  Promise.all(S.map(function(j){ j.createdAt=fb.serverTimestamp(); return fb.addDoc(c,j); }))
-    .then(function(){ toast('테스트 공고 3개를 만들었습니다.'); loadJobs(); })
-    .catch(function(e){ toast('생성 실패: '+(e.code||e.message)); });
-}
-
 /* ── 로그인 상태에 따라 진입 분기 ── */
 function boot(){
   if(!live()){ render(); return; }
