@@ -418,6 +418,20 @@ function loadAll(){
    .catch(function(e){ toast('불러오기 실패: '+(e.code||e.message)); renderMain(); });
 }
 
+/* ── 알림 문자 (서버가 발송. 앱에는 알리고 키 없음) ── */
+function notifySMS(appId, kind){
+  var u = window._auth && window._auth.currentUser;
+  if(!u || !appId) return Promise.resolve();
+  return u.getIdToken()
+    .then(function(t){
+      return fetch('https://cosroad.vercel.app/api/rc-notify', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ idToken:t, appId:appId, kind:kind })
+      });
+    })
+    .catch(function(e){ console.warn('알림 문자 실패', e); });
+}
+
 /* ── 공고 등록 ── */
 var JF = { title:'', jobType:'', area:'', workType:'', license:'무관', vehicle:'회사 차량 제공', hours:'', count:'1명', deadline:'', desc:'' };
 function openJobForm(){
@@ -504,7 +518,9 @@ function setAppStatus(s){
   if(!curApp) return;
   var fb=window._fb;
   fb.updateDoc(fb.doc(window._db,'applications',curApp.id), { status:s })
-    .then(function(){ curApp.status=s; toast('상태를 변경했습니다.'); loadAll(); closeModal(); })
+    .then(function(){
+      if(s==='hired'||s==='contact'||s==='rejected') notifySMS(curApp.id, s);
+      curApp.status=s; toast('상태를 변경했습니다.'); loadAll(); closeModal(); })
     .catch(function(e){ toast('실패: '+(e.code||e.message)); });
 }
 
@@ -535,7 +551,7 @@ function sendOffer(jobId, driverId, driverName, driverPhone){
     jobId:jobId, jobTitle:j.title, company:C.company, companyId:u.uid,
     driverId:driverId, driverName:driverName, driverPhone:driverPhone,
     direction:'offer', status:'applied', createdAt: fb.serverTimestamp()
-  }).then(function(){ closeModal(); toast('✅ 제안을 보냈습니다!'); loadAll(); })
+  }).then(function(ref){ notifySMS(ref.id, 'offer'); closeModal(); toast('✅ 제안을 보냈습니다!'); loadAll(); })
     .catch(function(e){ toast('제안 실패: '+(e.code||e.message)); });
 }
 

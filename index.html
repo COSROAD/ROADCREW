@@ -577,11 +577,26 @@ function applyJob(){
     jobId:curJob.id, jobTitle:curJob.title, company:curJob.company, companyId:curJob.companyId,
     driverId:u.uid, driverName:D.name, driverPhone:D.phone,
     direction:'apply', status:'applied', createdAt: fb.serverTimestamp()
-  }).then(function(){
+  }).then(function(ref){
+    notifySMS(ref.id, 'apply');
     closeModal(); toast('✅ 지원이 완료되었습니다!');
     return loadMyApps();
   }).then(renderMain)
   .catch(function(e){ toast('지원 실패: '+(e.code||e.message)); });
+}
+
+/* ── 알림 문자 (서버가 발송. 앱에는 알리고 키 없음) ── */
+function notifySMS(appId, kind){
+  var u = window._auth && window._auth.currentUser;
+  if(!u || !appId) return Promise.resolve();
+  return u.getIdToken()
+    .then(function(t){
+      return fetch('https://cosroad.vercel.app/api/rc-notify', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ idToken:t, appId:appId, kind:kind })
+      });
+    })
+    .catch(function(e){ console.warn('알림 문자 실패', e); });   // 문자 실패해도 본 기능은 진행
 }
 
 /* ── 필터 ── */
