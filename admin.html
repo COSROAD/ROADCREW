@@ -137,7 +137,7 @@ var pending=[], stats={drivers:0,companies:0,jobs:0,apps:0};
 var myUid='';
 
 function live(){ return window._live===true; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];}); }
 function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.style.display='block';
   clearTimeout(window._tt); window._tt=setTimeout(function(){t.style.display='none';},3000); }
 function fmtPhone(p){ if(!p) return ''; return String(p).replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3'); }
@@ -263,7 +263,16 @@ function copyUid(){
   try{ navigator.clipboard.writeText(myUid); toast('UID를 복사했습니다.'); }
   catch(e){ toast('복사 실패 — 직접 선택해 복사해 주세요.'); }
 }
-function logout(){ window._fb.signOut(window._auth); location.reload(); }
+function logout(){
+  try{
+    localStorage.removeItem('rc_role');
+    localStorage.removeItem('rc_driver');
+    localStorage.removeItem('rc_company');
+  }catch(e){}
+  window._fb.signOut(window._auth)
+    .catch(function(){})
+    .then(function(){ location.reload(); });
+}
 
 /* ── 데이터 ── */
 function loadPending(){
@@ -303,22 +312,37 @@ function review(i, result){
   var msg = result==='verified' ? '이 기사님의 면허를 승인할까요?\n(면허증 사진은 즉시 파기됩니다)'
                                 : '이 기사님의 면허 인증을 거절할까요?\n(면허증 사진은 즉시 파기됩니다)';
   if(!confirm(msg)) return;
+
+  /* 사진을 확실히 지운 다음에만 검수 결과를 저장한다.
+     지우기에 실패하면 경로를 남겨두어 다시 시도할 수 있게 한다. */
   var task = Promise.resolve();
   if(d.licenseImgPath){
-    task = fb.deleteObject(fb.ref(window._st, d.licenseImgPath)).catch(function(){});  // 이미 없으면 무시
+    task = fb.deleteObject(fb.ref(window._st, d.licenseImgPath))
+      .catch(function(e){
+        var code = (e && e.code) || '';
+        if(code === 'storage/object-not-found') return;   // 이미 없음 = 파기된 것
+        throw e;                                          // 그 밖의 실패는 진짜 실패
+      });
   }
   task.then(function(){
       return fb.updateDoc(fb.doc(window._db,'drivers',d.id), {
         licenseVerify: result,
-        licenseImgPath: '',            // 경로도 제거
+        licenseImgPath: '',
         licenseReviewedAt: new Date().toISOString()
       });
     })
     .then(function(){
-      toast(result==='verified' ? '✅ 승인했습니다. 사진을 파기했습니다.' : '거절했습니다. 사진을 파기했습니다.');
+      toast(result==='verified' ? '✅ 승인 완료. 면허증 사진을 파기했습니다.' : '거절 처리. 면허증 사진을 파기했습니다.');
       loadPending();
     })
-    .catch(function(e){ toast('처리 실패: '+(e.code||e.message)); });
+    .catch(function(e){
+      var code=(e && e.code)||'';
+      if(code.indexOf('storage/')===0){
+        alert('⚠️ 면허증 사진을 지우지 못했습니다.\n\n검수 결과를 저장하지 않았습니다.\n(사진이 남은 채로 승인되면 안 되기 때문입니다)\n\n오류: '+code+'\n\nStorage 규칙에서 관리자 삭제 권한을 확인한 뒤 다시 시도해 주세요.');
+      } else {
+        toast('처리 실패: '+(code||e.message));
+      }
+    });
 }
 
 /* ── 부팅 ── */

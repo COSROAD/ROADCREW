@@ -165,7 +165,7 @@ var C = JSON.parse(localStorage.getItem('rc_company')||'null') || {
 };
 function save(){ localStorage.setItem('rc_company', JSON.stringify(C)); }
 function live(){ return window._live === true; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];}); }
 function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.style.display='block';
   clearTimeout(window._tt); window._tt=setTimeout(function(){t.style.display='none';},2600); }
 function fmtPhone(p){ if(!p) return ''; return p.replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3'); }
@@ -384,7 +384,7 @@ apps:function(){
   }).join('');
 },
 find:function(){
-  if(!drivers.length) return empty('🔎','등록된 기사가 없습니다','기사님이 가입하면 여기에 표시됩니다.');
+  if(!drivers.length) return empty('🔎','공개된 기사가 없습니다','프로필 공개에 동의한 기사만 표시됩니다.');
   return drivers.map(function(d,i){
     return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;" onclick="openDriver('+i+')">'
      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
@@ -400,7 +400,8 @@ me:function(){
    +'<div style="font-size:19px;font-weight:850;margin-bottom:6px;">'+esc(C.company)+'</div>'
    + row('담당자',esc(C.manager)) + row('연락처',fmtPhone(C.phone))
    + row('업종',esc(C.bizType)) + row('지역',esc(C.area))+'</div>'
-   +'<button class="viewmore" style="display:block;margin:20px auto 0;" onclick="logout()">로그아웃</button>';
+   +'<button class="btn btn-ghost" style="margin-top:20px;padding:13px;font-size:14px;" onclick="goHome()">🏠 처음 화면으로</button>'
+   +'<button class="viewmore" style="display:block;margin:14px auto 0;" onclick="logout()">로그아웃</button>';
 }
 };
 
@@ -413,7 +414,7 @@ function loadAll(){
    .then(function(s){ myJobs=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; myJobs.push(o); });
      return fb.getDocs(fb.query(fb.collection(window._db,'applications'), fb.where('companyId','==',u.uid))); })
    .then(function(s){ apps=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; apps.push(o); });
-     return fb.getDocs(fb.collection(window._db,'drivers')); })
+     return fb.getDocs(fb.query(fb.collection(window._db,'drivers'), fb.where('agreeOpenProfile','==',true))); })
    .then(function(s){ drivers=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; drivers.push(o); }); renderMain(); })
    .catch(function(e){ toast('불러오기 실패: '+(e.code||e.message)); renderMain(); });
 }
@@ -639,14 +640,18 @@ function openDriver(i){
    + (d.intro? '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);white-space:pre-wrap;">'+esc(d.intro)+'</div>':'')
    + '<div class="field" style="margin-top:18px;"><label class="lb">제안할 공고 선택</label>'
    + (openJobs.length
-      ? '<div class="opts">'+openJobs.map(function(j){ return '<div class="opt" onclick="sendOffer(\''+j.id+'\',\''+d.uid+'\',\''+esc(d.name)+'\',\''+esc(d.phone)+'\')">'+esc(j.title)+'</div>'; }).join('')+'</div>'
+      ? '<div class="opts">'+openJobs.map(function(j,k){ return '<div class="opt" onclick="sendOffer('+k+','+i+')">'+esc(j.title)+'</div>'; }).join('')+'</div>'
       : '<div class="hint">모집중인 공고가 없습니다. 먼저 공고를 등록해 주세요.</div>')
    + '</div>';
   document.getElementById('modal').classList.add('on');
 }
-function sendOffer(jobId, driverId, driverName, driverPhone){
+function sendOffer(jobIdx, driverIdx){
   var u=window._auth.currentUser, fb=window._fb;
-  var j = myJobs.filter(function(x){ return x.id===jobId; })[0];
+  var openJobs = myJobs.filter(function(x){ return x.status==='open'; });
+  var j = openJobs[jobIdx];
+  var d = drivers[driverIdx];
+  if(!j || !d){ toast('공고 또는 기사 정보를 찾을 수 없습니다.'); return; }
+  var jobId = j.id, driverId = d.uid, driverName = d.name, driverPhone = d.phone;
   var dup = apps.some(function(a){ return a.jobId===jobId && a.driverId===driverId; });
   if(dup){ toast('이미 지원/제안된 기사입니다.'); return; }
   fb.addDoc(fb.collection(window._db,'applications'), {
@@ -657,20 +662,27 @@ function sendOffer(jobId, driverId, driverName, driverPhone){
     .catch(function(e){ toast('제안 실패: '+(e.code||e.message)); });
 }
 
-function switchRole(){
-  try{ localStorage.removeItem('rc_role'); }catch(e){}
-  location.href='index.html';
+function clearLocal(){
+  try{
+    localStorage.removeItem('rc_role');
+    localStorage.removeItem('rc_driver');
+    localStorage.removeItem('rc_company');
+  }catch(e){}
 }
+function switchRole(){ clearLocal(); location.replace('index.html'); }
+function goHome(){ clearLocal(); location.replace('index.html'); }
 function logout(){
-  if(live()){ window._fb.signOut(window._auth); }
-  localStorage.removeItem('rc_company');
-  try{ localStorage.removeItem('rc_role'); }catch(e){}
-  location.reload();
+  clearLocal();
+  C = { phone:'', company:'', manager:'', bizType:'', area:'', agree1:false, agree2:false };
+  if(live()){
+    window._fb.signOut(window._auth)
+      .catch(function(){})
+      .then(function(){ location.replace('index.html'); });
+  } else { location.replace('index.html'); }
 }
 
 /* ── 부팅 ── */
 function boot(){
-  try{ localStorage.setItem('rc_role','company'); }catch(e){}
   if(!live()){ render(); return; }
   window._fb.onAuthStateChanged(window._auth, function(u){
     if(!u){ mode='signup'; render(); return; }
@@ -679,6 +691,7 @@ function boot(){
       if(s.exists()){
         var p=s.data();
         C.company=p.company; C.manager=p.manager; C.phone=p.phone; C.bizType=p.bizType; C.area=p.area;
+        try{ localStorage.setItem('rc_role','company'); localStorage.removeItem('rc_driver'); }catch(e){}
         save(); enterMain();
       } else { mode='signup'; render(); }
     }).catch(function(){ mode='signup'; render(); });

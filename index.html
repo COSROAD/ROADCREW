@@ -244,7 +244,7 @@ agree:function(){ var all=D.agree1&&D.agree2&&D.agree3; return ''
 p1:function(){ return ''
   +'<h2 class="step-title">기본 정보</h2><p class="step-desc">이름과 활동하실 지역을 알려주세요.</p>'
   +'<div class="field"><label class="lb">이름 <span class="req">*</span></label>'
-  +'<input type="text" placeholder="홍길동" value="'+D.name+'" oninput="D.name=this.value;chk()"></div>'
+  +'<input type="text" placeholder="홍길동" maxlength="20" value="'+esc(D.name)+'" oninput="D.name=this.value;chk()"></div>'
   +'<div class="field"><label class="lb">활동 희망 지역 <span class="req">*</span></label>'
   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
   +'<select id="f-sido" onchange="fillGugun()"></select>'
@@ -272,7 +272,7 @@ p3:function(){ return ''
   +'<div class="field"><label class="lb">희망 급여</label><input type="text" value="협의" readonly style="background:#F2F4F7;color:var(--ink-soft);">'
   +'<div class="hint">급여는 업체와 협의로 진행됩니다.</div></div>'
   +'<div class="field"><label class="lb">자기소개 <span style="font-weight:400;color:var(--ink-soft);font-size:12.5px;">(선택)</span></label>'
-  +'<textarea placeholder="예) 택배 2년, 학원 셔틀 1년 경험 있습니다." oninput="D.intro=this.value;save()">'+(D.intro||'')+'</textarea></div>'; },
+  +'<textarea placeholder="예) 택배 2년, 학원 셔틀 1년 경험 있습니다." maxlength="500" oninput="D.intro=this.value;save()">'+esc(D.intro||'')+'</textarea></div>'; },
 p4:function(){ return ''
   +'<h2 class="step-title">면허 인증</h2>'
   +'<p class="step-desc">면허증을 확인하면 <b>✅ 인증 배지</b>가 붙어요.<br>업체가 훨씬 믿고 연락합니다.</p>'
@@ -543,14 +543,15 @@ me:function(){
    + row('희망 급여','협의')
    +'</div>'
    +'<button class="btn btn-ghost" style="margin-top:14px;" onclick="editProfile()">프로필 수정</button>'
-   +'<button class="viewmore" style="display:block;margin:18px auto 0;" onclick="logout()">로그아웃</button>';
+   +'<button class="btn btn-ghost" style="margin-top:18px;padding:13px;font-size:14px;" onclick="goHome()">🏠 처음 화면으로</button>'
+   +'<button class="viewmore" style="display:block;margin:14px auto 0;" onclick="logout()">로그아웃</button>';
 }
 };
 
 function tag(t){ return '<span style="font-size:12.5px;font-weight:700;color:var(--ink-soft);background:#F2F4F7;border-radius:8px;padding:6px 10px;">'+t+'</span>'; }
 function fchip(t,k){ return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;border-radius:20px;padding:7px 12px;font-size:12.5px;font-weight:700;margin-right:6px;">'
   +t+'<b style="cursor:pointer;" onclick="jobFilter.'+k+'=\'\';renderMain()">✕</b></span>'; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];}); }
 
 /* ── 공고 로드 ── */
 function loadJobs(){
@@ -639,16 +640,30 @@ function openFilter(){
 
 /* ── 기타 ── */
 function editProfile(){ window._mode='signup'; step=4; render(); }
+/* 이 기기에 남은 개인정보를 전부 지운다 (남의 정보가 섞이지 않게) */
+function clearLocal(){
+  try{
+    localStorage.removeItem('rc_role');
+    localStorage.removeItem('rc_driver');
+    localStorage.removeItem('rc_company');
+  }catch(e){}
+}
+function goHome(){ clearLocal(); location.replace('index.html'); }
 function logout(){
-  if(live()){ window._fb.signOut(window._auth); }
-  localStorage.removeItem('rc_driver');
-  location.reload();
+  clearLocal();
+  D = { phone:'', name:'', areas:[], license:'', vehicles:[], career:'', worktypes:[],
+        intro:'', licenseImg:'', licenseVerify:'none', agree1:false, agree2:false, agree3:false };
+  if(live()){
+    window._fb.signOut(window._auth)
+      .catch(function(){})
+      .then(function(){ location.replace('index.html'); });
+  } else { location.replace('index.html'); }
 }
 /* ── 로그인 상태에 따라 진입 분기 ── */
 function boot(){
-  /* 전에 업체로 들어온 사람은 바로 업체 화면으로 */
+  /* 업체로 '가입까지 마친' 사람만 업체 화면으로. 그냥 눌러본 사람은 첫 화면 유지 */
   try{
-    if(localStorage.getItem('rc_role')==='company' && !localStorage.getItem('rc_driver')){
+    if(localStorage.getItem('rc_role')==='company' && localStorage.getItem('rc_company')){
       location.replace('company.html'); return;
     }
   }catch(e){}
@@ -662,6 +677,7 @@ function boot(){
         D.name=p.name; D.phone=p.phone; D.areas=p.areas||[]; D.license=p.license;
         D.vehicles=p.vehicles||[]; D.career=p.career; D.worktypes=p.worktypes||[];
         D.intro=p.intro||''; D.licenseVerify=p.licenseVerify||'none';
+        try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
         save(); enterMain();
       } else { window._mode='signup'; render(); }
     }).catch(function(){ window._mode='signup'; render(); });
