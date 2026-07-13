@@ -82,6 +82,18 @@ textarea{min-height:90px;resize:vertical;}
 .pt .t{font-size:14.5px;font-weight:700;}
 .pt .d{font-size:13px;color:var(--ink-soft);}
 .demo{background:#FFF7E6;border:1px solid #FFE0A3;color:#8A5A00;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:16px;}
+.offer-pick{position:relative;border:1.5px solid var(--line);background:var(--white);border-radius:12px;
+  padding:15px 13px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.15s;}
+.offer-pick:hover{border-color:var(--orange);background:var(--orange-soft);}
+.offer-pick .ico{font-size:18px;flex:none;}
+.offer-pick .tt{flex:1;font-size:15px;font-weight:700;color:var(--ink);}
+.offer-pick .arw{flex:none;font-size:20px;color:#C4CBD6;}
+.offer-pick:hover .arw{color:var(--orange);}
+.offer-pick .tip{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+  background:rgba(20,28,42,.94);color:#fff;font-size:12.5px;font-weight:700;white-space:nowrap;
+  padding:8px 12px;border-radius:9px;opacity:0;pointer-events:none;transition:.15s;z-index:10;}
+.offer-pick:hover .tip{opacity:1;}
+@media (hover:none){ .offer-pick .tip{display:none;} }
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(20,28,42,.94);color:#fff;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:700;z-index:200;display:none;max-width:88%;text-align:center;}
 </style>
 </head>
@@ -163,7 +175,7 @@ var myJobs = [], apps = [], drivers = [], curJob = null, curApp = null;
 var C = JSON.parse(localStorage.getItem('rc_company')||'null') || {
   phone:'', company:'', manager:'', bizType:'', area:'', agree1:false
 };
-function save(){ localStorage.setItem('rc_company', JSON.stringify(C)); }
+function save(){ try{ localStorage.setItem('rc_company', JSON.stringify(C)); }catch(e){ console.warn('저장 실패(무시):', e); } }
 function live(){ return window._live === true; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];}); }
 function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.style.display='block';
@@ -383,14 +395,22 @@ jobs:function(){
 apps:function(){
   if(!apps.length) return empty('📥','아직 지원자가 없습니다','공고를 올리면 기사님들이 지원합니다.');
   var ST={applied:['새 지원','#1570EF','#EFF8FF'],viewed:['열람함','#7C3AED','#F4EBFF'],
-          contact:['연락중','#EA580C','#FFF4ED'],hired:['채용확정','#12B76A','#ECFDF3'],rejected:['미선정','#98A2B3','#F2F4F7']};
+          contact:['연락중','#EA580C','#FFF4ED'],hired:['채용확정','#12B76A','#ECFDF3'],rejected:['미선정','#98A2B3','#F2F4F7'],
+          accepted:['제안 수락','#12B76A','#ECFDF3'],declined:['제안 거절','#98A2B3','#F2F4F7']};
   return apps.map(function(a,i){
     var s=ST[a.status]||ST.applied;
-    return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;" onclick="openApp('+i+')">'
+    if(a.direction==='offer' && a.status==='applied') s=['제안함 · 대기','#EA580C','#FFF4ED'];
+    var from = (a.direction==='offer')
+      ? '<span style="font-size:11.5px;font-weight:800;color:var(--orange);">내가 제안</span> · '
+      : '';
+    return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;'
+     +(a.status==='accepted'?'border:2px solid #12B76A;':'')+'" onclick="openApp('+i+')">'
      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
      +'<div><div style="font-size:16.5px;font-weight:800;">'+esc(a.driverName)+' 기사님</div>'
-     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:4px;">'+esc(a.jobTitle)+'</div></div>'
+     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:4px;">'+from+esc(a.jobTitle)+'</div></div>'
      +'<span style="flex:none;font-size:12px;font-weight:800;padding:5px 11px;border-radius:20px;color:'+s[1]+';background:'+s[2]+';">'+s[0]+'</span></div>'
+     +(a.status==='accepted'?'<div style="background:#ECFDF3;color:#0F6E56;border-radius:10px;padding:10px;margin-top:10px;font-size:12.5px;font-weight:700;">✅ 기사님이 제안을 수락했습니다. 연락해 주세요.</div>':'')
+     +(a.status==='declined'?'<div style="background:#F2F4F7;color:#667085;border-radius:10px;padding:10px;margin-top:10px;font-size:12.5px;">기사님이 제안을 거절했습니다.</div>':'')
      +'</div>';
   }).join('');
 },
@@ -649,8 +669,14 @@ function deleteJob(i){
   var msg = '「'+(j.title||'공고')+'」을(를) 삭제할까요?\n\n되돌릴 수 없습니다.';
   if(cnt) msg += '\n⚠️ 지원자 '+cnt+'명의 지원 내역도 목록에서 사라집니다.';
   if(!confirm(msg)) return;
-  var fb=window._fb;
-  fb.deleteDoc(fb.doc(window._db,'jobs',j.id))
+  var fb=window._fb, db=window._db;
+  /* 공고에 딸린 지원·제안 내역도 함께 지운다 (안 지우면 유령 지원서가 남는다) */
+  fb.getDocs(fb.query(fb.collection(db,'applications'), fb.where('jobId','==',j.id)))
+    .then(function(snap){
+      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,'applications',d.id))); });
+      return Promise.all(t);
+    })
+    .then(function(){ return fb.deleteDoc(fb.doc(db,'jobs',j.id)); })
     .then(function(){ toast('공고를 삭제했습니다.'); loadAll(); })
     .catch(function(e){ toast('삭제 실패: '+(e.code||e.message)); });
 }
@@ -689,7 +715,8 @@ function openApp(i){
       .catch(function(){});
   }
   var d = drivers.filter(function(x){ return x.uid===curApp.driverId; })[0] || {};
-  var STS=[['viewed','열람함'],['contact','연락중'],['hired','채용확정'],['rejected','미선정']];
+  var locked = (curApp.status==='accepted' || curApp.status==='declined');
+  var STS = locked ? [] : [['viewed','열람함'],['contact','연락중'],['hired','채용확정'],['rejected','미선정']];
   document.getElementById('mTitle').textContent = curApp.driverName+' 기사님';
   document.getElementById('mBody').innerHTML =
      '<div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:12px;">'+esc(curApp.jobTitle)+' 지원</div>'
@@ -732,7 +759,17 @@ function openDriver(i){
    + (d.intro? '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);white-space:pre-wrap;">'+esc(d.intro)+'</div>':'')
    + '<div class="field" style="margin-top:18px;"><label class="lb">제안할 공고 선택</label>'
    + (openJobs.length
-      ? '<div class="opts">'+openJobs.map(function(j,k){ return '<div class="opt" onclick="sendOffer('+k+','+i+')">'+esc(j.title)+'</div>'; }).join('')+'</div>'
+      ? '<div class="hint" style="margin:0 0 10px;">👆 공고를 누르면 이 기사님께 <b>채용 제안</b>이 발송됩니다.</div>'
+        + '<div class="opts">'
+        + openJobs.map(function(j,k){
+            return '<div class="offer-pick" onclick="sendOffer('+k+','+i+')" title="제안을 보내려면 클릭하세요">'
+              +'<span class="ico">📢</span>'
+              +'<span class="tt">'+esc(j.title)+'</span>'
+              +'<span class="arw">›</span>'
+              +'<span class="tip">👆 제안을 보내려면 클릭하세요</span>'
+              +'</div>';
+          }).join('')
+        + '</div>'
       : '<div class="hint">모집중인 공고가 없습니다. 먼저 공고를 등록해 주세요.</div>')
    + '</div>';
   document.getElementById('modal').classList.add('on');
@@ -797,6 +834,7 @@ function clearLocal(){
     localStorage.removeItem('rc_role');
     localStorage.removeItem('rc_driver');
     localStorage.removeItem('rc_company');
+    localStorage.removeItem('rc_home');
   }catch(e){}
 }
 function switchRole(){ clearLocal(); location.replace('index.html'); }

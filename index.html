@@ -312,7 +312,7 @@ done:function(){ return ''
   +'<h2 class="step-title" style="text-align:center;">가입 완료!</h2>'
   +'<p class="step-desc" style="text-align:center;">'+(live()?'프로필이 저장되었습니다.':'시안 모드라 이 기기에만 저장했습니다.')+'</p></div>'
   +'<div class="card"><div style="font-size:18px;font-weight:850;margin-bottom:6px;">'+(D.name||'기사')+' 기사님'
-  +(D.licenseImg?'<span class="badge">✅ 면허 인증중</span>':'')+'</div>'
+  +(D.licenseVerify==='pending'?'<span class="badge">✅ 면허 인증중</span>':'')+'</div>'
   + row('연락처',fmtPhone(D.phone)) + row('활동 지역',D.areas.length?D.areas.join(' · '):'-')
   + row('면허',D.license||'-') + row('보유 차량',D.vehicles.length?D.vehicles.join(', '):'-')
   + row('경력',D.career||'-') + row('희망 근무형태',D.worktypes.length?D.worktypes.join(', '):'-')
@@ -671,6 +671,7 @@ me:function(){
    + row('희망 근무형태', D.worktypes.length?D.worktypes.join(', '):'-')
    + row('희망 급여','협의')
    +'</div>'
+   + openProfileBox()
    +'<button class="btn btn-ghost" style="margin-top:14px;" onclick="editProfile()">프로필 수정</button>'
    +'<button class="btn btn-ghost" style="margin-top:18px;padding:13px;font-size:14px;" onclick="goHome()">🏠 처음 화면으로</button>'
    +'<div style="display:flex;justify-content:center;gap:18px;margin-top:14px;">'
@@ -691,13 +692,18 @@ function withdraw(){
   toast('탈퇴 처리 중입니다...');
 
   /* 1) 면허증 사진 파기 → 2) 지원 내역 삭제 → 3) 프로필 삭제 → 4) 로그아웃 */
+  var imgLeft = false;
   fb.getDoc(fb.doc(db,'drivers',u.uid))
     .then(function(snap){
       var p = snap.exists() ? snap.data() : {};
-      if(p.licenseImgPath){
-        return fb.deleteObject(fb.ref(window._st, p.licenseImgPath))
-          .catch(function(e){ if((e&&e.code)!=='storage/object-not-found') throw e; });
-      }
+      if(!p.licenseImgPath) return;
+      return fb.deleteObject(fb.ref(window._st, p.licenseImgPath))
+        .catch(function(e){
+          var c=(e&&e.code)||'';
+          if(c==='storage/object-not-found') return;   // 이미 없음
+          imgLeft = true;                              // 못 지웠지만 탈퇴는 계속 진행
+          console.warn('면허증 사진 삭제 실패:', c);
+        });
     })
     .then(function(){
       return fb.getDocs(fb.query(fb.collection(db,'applications'), fb.where('driverId','==',u.uid)));
@@ -706,6 +712,14 @@ function withdraw(){
       var jobs=[]; snap.forEach(function(d){ jobs.push(fb.deleteDoc(fb.doc(db,'applications',d.id))); });
       return Promise.all(jobs);
     })
+    .then(function(){
+      /* 면허증을 못 지웠으면, 관리자가 파기하도록 기록만 남기고 프로필은 지운다 */
+      if(imgLeft){
+        return fb.setDoc(fb.doc(db,'purge_requests',u.uid), {
+          uid:u.uid, reason:'withdraw', requestedAt:new Date().toISOString()
+        }).catch(function(){});
+      }
+    })
     .then(function(){ return fb.deleteDoc(fb.doc(db,'drivers',u.uid)); })
     .then(function(){
       clearLocal();
@@ -713,14 +727,7 @@ function withdraw(){
       return window._fb.signOut(window._auth).catch(function(){});
     })
     .then(function(){ location.replace('index.html'); })
-    .catch(function(e){
-      var code=(e&&e.code)||'';
-      if(code.indexOf('storage/')===0){
-        alert('면허증 사진을 지우지 못해 탈퇴를 중단했습니다.\n\n사진이 남은 채로 탈퇴되면 안 되기 때문입니다.\n잠시 후 다시 시도해 주세요.\n\n오류: '+code);
-      } else {
-        toast('탈퇴 실패: '+(code||e.message));
-      }
-    });
+    .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
 }
 
 /* ── 채용 제안 수락 / 거절 ── */
@@ -754,6 +761,39 @@ function declineOffer(i){
     .then(renderMain)
     .catch(function(e){ toast('실패: '+(e.code||e.message)); })
     .then(function(){ offerBusy=false; });
+}
+
+/* ── 업체에 프로필 공개 (동의는 언제든 켜고 끌 수 있어야 한다) ── */
+function openProfileBox(){
+  var on = D.agree3 === true;
+  return '<div class="card" style="margin-top:14px;">'
+    +'<div style="display:flex;align-items:center;gap:12px;">'
+    +'<div style="flex:1;">'
+    +'<div style="font-size:14.5px;font-weight:800;">업체에 내 프로필 공개</div>'
+    +'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px;line-height:1.5;">'
+    +(on ? '업체가 나를 찾아 <b>채용 제안</b>을 보낼 수 있습니다.'
+         : '지금은 <b>공개하지 않음</b>. 업체가 나를 찾을 수 없습니다.<br>공고에 직접 지원하는 것은 그대로 가능합니다.')
+    +'</div></div>'
+    +'<div onclick="toggleOpenProfile()" style="flex:none;width:52px;height:30px;border-radius:20px;cursor:pointer;transition:.2s;'
+    +'background:'+(on?'#12B76A':'#C4CBD6')+';position:relative;">'
+    +'<div style="position:absolute;top:3px;left:'+(on?'25px':'3px')+';width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;"></div>'
+    +'</div></div></div>';
+}
+var openBusy = false;
+function toggleOpenProfile(){
+  if(openBusy) return;
+  var next = !(D.agree3===true);
+  var u = window._auth && window._auth.currentUser;
+  if(!u){ D.agree3=next; save(); renderMain(); return; }
+  openBusy = true;
+  var fb=window._fb;
+  fb.setDoc(fb.doc(window._db,'drivers',u.uid), { agreeOpenProfile: next }, {merge:true})
+    .then(function(){
+      D.agree3 = next; save(); renderMain();
+      toast(next ? '✅ 이제 업체가 제안을 보낼 수 있습니다.' : '프로필을 비공개로 바꿨습니다.');
+    })
+    .catch(function(e){ toast('변경 실패: '+((e&&e.code)||e.message)); })
+    .then(function(){ openBusy=false; });
 }
 
 /* 면허 인증 상태 — Firestore 값만 믿는다 (기기에 남은 사진으로 판단하지 않는다) */
@@ -894,6 +934,7 @@ function clearLocal(){
     localStorage.removeItem('rc_role');
     localStorage.removeItem('rc_driver');
     localStorage.removeItem('rc_company');
+    localStorage.removeItem('rc_home');
   }catch(e){}
 }
 function goHome(){
@@ -913,8 +954,7 @@ function logout(){
 /* ── 로그인 상태에 따라 진입 분기 ── */
 function boot(){
   /* 업체로 '가입까지 마친' 사람만 업체 화면으로. 그냥 눌러본 사람은 첫 화면 유지 */
-  var forceHome=false;
-  try{ forceHome = localStorage.getItem('rc_home')==='1'; }catch(e){}
+  var forceHome = wantHome();      // 한 번만 읽고 즉시 지운다
   if(!forceHome){
     try{
       if(localStorage.getItem('rc_role')==='company' && localStorage.getItem('rc_company')){
@@ -923,6 +963,7 @@ function boot(){
     }catch(e){}
   }
   if(!live()){ render(); return; }
+  D.licenseImg = null;   // 기기에 남은 옛 사진은 절대 쓰지 않는다 (인증 강등 방지)
   window._fb.onAuthStateChanged(window._auth, function(u){
     if(!u){ window._mode='signup'; render(); return; }
     var fb=window._fb;
@@ -932,10 +973,12 @@ function boot(){
         D.name=p.name; D.phone=p.phone; D.areas=p.areas||[]; D.license=p.license;
         D.vehicles=p.vehicles||[]; D.career=p.career; D.worktypes=p.worktypes||[];
         D.intro=p.intro||''; D.licenseVerify=p.licenseVerify||'none';
+        D.agree1=p.agreePrivacy!==false; D.agree2=p.agreeUniqueId!==false;
+        D.agree3=p.agreeOpenProfile===true;
         try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
         save();
         joined = true;
-        if(wantHome()){ window._mode='signup'; step=0; render(); }
+        if(forceHome){ window._mode='signup'; step=0; render(); }
         else enterMain();
       } else { window._mode='signup'; step=0; render(); }
     }).catch(function(){ window._mode='signup'; render(); });

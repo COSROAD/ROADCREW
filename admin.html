@@ -94,17 +94,10 @@ textarea{min-height:90px;resize:vertical;}
 </div>
 <div id="recaptcha"></div>
 <div class="toast" id="toast"></div>
-<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="sheet">
-    <h3 id="mTitle"></h3>
-    <div class="body" id="mBody"></div>
-    <button class="btn btn-main" style="margin-top:18px;" onclick="closeModal()">확인</button>
-  </div>
-</div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBUed_pgSzq6kmtZ3y5fPexV-7mEGzJSuw",
@@ -121,7 +114,7 @@ try{
   window._db = getFirestore(app);
   window._st = getStorage(app);
   window._fb = { RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut,
-                 doc, getDoc, updateDoc, collection, query, where, getDocs,
+                 doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs,
                  ref, getDownloadURL, deleteObject };
   window._live = (location.protocol === 'http:' || location.protocol === 'https:');
 }catch(e){ window._live = false; console.log('Firebase 초기화 실패', e); }
@@ -187,12 +180,13 @@ main:function(){
       + '</div>';
   }
   if(!pending.length){
-    return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);">'
+    return purgeBanner()
+      + '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);">'
       +'<div style="font-size:46px;">✅</div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">검수할 면허증이 없습니다</p>'
       +'<p style="font-size:13.5px;">기사가 면허증을 올리면 여기에 표시됩니다.</p></div>';
   }
-  return pending.map(function(d,i){
+  return purgeBanner() + pending.map(function(d,i){
     return '<div class="card" style="margin-top:0;margin-bottom:14px;">'
      +'<div style="font-size:17px;font-weight:850;margin-bottom:8px;">'+esc(d.name)+' 기사님</div>'
      + row('연락처', fmtPhone(d.phone)) + row('면허', esc(d.license||'-'))
@@ -314,6 +308,39 @@ function loadStats(){
   }).catch(function(){});
 }
 
+/* ── 탈퇴했는데 면허증 사진이 남은 경우 (파기 요청) ── */
+var purges = [];
+function loadPurges(){
+  var fb=window._fb;
+  return fb.getDocs(fb.collection(window._db,'purge_requests'))
+    .then(function(snap){ purges=[]; snap.forEach(function(d){ var o=d.data(); o.id=d.id; purges.push(o); }); })
+    .catch(function(){ purges=[]; });
+}
+function purgeBanner(){
+  if(!purges.length) return '';
+  return '<div style="background:#FEF3F2;border:1.5px solid #FECDCA;border-radius:14px;padding:16px;margin-bottom:16px;">'
+    +'<div style="font-size:15px;font-weight:850;color:#B42318;margin-bottom:6px;">⚠️ 파기해야 할 면허증 '+purges.length+'건</div>'
+    +'<div style="font-size:13px;color:#B42318;line-height:1.6;margin-bottom:12px;">'
+    +'탈퇴한 기사의 면허증 사진이 아직 남아 있습니다. 즉시 파기해야 합니다.</div>'
+    + purges.map(function(p,i){
+        return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+          +'<div style="flex:1;font-size:12px;color:#B42318;word-break:break-all;">'+esc(p.uid)+'</div>'
+          +'<button onclick="doPurge('+i+')" style="flex:none;background:#F04438;color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer;">파기</button>'
+          +'</div>';
+      }).join('')
+    +'</div>';
+}
+function doPurge(i){
+  var p = purges[i]; if(!p) return;
+  if(!confirm('이 기사의 면허증 사진을 파기할까요?')) return;
+  var fb=window._fb;
+  fb.deleteObject(fb.ref(window._st, 'license_review/'+p.uid+'.jpg'))
+    .catch(function(e){ if(((e&&e.code)||'')!=='storage/object-not-found') throw e; })
+    .then(function(){ return fb.deleteDoc(fb.doc(window._db,'purge_requests',p.id)); })
+    .then(function(){ toast('✅ 면허증 사진을 파기했습니다.'); loadPurges().then(render); })
+    .catch(function(e){ toast('파기 실패: '+((e&&e.code)||e.message)); });
+}
+
 /* ── 검수: 승인/거절 → 사진 즉시 파기 ── */
 function review(i, result){
   var d=pending[i]; if(!d) return;
@@ -362,7 +389,7 @@ function boot(){
     myUid = u.uid;
     var fb=window._fb;
     fb.getDoc(fb.doc(window._db,'admins',u.uid)).then(function(s){
-      if(s.exists()){ view='main'; loadPending(); }
+      if(s.exists()){ view='main'; loadPurges().then(loadPending); }
       else { view='noauth'; render(); }
     }).catch(function(){ view='noauth'; render(); });
   });
