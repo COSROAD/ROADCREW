@@ -183,7 +183,8 @@ function render(){
   if(s==='intro'||s==='done'){ top.innerHTML=''; }
   else {
     var T={phone:'휴대폰 인증',code:'인증번호 입력',agree:'약관 동의',c1:'업체 정보'};
-    top.innerHTML='<div class="top"><button class="back" onclick="prev()">‹</button><h1>'+T[s]+'</h1></div>';
+    top.innerHTML='<div class="top"><button class="back" onclick="prev()">‹</button><h1>'+T[s]+'</h1>'
+      +'<button class="back" style="font-size:19px;" onclick="goHome()" title="처음 화면으로">🏠</button></div>';
   }
   document.getElementById('progbar').style.width=(step/(STEPS.length-1)*100)+'%';
   document.getElementById('view').innerHTML = VIEWS[s]();
@@ -341,7 +342,10 @@ function tabbar(){
     return '<div onclick="tab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;'
       +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
       +'<div style="font-size:20px;">'+x[1]+'</div><div style="font-size:11px;margin-top:2px;">'+x[2]+'</div></div>';
-  }).join('')+'</div>';
+  }).join('')
+  +'<div onclick="goHome()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;color:#9AA4B4;font-weight:600;">'
+  +'<div style="font-size:20px;">🏠</div><div style="font-size:11px;margin-top:2px;">홈</div></div>'
+  +'</div>';
 }
 function empty(icon,t,d,btn){
   return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);"><div style="font-size:46px;">'+icon+'</div>'
