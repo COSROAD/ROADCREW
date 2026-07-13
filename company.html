@@ -422,7 +422,7 @@ function loadAll(){
 /* ── 알림 문자 (서버가 발송. 앱에는 알리고 키 없음) ── */
 function notifySMS(appId, kind){
   var u = window._auth && window._auth.currentUser;
-  if(!u || !appId) return Promise.resolve();
+  if(!u || !appId) return Promise.resolve({ok:false});
   return u.getIdToken()
     .then(function(t){
       return fetch('https://cosroad.vercel.app/api/rc-notify', {
@@ -430,7 +430,12 @@ function notifySMS(appId, kind){
         body: JSON.stringify({ idToken:t, appId:appId, kind:kind })
       });
     })
-    .catch(function(e){ console.warn('알림 문자 실패', e); });
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.ok){ console.warn('알림 문자 미발송:', j && j.message); }
+      return j || {ok:false};
+    })
+    .catch(function(e){ console.warn('알림 문자 실패', e); return {ok:false}; });
 }
 
 /* ── 공고 등록 ── */
@@ -622,7 +627,11 @@ function setAppStatus(s){
   var fb=window._fb;
   fb.updateDoc(fb.doc(window._db,'applications',curApp.id), { status:s })
     .then(function(){
-      if(s==='hired'||s==='contact'||s==='rejected') notifySMS(curApp.id, s);
+      if(s==='hired'||s==='contact'||s==='rejected'){
+        notifySMS(curApp.id, s).then(function(j){
+          if(j && !j.ok && !j.skipped){ toast('상태는 바뀌었지만 기사 알림 문자는 못 보냈습니다.'); }
+        });
+      }
       curApp.status=s; toast('상태를 변경했습니다.'); loadAll(); closeModal(); })
     .catch(function(e){ toast('실패: '+(e.code||e.message)); });
 }
@@ -658,7 +667,13 @@ function sendOffer(jobIdx, driverIdx){
     jobId:jobId, jobTitle:j.title, company:C.company, companyId:u.uid,
     driverId:driverId, driverName:driverName, driverPhone:driverPhone,
     direction:'offer', status:'applied', createdAt: fb.serverTimestamp()
-  }).then(function(ref){ notifySMS(ref.id, 'offer'); closeModal(); toast('✅ 제안을 보냈습니다!'); loadAll(); })
+  }).then(function(ref){
+    closeModal(); toast('✅ 제안을 보냈습니다!');
+    notifySMS(ref.id, 'offer').then(function(j){
+      if(j && !j.ok && !j.skipped){ toast('제안은 저장됐지만 기사 알림 문자는 못 보냈습니다.'); }
+    });
+    loadAll();
+  })
     .catch(function(e){ toast('제안 실패: '+(e.code||e.message)); });
 }
 

@@ -602,8 +602,10 @@ function applyJob(){
     driverId:u.uid, driverName:D.name, driverPhone:D.phone,
     direction:'apply', status:'applied', createdAt: fb.serverTimestamp()
   }).then(function(ref){
-    notifySMS(ref.id, 'apply');
     closeModal(); toast('✅ 지원이 완료되었습니다!');
+    notifySMS(ref.id, 'apply').then(function(j){
+      if(j && !j.ok && !j.skipped){ toast('지원은 접수됐지만 업체 알림 문자는 못 보냈습니다.'); }
+    });
     return loadMyApps();
   }).then(renderMain)
   .catch(function(e){ toast('지원 실패: '+(e.code||e.message)); });
@@ -612,7 +614,7 @@ function applyJob(){
 /* ── 알림 문자 (서버가 발송. 앱에는 알리고 키 없음) ── */
 function notifySMS(appId, kind){
   var u = window._auth && window._auth.currentUser;
-  if(!u || !appId) return Promise.resolve();
+  if(!u || !appId) return Promise.resolve({ok:false});
   return u.getIdToken()
     .then(function(t){
       return fetch('https://cosroad.vercel.app/api/rc-notify', {
@@ -620,7 +622,12 @@ function notifySMS(appId, kind){
         body: JSON.stringify({ idToken:t, appId:appId, kind:kind })
       });
     })
-    .catch(function(e){ console.warn('알림 문자 실패', e); });   // 문자 실패해도 본 기능은 진행
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.ok){ console.warn('알림 문자 미발송:', j && j.message); }
+      return j || {ok:false};
+    })
+    .catch(function(e){ console.warn('알림 문자 실패', e); return {ok:false}; });
 }
 
 /* ── 필터 ── */
