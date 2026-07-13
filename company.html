@@ -104,7 +104,7 @@ textarea{min-height:90px;resize:vertical;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBUed_pgSzq6kmtZ3y5fPexV-7mEGzJSuw",
   authDomain: "roadcrew-1e9cd.firebaseapp.com",
@@ -119,7 +119,7 @@ try{
   window._auth.languageCode = 'ko';
   window._db = getFirestore(app);
   window._fb = { RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut,
-                 doc, setDoc, getDoc, addDoc, updateDoc, collection, query, where, getDocs, serverTimestamp };
+                 doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp };
   window._live = (location.protocol === 'http:' || location.protocol === 'https:');
 }catch(e){
   window._live = false;
@@ -329,7 +329,7 @@ function renderMain(){
   var titles={jobs:'내 공고',apps:'지원자',find:'기사 찾기',me:'내 정보'};
   document.getElementById('topbar').innerHTML =
     '<div class="top"><h1>'+titles[tab]+'</h1>'
-    + (tab==='jobs' ? '<button class="back" style="font-size:14px;font-weight:800;color:var(--navy);" onclick="openJobForm()">+ 공고 등록</button>' : '')
+    + (tab==='jobs' ? '<button class="back" style="font-size:14px;font-weight:800;color:var(--navy);" onclick="newJob()">+ 공고 등록</button>' : '')
     + '</div>';
   document.getElementById('progbar').style.width='0';
   document.getElementById('view').innerHTML = MAIN[tab]();
@@ -356,7 +356,7 @@ function empty(icon,t,d,btn){
 var MAIN = {
 jobs:function(){
   if(!myJobs.length) return empty('📢','등록한 공고가 없습니다','첫 채용 공고를 올려보세요.',
-    '<button class="btn btn-main" style="margin-top:22px;" onclick="openJobForm()">+ 공고 등록하기</button>');
+    '<button class="btn btn-main" style="margin-top:22px;" onclick="newJob()">+ 공고 등록하기</button>');
   return myJobs.map(function(j,i){
     var cnt = apps.filter(function(a){return a.jobId===j.id;}).length;
     var open = j.status==='open';
@@ -367,9 +367,16 @@ jobs:function(){
      +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">'
      + tag('📍 '+esc(j.area)) + tag('🚗 '+esc(j.jobType)) + tag('👤 '+esc(j.workType))
      +'</div>'
+     + (j.deadline ? '<div style="font-size:12.5px;color:'+(isExpired(j)?'#F04438':'var(--ink-soft)')+';margin-top:8px;font-weight:700;">🗓 '+esc(j.deadline)+(isExpired(j)?' (기간 지남)':'')+'</div>' : '')
      +'<div style="display:flex;gap:8px;margin-top:14px;">'
      +'<button class="btn btn-ghost" style="padding:11px;font-size:14px;" onclick="tab=\'apps\';renderMain()">지원자 '+cnt+'명</button>'
+     +(open
+        ? '<button class="btn btn-ghost" style="padding:11px;font-size:14px;" onclick="editJob('+i+')">수정</button>'
+        : '<button class="btn btn-ghost" style="padding:11px;font-size:14px;color:#12B76A;border-color:#12B76A;" onclick="reopenJob(\''+j.id+'\')">다시 모집</button>')
+     +'</div>'
+     +'<div style="display:flex;gap:8px;margin-top:8px;">'
      +(open?'<button class="btn btn-ghost" style="padding:11px;font-size:14px;color:var(--ink-soft);border-color:var(--line);" onclick="closeJob(\''+j.id+'\')">마감하기</button>':'')
+     +'<button class="btn btn-ghost" style="padding:11px;font-size:14px;color:#F04438;border-color:#FECDCA;" onclick="deleteJob('+i+')">삭제</button>'
      +'</div></div>';
   }).join('');
 },
@@ -405,7 +412,10 @@ me:function(){
    + row('담당자',esc(C.manager)) + row('연락처',fmtPhone(C.phone))
    + row('업종',esc(C.bizType)) + row('지역',esc(C.area))+'</div>'
    +'<button class="btn btn-ghost" style="margin-top:20px;padding:13px;font-size:14px;" onclick="goHome()">🏠 처음 화면으로</button>'
-   +'<button class="viewmore" style="display:block;margin:14px auto 0;" onclick="logout()">로그아웃</button>';
+   +'<div style="display:flex;justify-content:center;gap:18px;margin-top:14px;">'
+   +'<button class="viewmore" onclick="logout()">로그아웃</button>'
+   +'<button class="viewmore" style="color:#F04438;" onclick="withdraw()">회원 탈퇴</button>'
+   +'</div>';
 }
 };
 
@@ -539,7 +549,7 @@ function jDeadlineUI(){
    +'</div>';
 }
 function openJobForm(){
-  document.getElementById('mTitle').textContent='공고 등록';
+  document.getElementById('mTitle').textContent = editingJobId ? '공고 수정' : '공고 등록';
   document.getElementById('mBody').innerHTML =
     '<div class="field"><label class="lb">제목 <span class="req">*</span></label><input type="text" id="j-title" placeholder="예) 학원 셔틀 기사 모집 (오전·오후)" value="'+esc(JF.title)+'" oninput="JF.title=this.value"></div>'
    +'<div class="field"><label class="lb">직종 <span class="req">*</span></label><div class="opts">'
@@ -565,7 +575,7 @@ function openJobForm(){
    +'</select></div>'
    + jDeadlineUI()
    +'<div class="field"><label class="lb">상세 설명</label><textarea id="j-desc" placeholder="업무 내용, 우대사항 등을 적어주세요." oninput="JF.desc=this.value">'+esc(JF.desc)+'</textarea></div>'
-   +'<button class="btn btn-main" onclick="saveJob()">공고 등록하기</button>';
+   +'<button class="btn btn-main" onclick="saveJob()">'+(editingJobId?'공고 수정하기':'공고 등록하기')+'</button>';
   document.getElementById('modal').classList.add('on');
   var s=document.getElementById('j-sido');
   s.innerHTML='<option value="">시/도</option>'+Object.keys(SIDO).map(function(k){return '<option>'+k+'</option>';}).join('');
@@ -577,6 +587,7 @@ function jSetArea(){
   if(!sd||!gg){ toast('시/도와 시/군/구를 선택해 주세요.'); return; }
   JF.area = sd+' '+gg+(em?' '+em:''); openJobForm();
 }
+function newJob(){ resetJobForm(); openJobForm(); }
 function saveJob(){
   var hoursText = jHoursText();
   if(!JF.title.trim()||!JF.jobType||!JF.area||!JF.workType){
@@ -586,29 +597,97 @@ function saveJob(){
   if(!hoursText){ toast('근무 시작·종료 시간을 선택해 주세요.'); return; }
   if(!live()){ toast('시안 모드에서는 등록할 수 없습니다.'); return; }
   var u=window._auth.currentUser, fb=window._fb;
-  fb.addDoc(fb.collection(window._db,'jobs'), {
+
+  var data = {
     companyId:u.uid, company:C.company, title:JF.title, jobType:JF.jobType, area:JF.area,
     workType:JF.workType, license:JF.license, vehicle:JF.vehicle, hours:hoursText,
     days:JF.days.slice(), slots:JF.slots.filter(function(x){return x.s&&x.e;}),
     pay:'협의', count:JF.count,
-    deadline:(JF.deadlineOpen ? '채용시 마감' : JF.deadline), desc:JF.desc,
-    status:'open', createdAt: fb.serverTimestamp()
-  }).then(function(){
-    JF={title:'',jobType:'',area:'',workType:'',license:'무관',vehicle:'회사 차량 제공',days:[],slots:[{s:'',e:''}],hours:'',count:'1명',deadline:'',deadlineOpen:true,desc:''};
-    closeModal(); toast('✅ 공고가 등록되었습니다!'); loadAll();
-  }).catch(function(e){ toast('등록 실패: '+(e.code||e.message)); });
+    deadline:(JF.deadlineOpen ? '채용시 마감' : JF.deadline), desc:JF.desc
+  };
+
+  var task, isEdit = !!editingJobId;
+  if(isEdit){
+    data.updatedAt = fb.serverTimestamp();
+    task = fb.updateDoc(fb.doc(window._db,'jobs',editingJobId), data);
+  } else {
+    data.status = 'open';
+    data.createdAt = fb.serverTimestamp();
+    task = fb.addDoc(fb.collection(window._db,'jobs'), data);
+  }
+
+  task.then(function(){
+    resetJobForm();
+    closeModal();
+    toast(isEdit ? '✅ 공고를 수정했습니다!' : '✅ 공고가 등록되었습니다!');
+    loadAll();
+  }).catch(function(e){ toast((isEdit?'수정':'등록')+' 실패: '+(e.code||e.message)); });
+}
+function resetJobForm(){
+  editingJobId = null;
+  JF = { title:'', jobType:'', area:'', workType:'', license:'무관', vehicle:'회사 차량 제공',
+         days:[], slots:[{s:'',e:''}], hours:'', count:'1명',
+         deadline:'', deadlineOpen:true, desc:'' };
 }
 function closeJob(id){
-  if(!confirm('이 공고를 마감할까요?')) return;
+  if(!confirm('이 공고를 마감할까요?\n\n마감해도 「다시 모집」으로 되돌릴 수 있습니다.')) return;
   var fb=window._fb;
   fb.updateDoc(fb.doc(window._db,'jobs',id), { status:'closed' })
     .then(function(){ toast('공고를 마감했습니다.'); loadAll(); })
     .catch(function(e){ toast('실패: '+(e.code||e.message)); });
 }
+function reopenJob(id){
+  if(!confirm('이 공고를 다시 모집중으로 바꿀까요?')) return;
+  var fb=window._fb;
+  fb.updateDoc(fb.doc(window._db,'jobs',id), { status:'open' })
+    .then(function(){ toast('다시 모집중입니다.'); loadAll(); })
+    .catch(function(e){ toast('실패: '+(e.code||e.message)); });
+}
+function deleteJob(i){
+  var j = myJobs[i]; if(!j) return;
+  var cnt = apps.filter(function(a){return a.jobId===j.id;}).length;
+  var msg = '「'+(j.title||'공고')+'」을(를) 삭제할까요?\n\n되돌릴 수 없습니다.';
+  if(cnt) msg += '\n⚠️ 지원자 '+cnt+'명의 지원 내역도 목록에서 사라집니다.';
+  if(!confirm(msg)) return;
+  var fb=window._fb;
+  fb.deleteDoc(fb.doc(window._db,'jobs',j.id))
+    .then(function(){ toast('공고를 삭제했습니다.'); loadAll(); })
+    .catch(function(e){ toast('삭제 실패: '+(e.code||e.message)); });
+}
+/* 마감일이 지났는가 */
+function isExpired(j){
+  if(!j || !j.deadline || j.deadline==='채용시 마감') return false;
+  var today = new Date().toISOString().slice(0,10);
+  return j.deadline < today;
+}
+/* 공고 수정 — 기존 값을 폼에 채워 넣고 연다 */
+var editingJobId = null;
+function editJob(i){
+  var j = myJobs[i]; if(!j) return;
+  editingJobId = j.id;
+  JF = {
+    title:j.title||'', jobType:j.jobType||'', area:j.area||'', workType:j.workType||'',
+    license:j.license||'무관', vehicle:j.vehicle||'회사 차량 제공',
+    days:(j.days||[]).slice(),
+    slots:(j.slots && j.slots.length) ? j.slots.map(function(x){return {s:x.s,e:x.e};}) : [{s:'',e:''}],
+    hours:j.hours||'', count:j.count||'1명',
+    deadline:(j.deadline && j.deadline!=='채용시 마감') ? j.deadline : '',
+    deadlineOpen:(!j.deadline || j.deadline==='채용시 마감'),
+    desc:j.desc||''
+  };
+  openJobForm();
+}
 
 /* ── 지원자 ── */
 function openApp(i){
   curApp = apps[i];
+  /* 처음 열면 자동으로 '열람함' — 기사가 진행 상황을 알 수 있게 */
+  if(curApp && curApp.status==='applied' && curApp.direction!=='offer'){
+    var _fb=window._fb;
+    _fb.updateDoc(_fb.doc(window._db,'applications',curApp.id), { status:'viewed' })
+      .then(function(){ curApp.status='viewed'; loadAll(); })
+      .catch(function(){});
+  }
   var d = drivers.filter(function(x){ return x.uid===curApp.driverId; })[0] || {};
   var STS=[['viewed','열람함'],['contact','연락중'],['hired','채용확정'],['rejected','미선정']];
   document.getElementById('mTitle').textContent = curApp.driverName+' 기사님';
@@ -679,6 +758,38 @@ function sendOffer(jobIdx, driverIdx){
     loadAll();
   })
     .catch(function(e){ toast('제안 실패: '+(e.code||e.message)); });
+}
+
+/* ── 회원 탈퇴 (개인정보 삭제 요구권) ── */
+function withdraw(){
+  if(!confirm('정말 탈퇴하시겠습니까?\n\n· 업체 정보, 등록한 공고, 지원자 내역이 모두 삭제됩니다\n· 되돌릴 수 없습니다')) return;
+  if(!confirm('마지막 확인입니다.\n\n탈퇴하면 복구할 수 없습니다. 진행할까요?')) return;
+
+  var u = window._auth.currentUser;
+  if(!u){ toast('로그인 정보가 없습니다.'); return; }
+  var fb = window._fb, db = window._db;
+  toast('탈퇴 처리 중입니다...');
+
+  fb.getDocs(fb.query(fb.collection(db,'jobs'), fb.where('companyId','==',u.uid)))
+    .then(function(snap){
+      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,'jobs',d.id))); });
+      return Promise.all(t);
+    })
+    .then(function(){
+      return fb.getDocs(fb.query(fb.collection(db,'applications'), fb.where('companyId','==',u.uid)));
+    })
+    .then(function(snap){
+      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,'applications',d.id))); });
+      return Promise.all(t);
+    })
+    .then(function(){ return fb.deleteDoc(fb.doc(db,'companies',u.uid)); })
+    .then(function(){
+      clearLocal();
+      alert('탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.');
+      return window._fb.signOut(window._auth).catch(function(){});
+    })
+    .then(function(){ location.replace('index.html'); })
+    .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
 }
 
 function clearLocal(){
