@@ -172,8 +172,23 @@ function go(i){ step=i; render(); window.scrollTo(0,0); }
 function next(){ if(step<STEPS.length-1) go(step+1); }
 
 /* ── 첫 화면: 역할 선택 (입구는 하나, 들어가면 별개) ── */
-function pickDriver(){ try{ localStorage.setItem('rc_role','driver'); }catch(e){} next(); }
-function pickCompany(){ try{ localStorage.setItem('rc_role','company'); }catch(e){} location.href='company.html'; }
+var joined = false;   // 이미 기사 가입을 마친 사람인가
+
+/* '처음 화면으로'를 눌러서 온 것인지 (한 번만 유효) */
+function wantHome(){
+  var v=false;
+  try{ v = localStorage.getItem('rc_home')==='1'; localStorage.removeItem('rc_home'); }catch(e){}
+  return v;
+}
+function pickDriver(){
+  try{ localStorage.setItem('rc_role','driver'); }catch(e){}
+  if(joined){ enterMain(); return; }   // 이미 가입한 기사면 바로 메인으로
+  next();
+}
+function pickCompany(){
+  try{ localStorage.setItem('rc_role','company'); }catch(e){}
+  location.href='company.html';
+}
 function prev(){ if(step>0) go(step-1); }
 function render(){
   if(isMain()){ renderMain(); return; }
@@ -655,7 +670,10 @@ function clearLocal(){
     localStorage.removeItem('rc_company');
   }catch(e){}
 }
-function goHome(){ clearLocal(); location.replace('index.html'); }
+function goHome(){
+  try{ localStorage.setItem('rc_home','1'); }catch(e){}
+  location.replace('index.html');
+}
 function logout(){
   clearLocal();
   D = { phone:'', name:'', areas:[], license:'', vehicles:[], career:'', worktypes:[],
@@ -669,11 +687,15 @@ function logout(){
 /* ── 로그인 상태에 따라 진입 분기 ── */
 function boot(){
   /* 업체로 '가입까지 마친' 사람만 업체 화면으로. 그냥 눌러본 사람은 첫 화면 유지 */
-  try{
-    if(localStorage.getItem('rc_role')==='company' && localStorage.getItem('rc_company')){
-      location.replace('company.html'); return;
-    }
-  }catch(e){}
+  var forceHome=false;
+  try{ forceHome = localStorage.getItem('rc_home')==='1'; }catch(e){}
+  if(!forceHome){
+    try{
+      if(localStorage.getItem('rc_role')==='company' && localStorage.getItem('rc_company')){
+        location.replace('company.html'); return;
+      }
+    }catch(e){}
+  }
   if(!live()){ render(); return; }
   window._fb.onAuthStateChanged(window._auth, function(u){
     if(!u){ window._mode='signup'; render(); return; }
@@ -685,8 +707,11 @@ function boot(){
         D.vehicles=p.vehicles||[]; D.career=p.career; D.worktypes=p.worktypes||[];
         D.intro=p.intro||''; D.licenseVerify=p.licenseVerify||'none';
         try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
-        save(); enterMain();
-      } else { window._mode='signup'; render(); }
+        save();
+        joined = true;
+        if(wantHome()){ window._mode='signup'; step=0; render(); }
+        else enterMain();
+      } else { window._mode='signup'; step=0; render(); }
     }).catch(function(){ window._mode='signup'; render(); });
   });
 }

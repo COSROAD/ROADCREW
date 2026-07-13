@@ -685,7 +685,10 @@ function clearLocal(){
   }catch(e){}
 }
 function switchRole(){ clearLocal(); location.replace('index.html'); }
-function goHome(){ clearLocal(); location.replace('index.html'); }
+function goHome(){
+  try{ localStorage.setItem('rc_home','1'); }catch(e){}
+  location.replace('index.html');
+}
 function logout(){
   clearLocal();
   C = { phone:'', company:'', manager:'', bizType:'', area:'', agree1:false, agree2:false };
