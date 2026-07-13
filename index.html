@@ -163,7 +163,15 @@ var D = JSON.parse(localStorage.getItem('rc_driver')||'null') || {
   worktypes:[], pay:'협의', intro:'', licenseImg:null,
   agree1:false, agree2:false, agree3:false
 };
-function save(){ localStorage.setItem('rc_driver', JSON.stringify(D)); }
+/* 면허증 사진은 이 기기에 저장하지 않는다 (고유식별정보 보호).
+   화면에 보여줄 동안만 메모리에 들고 있다가, 업로드하면 바로 버린다. */
+function save(){
+  try{
+    var copy = {};
+    for(var k in D){ if(k !== 'licenseImg') copy[k] = D[k]; }
+    localStorage.setItem('rc_driver', JSON.stringify(copy));
+  }catch(e){ console.warn('저장 실패(무시하고 계속):', e); }
+}
 function live(){ return window._live === true; }
 function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.style.display='block';
   clearTimeout(window._tt); window._tt=setTimeout(function(){t.style.display='none';},2600); }
@@ -383,24 +391,56 @@ function finish(){
   if(!u){ toast('인증 정보가 없습니다. 처음부터 다시 시도해 주세요.'); return; }
   setBusy(true,'저장 중...');
   var fb = window._fb;
+
   var profile = {
     uid:u.uid, phone:D.phone, name:D.name, areas:D.areas,
     license:D.license, vehicles:D.vehicles, career:D.career,
-    worktypes:D.worktypes, pay:'협의', intro:D.intro||'',
-    agreePrivacy:D.agree1, agreeUniqueId:D.agree2, agreeOpenProfile:D.agree3,
-    licenseVerify: D.licenseImg ? 'pending' : 'none',
-    createdAt: fb.serverTimestamp()
+    worktypes:D.worktypes, pay:'협의', intro:D.intro||''
   };
+
+  if(joined){
+    /* 이미 가입한 사람이 프로필을 고치는 중.
+       동의 기록·가입일은 건드리지 않는다 (법적 증빙).
+       면허 인증 상태도 새 사진을 올릴 때만 바꾼다. */
+    profile.licenseVerify = D.licenseImg ? 'pending' : (D.licenseVerify || 'none');
+  } else {
+    profile.agreePrivacy     = D.agree1;
+    profile.agreeUniqueId    = D.agree2;
+    profile.agreeOpenProfile = D.agree3;
+    profile.agreedAt         = fb.serverTimestamp();
+    profile.createdAt        = fb.serverTimestamp();
+    profile.licenseVerify    = D.licenseImg ? 'pending' : 'none';
+  }
+
   var task = Promise.resolve();
   if(D.licenseImg){
+    setBusy(true,'면허증 올리는 중...');
     var r = fb.ref(window._st, 'license_review/'+u.uid+'.jpg');
     task = fb.uploadString(r, D.licenseImg, 'data_url').then(function(){
       profile.licenseImgPath = 'license_review/'+u.uid+'.jpg';
     });
   }
-  task.then(function(){ return fb.setDoc(fb.doc(window._db,'drivers',u.uid), profile); })
-    .then(function(){ setBusy(false); next(); })
-    .catch(function(e){ setBusy(false,'완료'); toast('저장 실패: '+(e.code||e.message)); });
+  task.then(function(){
+      setBusy(true,'저장 중...');
+      return fb.setDoc(fb.doc(window._db,'drivers',u.uid), profile, {merge:true});
+    })
+    .then(function(){
+      D.licenseImg = null;                 // 올렸으니 이 기기에서는 즉시 버린다
+      D.licenseVerify = profile.licenseVerify;
+      joined = true;
+      save(); setBusy(false); next();
+    })
+    .catch(function(e){
+      setBusy(false,'완료');
+      var code = (e && e.code) || '';
+      if(code.indexOf('storage/') === 0){
+        toast('면허증 사진을 올리지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      } else if(code === 'permission-denied'){
+        toast('저장 권한이 없습니다. 처음부터 다시 시도해 주세요.');
+      } else {
+        toast('저장 실패: '+(code || e.message));
+      }
+    });
 }
 
 function ag(key,tag,cls,txt,which){
@@ -432,12 +472,53 @@ function areaChips(){
     +'<b style="cursor:pointer;" onclick="D.areas.splice('+i+',1);save();render()">✕</b></span>';
   }).join('');
 }
+/* 사진을 자동으로 줄인다. 요즘 폰 사진은 2~5MB라 그대로 쓰면 앱이 멈춘다.
+   긴 변 1600px, JPEG 품질 0.8 -> 보통 300KB~1MB. 면허 확인에는 충분하다. */
+function shrinkImage(file, cb){
+  var reader = new FileReader();
+  reader.onerror = function(){ cb('사진을 읽지 못했습니다. 다른 사진을 선택해 주세요.'); };
+  reader.onload = function(e){
+    var img = new Image();
+    img.onerror = function(){ cb('사진 형식을 읽지 못했습니다. JPG 또는 PNG로 다시 시도해 주세요.'); };
+    img.onload = function(){
+      try{
+        var MAX = 1600, w = img.width, h = img.height;
+        if(w > MAX || h > MAX){
+          if(w >= h){ h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        var cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        var ctx = cv.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img, 0, 0, w, h);
+        var out = cv.toDataURL('image/jpeg', 0.8);
+        if(!out || out.length < 100) return cb('사진 변환에 실패했습니다.');
+        cb(null, out);
+      }catch(err){ cb('사진 처리 중 오류가 발생했습니다.'); }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+var imgBusy = false;
 function upImg(ev){
-  var f=ev.target.files[0]; if(!f) return;
-  if(f.size > 5*1024*1024){ toast('사진이 너무 큽니다 (5MB 이하).'); return; }
-  var r=new FileReader();
-  r.onload=function(e){ D.licenseImg=e.target.result; save(); render(); };
-  r.readAsDataURL(f);
+  var f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if(!f || imgBusy) return;
+  if(!/^image\//.test(f.type)){ toast('이미지 파일만 올릴 수 있습니다.'); return; }
+  if(f.size > 20*1024*1024){ toast('사진이 너무 큽니다 (20MB 이하).'); return; }
+
+  imgBusy = true;
+  toast('사진을 처리하는 중입니다...');
+  shrinkImage(f, function(err, dataUrl){
+    imgBusy = false;
+    if(err){ toast(err); return; }
+    D.licenseImg = dataUrl;
+    save(); render();
+    toast('사진을 확인했습니다. 아래 완료를 눌러주세요.');
+  });
 }
 function skipLicense(){ D.licenseImg=null; save(); finish(); }
 function fmtPhone(p){ if(!p) return ''; return p.replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3'); }
@@ -551,8 +632,8 @@ apps:function(){
 me:function(){
   return '<div class="card" style="margin-top:0;">'
    +'<div style="font-size:19px;font-weight:850;margin-bottom:4px;">'+esc(D.name||'기사')+' 기사님'
-   +(D.licenseVerify==='verified'?'<span class="badge" style="background:#ECFDF3;color:#12B76A;">✅ 면허 인증</span>'
-     :(D.licenseImg||D.licenseVerify==='pending'?'<span class="badge">인증 검수중</span>':''))+'</div>'
+   + licenseBadge() +'</div>'
+   + licenseNotice()
    + row('연락처', fmtPhone(D.phone))
    + row('활동 지역', D.areas.length?D.areas.join(' · '):'-')
    + row('면허', D.license||'-')
@@ -566,6 +647,31 @@ me:function(){
    +'<button class="viewmore" style="display:block;margin:14px auto 0;" onclick="logout()">로그아웃</button>';
 }
 };
+
+/* 면허 인증 상태 — Firestore 값만 믿는다 (기기에 남은 사진으로 판단하지 않는다) */
+function licenseBadge(){
+  var v = D.licenseVerify;
+  if(v==='verified') return '<span class="badge" style="background:#ECFDF3;color:#12B76A;">✅ 면허 인증</span>';
+  if(v==='pending')  return '<span class="badge">인증 검수중</span>';
+  if(v==='rejected') return '<span class="badge" style="background:#FEF3F2;color:#F04438;">인증 거절</span>';
+  return '';
+}
+function licenseNotice(){
+  var v = D.licenseVerify;
+  if(v==='rejected'){
+    return '<div style="background:#FEF3F2;border:1px solid #FECDCA;border-radius:12px;padding:13px;margin:10px 0 4px;font-size:13px;color:#B42318;line-height:1.6;">'
+      +'<b>면허 인증이 거절되었습니다.</b><br>사진이 흐리거나 정보가 맞지 않을 수 있습니다.'
+      +'<button class="viewmore" style="color:#B42318;font-weight:800;display:block;padding-top:6px;" onclick="reLicense()">면허증 다시 올리기 →</button></div>';
+  }
+  if(v==='none'){
+    return '<div style="background:var(--navy-soft);border-radius:12px;padding:13px;margin:10px 0 4px;font-size:13px;color:var(--navy);line-height:1.6;">'
+      +'면허를 인증하면 <b>✅ 인증 배지</b>가 붙어 업체가 훨씬 믿고 연락합니다.'
+      +'<button class="viewmore" style="color:var(--navy);font-weight:800;display:block;padding-top:6px;" onclick="reLicense()">면허증 인증하기 →</button></div>';
+  }
+  return '';
+}
+/* 면허증만 다시 올리기 (프로필 전체를 다시 쓰지 않게) */
+function reLicense(){ D.licenseImg=null; window._mode='signup'; step=7; render(); }
 
 function tag(t){ return '<span style="font-size:12.5px;font-weight:700;color:var(--ink-soft);background:#F2F4F7;border-radius:8px;padding:6px 10px;">'+t+'</span>'; }
 function fchip(t,k){ return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;border-radius:20px;padding:7px 12px;font-size:12.5px;font-weight:700;margin-right:6px;">'
