@@ -221,7 +221,10 @@ main: function(){
     return '<div onclick="tab=\''+x[0]+'\';render()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;'
       +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
       +'<div style="font-size:20px;">'+x[1]+'</div><div style="font-size:11.5px;margin-top:2px;">'+x[2]+'</div></div>';
-  }).join('')+'</div>';
+  }).join('')
+  +'<div onclick="goApp()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;color:#9AA4B4;font-weight:600;">'
+  +'<div style="font-size:20px;">🏠</div><div style="font-size:11.5px;margin-top:2px;">앱 화면</div></div>'
+  +'</div>';
 }
 };
 function chk(){
@@ -263,11 +266,17 @@ function copyUid(){
   try{ navigator.clipboard.writeText(myUid); toast('UID를 복사했습니다.'); }
   catch(e){ toast('복사 실패 — 직접 선택해 복사해 주세요.'); }
 }
+/* 앱 첫 화면으로. 로그아웃은 하지 않는다 (관리자로 다시 돌아올 때 재로그인 안 하도록) */
+function goApp(){
+  try{ localStorage.setItem('rc_home','1'); }catch(e){}
+  location.href = 'index.html';
+}
 function logout(){
   try{
     localStorage.removeItem('rc_role');
     localStorage.removeItem('rc_driver');
     localStorage.removeItem('rc_company');
+    localStorage.removeItem('rc_home');
   }catch(e){}
   window._fb.signOut(window._auth)
     .catch(function(){})
