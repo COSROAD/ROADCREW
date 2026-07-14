@@ -126,7 +126,7 @@ textarea{min-height:90px;resize:vertical;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBUed_pgSzq6kmtZ3y5fPexV-7mEGzJSuw",
   authDomain: "roadcrew-1e9cd.firebaseapp.com",
@@ -141,7 +141,7 @@ try{
   window._auth.languageCode = 'ko';
   window._db = getFirestore(app);
   window._fb = { RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut,
-                 doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp };
+                 doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp };
   window._live = (location.protocol === 'http:' || location.protocol === 'https:');
 }catch(e){
   window._live = false;
@@ -346,7 +346,7 @@ function finish(){
 }
 
 /* ═══════════ 업체 메인 ═══════════ */
-function enterMain(){ mode='main'; tab='jobs'; loadAll(); }
+function enterMain(){ mode='main'; tab='jobs'; loadAll(); startRealtime(); }
 function renderMain(){
   var titles={jobs:'내 공고',apps:'지원자',find:'기사 찾기',me:'내 정보'};
   document.getElementById('topbar').innerHTML =
@@ -853,6 +853,7 @@ function goHome(){
   location.replace('index.html');
 }
 function logout(){
+  stopRealtime();
   clearLocal();
   C = { phone:'', company:'', manager:'', bizType:'', area:'', agree1:false, agree2:false };
   if(live()){
@@ -863,6 +864,37 @@ function logout(){
 }
 
 /* ── 부팅 ── */
+/* ═══ 실시간: 지원자가 들어오면 즉시 뜬다 ═══ */
+var unsubApps = null;
+var seenApps = {}, firstApps = true;
+
+function stopRealtime(){ try{ if(unsubApps) unsubApps(); }catch(e){} unsubApps=null; }
+function startRealtime(){
+  var u = window._auth && window._auth.currentUser;
+  if(!u || !live()) return;
+  var fb = window._fb;
+  stopRealtime();
+  firstApps = true;
+  unsubApps = fb.onSnapshot(
+    fb.query(fb.collection(window._db,'applications'), fb.where('companyId','==',u.uid)),
+    function(snap){
+      var fresh = 0;
+      apps = [];
+      snap.forEach(function(d){
+        var o = d.data(); o.id = d.id; apps.push(o);
+        if(!seenApps[o.id]){ if(!firstApps && o.direction==='apply') fresh++; seenApps[o.id]=true; }
+      });
+      if(fresh){
+        toast('🔔 새 지원자 ' + fresh + '명이 도착했습니다!');
+        try{ if(navigator.vibrate) navigator.vibrate([120,60,120]); }catch(e){}
+      }
+      firstApps = false;
+      if(mode==='main') renderMain();
+    },
+    function(e){ console.warn('지원자 구독 실패', e); }
+  );
+}
+
 function boot(){
   if(!live()){ render(); return; }
   window._fb.onAuthStateChanged(window._auth, function(u){

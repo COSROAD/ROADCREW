@@ -147,7 +147,7 @@ textarea{min-height:90px;resize:vertical;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBUed_pgSzq6kmtZ3y5fPexV-7mEGzJSuw",
   authDomain: "roadcrew-1e9cd.firebaseapp.com",
@@ -161,7 +161,7 @@ try{
   window._auth = getAuth(app);
   window._db   = getFirestore(app);
   window._fb   = { RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut,
-                   doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp };
+                   doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp };
   window._live = (location.protocol === 'http:' || location.protocol === 'https:');
 }catch(e){ window._live = false; console.log('Firebase 초기화 실패', e); }
 window.dispatchEvent(new Event('fbready'));
@@ -244,6 +244,7 @@ function clearLocal(){
 }
 function goHome(){ try{ localStorage.setItem('rc_home','1'); }catch(e){} location.replace('index.html'); }
 function logout(){
+  stopRealtime();
   clearLocal();
   O = { phone:'', name:'', from:null, to:null, vehicle:'', item:'', note:'', agree1:false, agree2:false };
   if(live()){ window._fb.signOut(window._auth).catch(function(){}).then(function(){ location.replace('index.html'); }); }
@@ -694,7 +695,7 @@ var OST = {
   canceled:['취소됨','#98A2B3','#F2F4F7']
 };
 
-function enterMain(){ mode='main'; mainTab='list'; loadMyOrders().then(renderMain); }
+function enterMain(){ mode='main'; mainTab='list'; loadMyOrders().then(renderMain).then(startRealtime); }
 
 function renderMain(){
   document.getElementById('topbar').innerHTML =
@@ -779,6 +780,42 @@ function cancelOrder(i){
     .then(function(){ toast('주문을 취소했습니다.'); return loadMyOrders(); })
     .then(renderMain)
     .catch(function(e){ toast('취소 실패: '+(e.code||e.message)); });
+}
+
+/* ═══ 실시간: 기사가 수락하면 즉시 화면이 바뀐다 ═══ */
+var unsubOrders = null;
+var lastStatus = {};
+
+function stopRealtime(){ try{ if(unsubOrders) unsubOrders(); }catch(e){} unsubOrders=null; }
+function startRealtime(){
+  var u = window._auth && window._auth.currentUser;
+  if(!u || !live()) return;
+  var fb = window._fb;
+  stopRealtime();
+  unsubOrders = fb.onSnapshot(
+    fb.query(fb.collection(window._db,'orders'), fb.where('customerId','==',u.uid)),
+    function(snap){
+      myOrders = [];
+      var changed = null;
+      snap.forEach(function(d){
+        var o = d.data(); o.id = d.id; myOrders.push(o);
+        if(lastStatus[o.id] && lastStatus[o.id] !== o.status) changed = o;
+        lastStatus[o.id] = o.status;
+      });
+      myOrders.sort(function(a,b){ return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0); });
+
+      if(changed){
+        var msg = { accepted:'🚚 기사님이 배정되었습니다!', picked:'📦 물품을 픽업했습니다.',
+                    done:'✅ 배송이 완료되었습니다.', canceled:'주문이 취소되었습니다.' }[changed.status];
+        if(msg){
+          toast(msg);
+          try{ if(navigator.vibrate) navigator.vibrate([120,60,120]); }catch(e){}
+        }
+      }
+      if(mode==='main') renderMain();
+    },
+    function(e){ console.warn('주문 구독 실패', e); }
+  );
 }
 
 /* ── 부팅 ── */
