@@ -174,10 +174,12 @@ var D = JSON.parse(localStorage.getItem('rc_driver')||'null') || {
   phone:'', name:'', areas:[], license:'', vehicles:[], career:'',
   worktypes:[], pay:'협의', intro:'', licenseImg:null,
   insurance:false, helmet:false,          // 퀵(이륜차) 법정 확인 항목
-  agree1:false, agree2:false, agree3:false
+  agree1:false, agree2:false, agree3:false, agreeGeo:false
 };
 if(D.insurance===undefined) D.insurance=false;
 if(D.helmet===undefined) D.helmet=false;
+if(D.agreeGeo===undefined) D.agreeGeo=false;
+var myPos = null;   // {lat, lon} — 메모리에만. 저장하지 않는다.
 
 /* 퀵 일감을 받으려면 확인이 필요한 차종 (이륜차) */
 function needSafety(){ return (D.vehicles||[]).indexOf('오토바이') >= 0; }
@@ -288,7 +290,8 @@ agree:function(){ var all=D.agree1&&D.agree2&&D.agree3; return ''
   +'<div class="agree-all" onclick="toggleAll()"><span class="chk '+(all?'on':'')+'">✓</span><span>전체 동의하기</span></div>'
   +ag('agree1','[필수]','req','개인정보 수집·이용 동의','p1')
   +ag('agree2','[필수]','req','고유식별정보(운전면허번호) 수집·이용 동의','p2')
-  +ag('agree3','[선택]','opt','업체에 내 프로필 공개 동의','p3'); },
+  +ag('agree3','[선택]','opt','업체에 내 프로필 공개 동의','p3')
+  +ag('agreeGeo','[선택]','opt','위치정보 이용 동의 (가까운 일감)','p4'); },
 p1:function(){ return ''
   +'<h2 class="step-title">기본 정보</h2><p class="step-desc">이름과 활동하실 지역을 알려주세요.</p>'
   +'<div class="field"><label class="lb">이름 <span class="req">*</span></label>'
@@ -421,7 +424,7 @@ function finish(){
     uid:u.uid, phone:D.phone, name:D.name, areas:D.areas,
     license:D.license, vehicles:D.vehicles, career:D.career,
     worktypes:D.worktypes, pay:'협의', intro:D.intro||'',
-    insurance:!!D.insurance, helmet:!!D.helmet
+    insurance:!!D.insurance, helmet:!!D.helmet, agreeGeo:!!D.agreeGeo
   };
 
   if(joined){
@@ -551,6 +554,12 @@ function fmtPhone(p){ if(!p) return ''; return p.replace(/(\d{3})(\d{3,4})(\d{4}
 function row(k,v){ return '<div class="row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'; }
 
 var TERMS = {
+ p4:{t:'위치정보 이용 동의 [선택]', b:'<b>수집 항목</b><br>단말기의 현재 위치(GPS 좌표)<br><br>'
+   +'<b>이용 목적</b><br>퀵 일감을 <b>가까운 순서로 정렬</b>하여 보여드리기 위한 용도로만 사용합니다.<br><br>'
+   +'<b>보유·이용 기간</b><br><b>저장하지 않습니다.</b> 화면을 정렬한 즉시 폐기하며, 위치 좌표를 서버나 기기에 보관하지 않습니다.<br><br>'
+   +'<b>제3자 제공</b><br>제공하지 않습니다. 실시간 위치가 고객에게 공유되지 않습니다.<br><br>'
+   +'<b>동의 거부</b><br>거부하셔도 <b>모든 기능을 그대로 이용</b>하실 수 있습니다. 일감이 등록순으로 표시될 뿐입니다.<br><br>'
+   +'동의는 <b>언제든지 철회</b>할 수 있습니다. (내 정보 화면에서 변경)'},
  p1:{t:'개인정보 수집·이용 동의 [필수]', b:'<b>수집 항목</b><br>이름, 휴대폰번호, 활동 희망지역, 면허 종류, 보유 차량, 경력<br><br>'
    +'<b>수집·이용 목적</b><br>회원 식별, 채용 매칭 및 일감 연결, 서비스 안내<br><br>'
    +'<b>보유 기간</b><br>회원 탈퇴 시까지<br><br>동의를 거부하실 수 있으나, 필수 항목 미동의 시 서비스 이용이 제한됩니다.'},
@@ -651,7 +660,13 @@ quick:function(){
         +(o.status==='accepted'
            ? '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#7C3AED;" onclick="orderPicked('+i+')">📦 픽업 완료</button>'
            : '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#12B76A;" onclick="orderDone('+i+')">✅ 배송 완료</button>')
-        +'</div></div>';
+        +'</div>'
+        +(o.status==='picked'
+           ? '<button class="btn btn-main" style="margin-top:8px;padding:12px;font-size:14px;background:var(--orange);" onclick="orderSoon('+i+')" '
+             +(o.sms_order_soon?'disabled':'')+'>'
+             +(o.sms_order_soon?'✓ 곧 도착 문자 보냄':'🚚 곧 도착 + 문자')+'</button>'
+           : '')
+        +'</div>';
     }).join('');
     h += '<div style="height:8px;"></div>';
   }
@@ -665,8 +680,11 @@ quick:function(){
     return h + quickNotice();
   }
 
-  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-soft);margin-bottom:10px;">대기 중인 일감 '+quickOpen.length+'건 · 먼저 수락하는 기사님이 배정됩니다</div>';
+  h += geoBar();
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-soft);margin-bottom:10px;">대기 중인 일감 '+quickOpen.length+'건 · 먼저 수락하는 기사님이 배정됩니다'
+    + (myPos?' · <span style="color:var(--orange);">가까운 순</span>':'') + '</div>';
   h += quickOpen.map(function(o,i){
+    var near = (myPos && o.fromLat) ? distKm(myPos.lat, myPos.lon, o.fromLat, o.fromLon) : null;
     return '<div class="card" style="margin-top:0;margin-bottom:12px;">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
       +'<div style="font-size:15.5px;font-weight:800;line-height:1.5;">'+esc(o.fromName)+'<br><span style="color:var(--orange);">→ '+esc(o.toName)+'</span></div>'
@@ -674,6 +692,7 @@ quick:function(){
       +'<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">'+(o.distanceKm||0)+'km</div></div></div>'
       +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">'
       + tag((QVEH[o.vehicle]||'')+' '+esc(o.vehicle)) + tag('📦 '+esc(o.item))
+      + (near!==null ? '<span style="font-size:12.5px;font-weight:800;color:var(--orange);background:var(--orange-soft);border-radius:8px;padding:6px 10px;">📍 '+near.toFixed(1)+'km</span>' : '')
       +'</div>'
       +(o.note?'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:9px;">💬 '+esc(o.note)+'</div>':'')
       +'<button class="btn btn-main" style="margin-top:12px;padding:13px;font-size:15px;background:var(--orange);" onclick="acceptOrder('+i+')">이 일감 수락하기</button>'
@@ -773,6 +792,7 @@ me:function(){
    + row('희망 급여','협의')
    +'</div>'
    + openProfileBox()
+   + geoBox()
    +'<button class="btn btn-ghost" style="margin-top:14px;" onclick="editProfile()">프로필 수정</button>'
    +'<button class="btn btn-ghost" style="margin-top:18px;padding:13px;font-size:14px;" onclick="goHome()">🏠 처음 화면으로</button>'
    +'<div style="display:flex;justify-content:center;gap:18px;margin-top:14px;">'
@@ -831,6 +851,64 @@ function withdraw(){
     .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
 }
 
+/* 두 좌표 사이 직선거리(km) */
+function distKm(lat1, lon1, lat2, lon2){
+  var R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2)
+        + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* 내 위치 (위치정보법: 동의 없이는 절대 호출하지 않는다. 저장도 하지 않는다) */
+function geoBar(){
+  if(!D.agreeGeo){
+    return '<button class="btn btn-ghost" style="padding:11px;font-size:13.5px;margin-bottom:12px;" onclick="askGeoDriver()">📍 가까운 일감부터 보려면 위치정보 동의가 필요합니다</button>';
+  }
+  if(myPos){
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+      +'<div style="flex:1;font-size:12.5px;color:var(--orange);font-weight:800;">📍 내 위치 기준 가까운 순</div>'
+      +'<button class="viewmore" onclick="findMe()">위치 새로고침</button></div>';
+  }
+  return '<button class="btn btn-ghost" style="padding:11px;font-size:13.5px;margin-bottom:12px;" onclick="findMe()">📍 내 위치로 가까운 일감 찾기</button>';
+}
+function askGeoDriver(){
+  if(!confirm('가까운 일감을 먼저 보여드리려면 위치정보 이용에 동의해야 합니다.\n\n· 일감을 가까운 순으로 정렬하는 용도로만 사용합니다\n· 위치는 저장하지 않습니다\n· 언제든 철회할 수 있습니다\n\n동의하시겠습니까?')) return;
+  D.agreeGeo = true; save();
+  var u = window._auth && window._auth.currentUser;
+  if(u && live()){
+    var fb=window._fb;
+    fb.setDoc(fb.doc(window._db,'drivers',u.uid), { agreeGeo:true }, {merge:true}).catch(function(){});
+  }
+  findMe();
+}
+var geoBusy = false;
+function findMe(){
+  if(!D.agreeGeo){ askGeoDriver(); return; }
+  if(geoBusy) return;
+  if(!navigator.geolocation){ toast('이 브라우저는 위치를 지원하지 않습니다.'); return; }
+  geoBusy = true;
+  toast('위치를 확인하는 중입니다...');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    geoBusy = false;
+    myPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };   // 메모리에만
+    sortQuick();
+    renderMain();
+    toast('📍 가까운 일감부터 보여드립니다.');
+  }, function(err){
+    geoBusy = false;
+    if(err.code === 1) toast('위치 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.');
+    else toast('위치를 가져오지 못했습니다.');
+  }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
+}
+function sortQuick(){
+  if(!myPos) return;
+  quickOpen.sort(function(a,b){
+    var da = a.fromLat ? distKm(myPos.lat,myPos.lon,a.fromLat,a.fromLon) : 9999;
+    var db = b.fromLat ? distKm(myPos.lat,myPos.lon,b.fromLat,b.fromLon) : 9999;
+    return da - db;
+  });
+}
+
 function quickNotice(){
   return '<div class="note-mid">'
     +'<b>로드크루는 통신판매중개자입니다.</b><br>'
@@ -886,6 +964,7 @@ function loadQuick(){
         if(!myVeh.length || myVeh.indexOf(o.vehicle) >= 0) quickOpen.push(o);
       });
       quickOpen.sort(function(a,b){ return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0); });
+      sortQuick();
       return fb.getDocs(fb.query(fb.collection(db,'orders'), fb.where('driverId','==',u.uid)));
     })
     .then(function(snap){
@@ -946,6 +1025,23 @@ function orderPicked(i){
     })
     .then(renderMain)
     .catch(function(e){ toast('실패: '+(e.code||e.message)); })
+    .then(function(){ qBusy=false; });
+}
+
+/* 곧 도착 — 고객에게 준비 문자 (한 번만) */
+function orderSoon(i){
+  var o = quickMine[i];
+  if(!o || qBusy) return;
+  if(o.sms_order_soon){ toast('이미 보냈습니다.'); return; }
+  if(!confirm('고객에게 「곧 도착합니다」 문자를 보낼까요?\n\n요금 '+won(o.fare)+'을 준비해 달라는 안내가 함께 갑니다.')) return;
+  qBusy = true;
+  notifySMS(o.id, 'order_soon')
+    .then(function(j){
+      if(j && (j.ok || j.skipped)) toast('🚚 곧 도착 문자를 보냈습니다.');
+      else toast('문자를 보내지 못했습니다. 전화로 알려주세요.');
+      return loadQuick();
+    })
+    .then(renderMain)
     .then(function(){ qBusy=false; });
 }
 
@@ -1030,6 +1126,34 @@ function openProfileBox(){
     +'<div style="position:absolute;top:3px;left:'+(on?'25px':'3px')+';width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;"></div>'
     +'</div></div></div>';
 }
+function geoBox(){
+  var on = D.agreeGeo === true;
+  return '<div class="card" style="margin-top:12px;">'
+    +'<div style="display:flex;align-items:center;gap:12px;">'
+    +'<div style="flex:1;">'
+    +'<div style="font-size:14.5px;font-weight:800;">📍 위치정보 이용 <span class="tag-opt">[선택]</span></div>'
+    +'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px;line-height:1.5;">'
+    +(on ? '가까운 일감을 먼저 보여드립니다.<br>위치는 <b>저장하지 않습니다.</b>'
+         : '지금은 <b>사용하지 않음</b>. 일감이 등록순으로 표시됩니다.')
+    +'</div></div>'
+    +'<div onclick="toggleGeo()" style="flex:none;width:52px;height:30px;border-radius:20px;cursor:pointer;transition:.2s;'
+    +'background:'+(on?'#12B76A':'#C4CBD6')+';position:relative;">'
+    +'<div style="position:absolute;top:3px;left:'+(on?'25px':'3px')+';width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;"></div>'
+    +'</div></div></div>';
+}
+function toggleGeo(){
+  var next = !(D.agreeGeo===true);
+  D.agreeGeo = next; save();
+  if(!next) myPos = null;
+  var u = window._auth && window._auth.currentUser;
+  if(u && live()){
+    var fb=window._fb;
+    fb.setDoc(fb.doc(window._db,'drivers',u.uid), { agreeGeo: next }, {merge:true}).catch(function(){});
+  }
+  renderMain();
+  toast(next ? '✅ 위치정보 이용에 동의했습니다.' : '위치정보 이용을 껐습니다.');
+}
+
 var openBusy = false;
 function toggleOpenProfile(){
   if(openBusy) return;
@@ -1228,6 +1352,7 @@ function boot(){
         D.agree1=p.agreePrivacy!==false; D.agree2=p.agreeUniqueId!==false;
         D.agree3=p.agreeOpenProfile===true;
         D.insurance=p.insurance===true; D.helmet=p.helmet===true;
+        D.agreeGeo=p.agreeGeo===true;
         try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
         save();
         joined = true;

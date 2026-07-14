@@ -216,8 +216,9 @@ var O = JSON.parse(localStorage.getItem('rc_order') || 'null') || {
   phone:'', name:'',
   from:null, to:null,          // {name, addr, lat, lon, detail}
   vehicle:'', item:'', note:'',
-  agree1:false, agree2:false
+  agree1:false, agree2:false, agreeGeo:false   // 위치정보는 선택 동의
 };
+if(O.agreeGeo===undefined) O.agreeGeo=false;
 var distKm = 0, timeMin = 0, fare = 0, calcing = false;
 var myOrders = [];
 var mode = 'signup';          // signup | main
@@ -312,6 +313,7 @@ agree:function(){ var all=O.agree1&&O.agree2; return ''
   +'<div>'
   + ag('agree1','[필수]','req','개인정보 수집·이용 동의','p1')
   + ag('agree2','[필수]','req','서비스 이용약관 동의 (중개 고지 포함)','p2')
+  + ag('agreeGeo','[선택]','opt','위치정보 이용 동의','p3')
   +'</div>'
   +'<div class="note" style="margin-top:14px;">'
   +'<b>로드크루는 통신판매중개자입니다.</b><br>'
@@ -324,6 +326,9 @@ form:function(){ return ''
   +'<input type="text" maxlength="20" placeholder="홍길동" value="'+esc(O.name)+'" oninput="O.name=this.value;save();chk()"></div>'
 
   +'<div class="field"><label class="lb">출발지 <span class="req">*</span></label>'
+  + (O.agreeGeo
+      ? '<button class="btn btn-ghost" style="padding:11px;font-size:13.5px;margin-bottom:8px;" onclick="useMyLocation()">📍 내 위치로 설정</button>'
+      : '<button class="viewmore" style="display:block;margin-bottom:8px;" onclick="askGeo()">📍 내 위치로 설정하려면 위치정보 동의가 필요합니다 →</button>')
   +'<div class="addr-row" onclick="openSearch(\'from\')">'
   +'<span class="dot" style="background:var(--navy);"></span>'
   +'<span class="tx'+(O.from?'':' ph')+'">'+(O.from?esc(O.from.name):'출발지를 검색하세요')+'</span>'
@@ -469,6 +474,43 @@ function recalc(){
   });
 }
 
+/* ── 내 위치 (위치정보법: 동의 없이는 절대 호출하지 않는다) ── */
+var geoBusy = false;
+function askGeo(){
+  if(!confirm('「내 위치」를 쓰려면 위치정보 이용에 동의해야 합니다.\n\n· 출발지 주소를 채우는 용도로만 사용합니다\n· 위치는 저장하지 않습니다\n· 언제든 철회할 수 있습니다\n\n동의하시겠습니까?')) return;
+  O.agreeGeo = true; save(); render();
+  toast('✅ 동의했습니다. 「내 위치」를 쓸 수 있습니다.');
+}
+function useMyLocation(){
+  if(!O.agreeGeo){ askGeo(); return; }
+  if(geoBusy) return;
+  if(!navigator.geolocation){ toast('이 브라우저는 위치를 지원하지 않습니다.'); return; }
+
+  geoBusy = true;
+  toast('위치를 확인하는 중입니다...');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat = pos.coords.latitude, lon = pos.coords.longitude;
+    fetch('https://cosroad.vercel.app/api/rc-quick', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'reverse', lat:lat, lon:lon })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      geoBusy = false;
+      if(!j || !j.ok){ toast((j&&j.message)||'주소를 찾지 못했습니다. 직접 검색해 주세요.'); return; }
+      var keep = (O.from && O.from.detail) || '';
+      O.from = { name:j.name, addr:j.addr, lat:j.lat, lon:j.lon, detail:keep };
+      save(); recalc();
+      toast('📍 내 위치로 설정했습니다.');
+    })
+    .catch(function(){ geoBusy=false; toast('주소 변환에 실패했습니다. 직접 검색해 주세요.'); });
+  }, function(err){
+    geoBusy = false;
+    if(err.code === 1) toast('위치 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.');
+    else toast('위치를 가져오지 못했습니다. 직접 검색해 주세요.');
+  }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
+}
+
 /* ── 주소 검색 ── */
 var searchTarget = null, searchTimer = null;
 function openSearch(which){
@@ -526,6 +568,12 @@ var TERMS = {
    +'<b>제3자 제공</b><br>배정된 기사에게 이름·연락처·주소를 제공합니다. 배송 수행에 필요한 최소 정보입니다.<br><br>'
    +'<b>보유 기간</b><br>주문 완료 후 1년 (전자상거래법상 거래기록 보존)<br><br>'
    +'동의를 거부하실 수 있으나, 거부 시 배송 주문이 불가합니다.'},
+ p3:{t:'위치정보 이용 동의 [선택]', b:'<b>수집 항목</b><br>단말기의 현재 위치(GPS 좌표)<br><br>'
+   +'<b>이용 목적</b><br>「내 위치」 버튼을 눌렀을 때 출발지 주소를 자동으로 채우기 위한 용도로만 사용합니다.<br><br>'
+   +'<b>보유·이용 기간</b><br><b>저장하지 않습니다.</b> 주소로 변환한 즉시 폐기하며, 위치 좌표를 서버나 기기에 보관하지 않습니다.<br><br>'
+   +'<b>제3자 제공</b><br>제공하지 않습니다. (주소 변환을 위해 SK텔레콤 T맵 API에 일시적으로 전달되며, 저장되지 않습니다)<br><br>'
+   +'<b>동의 거부</b><br>거부하셔도 <b>주소를 직접 검색하여 서비스를 그대로 이용</b>하실 수 있습니다. 「내 위치」 버튼만 사용할 수 없습니다.<br><br>'
+   +'동의는 <b>언제든지 철회</b>할 수 있습니다. (내 주문 화면에서 변경)'},
  p2:{t:'서비스 이용약관 [필수]', b:'<b>제1조 (중개자의 지위)</b><br>'
    +'<b>로드크루는 통신판매중개자이며, 운송계약의 당사자가 아닙니다.</b> 운송계약은 고객과 기사 사이에 직접 체결되며, 로드크루는 이에 대한 책임을 지지 않습니다.<br><br>'
    +'<b>제2조 (요금·결제)</b><br>앱에 표시되는 요금은 거리 기준 예상 금액입니다. 요금은 고객이 기사에게 직접 결제합니다.<br><br>'
@@ -612,7 +660,7 @@ function submitOrder(){
     fare: fare,
     payType: '기사와 직접',
     status: 'open',
-    agreePrivacy: O.agree1, agreeTerms: O.agree2, agreedAt: fb.serverTimestamp(),
+    agreePrivacy: O.agree1, agreeTerms: O.agree2, agreeGeo: !!O.agreeGeo, agreedAt: fb.serverTimestamp(),
     createdAt: fb.serverTimestamp()
   })
   .then(function(){
@@ -686,6 +734,7 @@ function renderMain(){
     }).join('');
   }
 
+  body += geoToggle();
   document.getElementById('view').innerHTML = body;
   document.getElementById('foot').innerHTML =
     '<div style="display:flex;">'
@@ -698,6 +747,27 @@ function renderMain(){
     +'<div onclick="logout()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;color:#9AA4B4;font-weight:600;">'
     +'<div style="font-size:21px;">👤</div><div style="font-size:11.5px;margin-top:2px;">로그아웃</div></div>'
     +'</div>';
+}
+
+/* 위치정보 동의는 언제든 켜고 끌 수 있어야 한다 (철회권) */
+function geoToggle(){
+  var on = O.agreeGeo === true;
+  return '<div class="card" style="margin-top:14px;">'
+    +'<div style="display:flex;align-items:center;gap:12px;">'
+    +'<div style="flex:1;">'
+    +'<div style="font-size:14.5px;font-weight:800;">📍 위치정보 이용 <span class="tag-opt">[선택]</span></div>'
+    +'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px;line-height:1.5;">'
+    +(on ? '「내 위치」 버튼으로 출발지를 자동으로 채웁니다.<br>위치는 <b>저장하지 않습니다.</b>'
+         : '지금은 <b>사용하지 않음</b>. 주소를 직접 검색합니다.')
+    +'</div></div>'
+    +'<div onclick="togGeo()" style="flex:none;width:52px;height:30px;border-radius:20px;cursor:pointer;transition:.2s;'
+    +'background:'+(on?'#12B76A':'#C4CBD6')+';position:relative;">'
+    +'<div style="position:absolute;top:3px;left:'+(on?'25px':'3px')+';width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;"></div>'
+    +'</div></div></div>';
+}
+function togGeo(){
+  O.agreeGeo = !O.agreeGeo; save(); renderMain();
+  toast(O.agreeGeo ? '✅ 위치정보 이용에 동의했습니다.' : '위치정보 이용을 껐습니다.');
 }
 
 function cancelOrder(i){
