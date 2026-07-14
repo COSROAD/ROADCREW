@@ -1,6 +1,6 @@
 {
-  "name": "ROADCREW 로드크루",
-  "short_name": "ROADCREW",
+  "name": "ROADJOB 로드잡",
+  "short_name": "ROADJOB",
   "description": "일감도 받고, 일자리도 구하고. 기사의 수입을 한곳에서.",
   "start_url": "./",
   "scope": "./",

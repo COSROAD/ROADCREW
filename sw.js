@@ -1,4 +1,4 @@
-// ROADCREW 서비스워커 — PWA '앱 설치' 조건 충족용. 캐시 없음(항상 최신).
+// ROADJOB 서비스워커 — PWA '앱 설치' 조건 충족용. 캐시 없음(항상 최신).
 self.addEventListener('install', function(e){ self.skipWaiting(); });
 self.addEventListener('activate', function(e){ e.waitUntil(self.clients.claim()); });
 self.addEventListener('fetch', function(event){

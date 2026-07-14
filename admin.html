@@ -6,21 +6,21 @@
 <meta name="theme-color" content="#0F2A47">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ROADCREW 관리자">
+<meta name="apple-mobile-web-app-title" content="ROADJOB 관리자">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="ROADCREW 로드크루">
-<meta property="og:title" content="cosROADCREW 로드크루">
+<meta property="og:site_name" content="ROADJOB 로드잡">
+<meta property="og:title" content="cosROADJOB 로드잡">
 <meta property="og:description" content="기사와 일자리를 잇는 곳. 구인 · 구직 · 퀵을 한곳에서.">
-<meta property="og:image" content="https://roadcrew.kr/og-roadcrew.png?v=1">
+<meta property="og:image" content="https://roadjob.co.kr/og-roadjob.png?v=1">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="https://roadcrew.kr/">
+<meta property="og:url" content="https://roadjob.co.kr/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="기사와 일자리를 잇는 곳. 구인 · 구직 · 퀵을 한곳에서.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>ROADCREW 관리자</title>
+<title>ROADJOB 관리자</title>
 <style>
 :root{--navy:#0F2A47;--navy-soft:#E8EEF5;--orange:#EA580C;--orange-soft:#FFF4ED;
 --ink:#1A2233;--ink-soft:#5A6478;--line:#E4E8EF;--bg:#F6F8FB;--white:#fff;--ok:#12B76A;--err:#F04438;}
@@ -132,7 +132,7 @@ window._fbLoaded = true;
 document.dispatchEvent(new Event('fbready'));
 </script>
 <script>
-/* ═══════════ ROADCREW 관리자 ═══════════ */
+/* ═══════════ ROADJOB 관리자 ═══════════ */
 var phone='', code='', busy=false, confirmResult=null, recaptcha=null;
 var view='login';          // login | code | noauth | main
 var tab='license';         // license | stats
@@ -150,7 +150,7 @@ function setBusy(v,l){ busy=v; var b=document.getElementById('nx'); if(b){ b.dis
 function render(){
   var top=document.getElementById('topbar');
   top.innerHTML = (view==='main')
-    ? '<div class="top"><h1>ROADCREW 관리자</h1><button class="back" style="font-size:13px;font-weight:800;color:var(--ink-soft);" onclick="logout()">로그아웃</button></div>'
+    ? '<div class="top"><h1>ROADJOB 관리자</h1><button class="back" style="font-size:13px;font-weight:800;color:var(--ink-soft);" onclick="logout()">로그아웃</button></div>'
     : '';
   document.getElementById('progbar').style.width='0';
   document.getElementById('view').innerHTML = V[view]();
@@ -161,7 +161,7 @@ function render(){
 var V = {
 login:function(){ return ''
   +'<div class="hero" style="padding:48px 0 24px;">'
-  +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADCREW</span></div>'
+  +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
   +'<p class="sub" style="font-weight:800;color:var(--navy);">관리자</p></div>'
   +'<div class="field"><label class="lb">관리자 휴대폰 번호</label>'
   +'<input type="tel" id="f-phone" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="01012345678" value="'+phone+'" oninput="phone=this.value.replace(/[^0-9]/g,\'\');this.value=phone;chk()" onkeydown="if(event.key===\'Enter\'&&/^01[0-9]{8,9}$/.test(phone))sendCode()"></div>'

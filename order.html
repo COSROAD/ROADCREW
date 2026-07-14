@@ -6,21 +6,21 @@
 <meta name="theme-color" content="#0F2A47">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ROADCREW 퀵">
+<meta name="apple-mobile-web-app-title" content="ROADJOB 퀵">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="ROADCREW 로드크루">
-<meta property="og:title" content="cosROADCREW 퀵 — 소형화물 배송">
+<meta property="og:site_name" content="ROADJOB 로드잡">
+<meta property="og:title" content="cosROADJOB 퀵 — 소형화물 배송">
 <meta property="og:description" content="기사와 일자리를 잇는 곳. 구인 · 구직 · 퀵을 한곳에서.">
-<meta property="og:image" content="https://roadcrew.kr/og-roadcrew.png?v=1">
+<meta property="og:image" content="https://roadjob.co.kr/og-roadjob.png?v=1">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="https://roadcrew.kr/">
+<meta property="og:url" content="https://roadjob.co.kr/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="기사와 일자리를 잇는 곳. 구인 · 구직 · 퀵을 한곳에서.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>ROADCREW 퀵 — 소형화물 배송</title>
+<title>ROADJOB 퀵 — 소형화물 배송</title>
 <style>
 :root{--navy:#0F2A47;--navy-soft:#E8EEF5;--orange:#EA580C;--orange-soft:#FFF4ED;
 --ink:#1A2233;--ink-soft:#5A6478;--line:#E4E8EF;--bg:#F6F8FB;--white:#fff;--ok:#12B76A;--err:#F04438;}
@@ -169,7 +169,7 @@ window.dispatchEvent(new Event('fbready'));
 
 <script>
 /* ═══════════════════════════════════════════════════
-   ROADCREW 퀵 — 고객(보내는 사람) 앱
+   ROADJOB 퀵 — 고객(보내는 사람) 앱
    1단계: 자전거 · 오토바이 · 승용차
    결제: 기사와 직접 (PG는 추후)
    ═══════════════════════════════════════════════════ */
@@ -284,7 +284,7 @@ function demoBar(){ return live() ? '' : '<div class="demo">⚠️ 시안 모드
 var V = {
 intro:function(){ return ''
   +'<div class="hero" style="padding:44px 0 22px;">'
-  +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADCREW</span></div>'
+  +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
   +'<p class="sub" style="font-weight:800;color:var(--orange);">퀵 · 소형화물 배송</p>'
   +'<p class="sub">서류 한 장부터 소형 박스까지<br>가까운 기사님이 바로 갑니다.</p>'
   +'<div class="pts">'
@@ -316,7 +316,7 @@ agree:function(){ var all=O.agree1&&O.agree2; return ''
   + ag('agreeGeo','[선택]','opt','위치정보 이용 동의','p3')
   +'</div>'
   +'<div class="note" style="margin-top:14px;">'
-  +'<b>로드크루는 통신판매중개자입니다.</b><br>'
+  +'<b>로드잡는 통신판매중개자입니다.</b><br>'
   +'운송계약의 당사자가 아니며, 운송은 기사님과 고객님 사이에 직접 체결됩니다.'
   +'</div>'; },
 
@@ -359,7 +359,7 @@ form:function(){ return ''
 
   +'<div class="note" style="margin-top:14px;">'
   +'💳 <b>요금은 기사님께 직접 결제</b>해 주세요 (현금·계좌이체·간편송금).<br>'
-  +'로드크루는 중개자이며 운송계약의 당사자가 아닙니다.<br>'
+  +'로드잡는 중개자이며 운송계약의 당사자가 아닙니다.<br>'
   +'현금·귀중품·위험물은 접수할 수 없습니다.'
   +'</div>'; },
 
@@ -575,10 +575,10 @@ var TERMS = {
    +'<b>동의 거부</b><br>거부하셔도 <b>주소를 직접 검색하여 서비스를 그대로 이용</b>하실 수 있습니다. 「내 위치」 버튼만 사용할 수 없습니다.<br><br>'
    +'동의는 <b>언제든지 철회</b>할 수 있습니다. (내 주문 화면에서 변경)'},
  p2:{t:'서비스 이용약관 [필수]', b:'<b>제1조 (중개자의 지위)</b><br>'
-   +'<b>로드크루는 통신판매중개자이며, 운송계약의 당사자가 아닙니다.</b> 운송계약은 고객과 기사 사이에 직접 체결되며, 로드크루는 이에 대한 책임을 지지 않습니다.<br><br>'
+   +'<b>로드잡는 통신판매중개자이며, 운송계약의 당사자가 아닙니다.</b> 운송계약은 고객과 기사 사이에 직접 체결되며, 로드잡는 이에 대한 책임을 지지 않습니다.<br><br>'
    +'<b>제2조 (요금·결제)</b><br>앱에 표시되는 요금은 거리 기준 예상 금액입니다. 요금은 고객이 기사에게 직접 결제합니다.<br><br>'
    +'<b>제3조 (접수 제한 물품)</b><br>현금·유가증권·귀중품·위험물·불법물품·살아있는 동물은 접수할 수 없습니다. 이를 위반하여 발생한 손해는 고객이 부담합니다.<br><br>'
-   +'<b>제4조 (분실·파손)</b><br>운송 중 분실·파손에 대한 책임은 기사에게 있습니다. 로드크루는 중개자로서 분쟁 해결을 지원합니다.<br><br>'
+   +'<b>제4조 (분실·파손)</b><br>운송 중 분실·파손에 대한 책임은 기사에게 있습니다. 로드잡는 중개자로서 분쟁 해결을 지원합니다.<br><br>'
    +'<b>제5조 (취소)</b><br>기사 배정 전에는 자유롭게 취소할 수 있습니다. 배정 후 취소는 기사와 협의해 주세요.'}
 };
 function showTerm(k){
