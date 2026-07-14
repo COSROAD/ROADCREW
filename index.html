@@ -92,6 +92,8 @@ textarea{min-height:90px;resize:vertical;}
 .pt .t{font-size:14.5px;font-weight:700;}
 .pt .d{font-size:13px;color:var(--ink-soft);}
 .demo{background:#FFF7E6;border:1px solid #FFE0A3;color:#8A5A00;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:16px;}
+.note-mid{background:#F2F4F7;border-radius:10px;padding:12px;margin-top:16px;font-size:12px;color:var(--ink-soft);line-height:1.7;}
+.note-mid b{color:var(--ink);}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(20,28,42,.94);color:#fff;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:700;z-index:200;display:none;max-width:88%;text-align:center;}
 </style>
 </head>
@@ -171,8 +173,14 @@ var step = 0, busy = false, confirmResult = null, recaptcha = null;
 var D = JSON.parse(localStorage.getItem('rc_driver')||'null') || {
   phone:'', name:'', areas:[], license:'', vehicles:[], career:'',
   worktypes:[], pay:'협의', intro:'', licenseImg:null,
+  insurance:false, helmet:false,          // 퀵(이륜차) 법정 확인 항목
   agree1:false, agree2:false, agree3:false
 };
+if(D.insurance===undefined) D.insurance=false;
+if(D.helmet===undefined) D.helmet=false;
+
+/* 퀵 일감을 받으려면 확인이 필요한 차종 (이륜차) */
+function needSafety(){ return (D.vehicles||[]).indexOf('오토바이') >= 0; }
 /* 면허증 사진은 이 기기에 저장하지 않는다 (고유식별정보 보호).
    화면에 보여줄 동안만 메모리에 들고 있다가, 업로드하면 바로 버린다. */
 function save(){
@@ -206,6 +214,10 @@ function pickDriver(){
 function pickCompany(){
   try{ localStorage.setItem('rc_role','company'); }catch(e){}
   location.href='company.html';
+}
+function pickOrder(){
+  try{ localStorage.setItem('rc_role','order'); }catch(e){}
+  location.href='order.html';
 }
 function prev(){ if(step>0) go(step-1); }
 function render(){
@@ -246,10 +258,12 @@ intro:function(){ return ''
   +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">기사를 구하고 있어요</div></div>'
   +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
-  +'<div style="background:#fff;border:2px dashed var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;opacity:.6;">'
+  +'<div onclick="pickOrder()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
+  +'onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
   +'<span style="font-size:38px;">📦</span>'
-  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">보낼 게 있어요 <span class="badge">준비 중</span></div>'
-  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">퀵 · 소형화물 배송</div></div></div>'
+  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">보낼 게 있어요</div>'
+  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">퀵 · 소형화물 배송</div></div>'
+  +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
   +'</div>'
 
   +'<div class="pts" style="margin-top:26px;">'
@@ -294,7 +308,8 @@ p2:function(){ return ''
   +'</div></div>'
   +'<div class="field"><label class="lb">보유 차량 <span class="req">*</span> <span style="font-weight:400;color:var(--ink-soft);font-size:12.5px;">(복수 선택)</span></label><div class="opts col2">'
   + VEHICLE.map(function(v){return '<div class="opt '+(D.vehicles.indexOf(v.k)>=0?'on':'')+'" onclick="togVeh(\''+v.k+'\')"><span class="ico">'+v.e+'</span>'+v.k+'</div>';}).join('')
-  +'</div><div class="hint">자전거·오토바이만 있어도 소형 화물 일감을 받을 수 있어요.</div></div>'; },
+  +'</div><div class="hint">자전거·오토바이만 있어도 소형 화물 일감을 받을 수 있어요.</div></div>'
+  + safetyBox(); },
 p3:function(){ return ''
   +'<h2 class="step-title">경력 · 희망 조건</h2><p class="step-desc">맞는 일자리를 골라 보여드립니다.</p>'
   +'<div class="field"><label class="lb">운전·배송 경력 <span class="req">*</span></label><div class="opts col2">'
@@ -405,7 +420,8 @@ function finish(){
   var profile = {
     uid:u.uid, phone:D.phone, name:D.name, areas:D.areas,
     license:D.license, vehicles:D.vehicles, career:D.career,
-    worktypes:D.worktypes, pay:'협의', intro:D.intro||''
+    worktypes:D.worktypes, pay:'협의', intro:D.intro||'',
+    insurance:!!D.insurance, helmet:!!D.helmet
   };
 
   if(joined){
@@ -563,9 +579,13 @@ if('serviceWorker' in navigator){
 var JOBTYPE = ['소형화물 배송','셔틀 기사(학원·복지)','택배','물류 배송','일용·대타'];
 var mainTab = 'jobs';
 var jobs = [], myApps = [], curJob = null, jobFilter = { type:'', worktype:'' };
+var quickOpen = [], quickMine = [], curOrder = null;   // 퀵 일감
+
+/* 퀵 차종 (고객 앱과 같은 표) */
+var QVEH = { '자전거':'🚲', '오토바이':'🛵', '승용차':'🚗', '다마스':'🚐', '라보':'🛻' };
 
 function isMain(){ return window._mode === 'main'; }
-function enterMain(){ window._mode='main'; mainTab='jobs'; loadJobs(); }
+function enterMain(){ window._mode='main'; mainTab='quick'; loadJobs(); loadQuick().then(function(){ if(window._mode==='main') renderMain(); }); }
 
 function renderMain(){
   var top = document.getElementById('topbar');
@@ -578,7 +598,7 @@ function renderMain(){
   document.getElementById('foot').innerHTML = tabbar();
 }
 function tabbar(){
-  var t = [['jobs','💼','일자리'],['apps','📋','지원현황'],['me','👤','내 정보']];
+  var t = [['quick','🚚','일감'],['jobs','💼','일자리'],['apps','📋','지원현황'],['me','👤','내 정보']];
   return '<div style="display:flex;">'+ t.map(function(x){
     var on = mainTab===x[0];
     return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;'
@@ -591,6 +611,77 @@ function tabbar(){
 }
 
 var MAIN = {
+quick:function(){
+  var mine = quickMine.filter(function(o){ return o.status==='accepted' || o.status==='picked'; });
+  var h = '';
+
+  /* 오토바이 기사인데 보험·안전모 미확인 → 일감 차단 (법정 의무) */
+  if(!canQuick()){
+    return '<div style="background:#FEF3F2;border:1.5px solid #FECDCA;border-radius:16px;padding:20px;">'
+      +'<div style="font-size:16px;font-weight:850;color:#B42318;margin-bottom:8px;">🛵 확인이 필요합니다</div>'
+      +'<div style="font-size:13.5px;color:#B42318;line-height:1.7;">'
+      +'2026년 6월부터 <b>유상운송보험 가입이 법으로 의무화</b>되었습니다.<br>'
+      +'일반 종합보험으로는 <b>배달 중 사고가 보장되지 않습니다.</b><br><br>'
+      +'· 유상운송보험 가입 '+(D.insurance?'✅':'❌ 미확인')+'<br>'
+      +'· 안전모 보유 '+(D.helmet?'✅':'❌ 미확인')
+      +'</div>'
+      +'<button class="btn btn-main" style="margin-top:16px;background:#F04438;" onclick="editSafety()">확인하러 가기</button>'
+      +'</div>'
+      +'<div class="note-mid">로드크루는 <b>통신판매중개자</b>이며 운송계약의 당사자가 아닙니다.</div>';
+  }
+
+  /* 내가 수행 중인 일감 — 맨 위 */
+  if(mine.length){
+    h += '<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:10px;">진행 중 '+mine.length+'건</div>';
+    h += mine.map(function(o){
+      var i = quickMine.indexOf(o);
+      return '<div class="card" style="margin-top:0;margin-bottom:12px;border:2px solid var(--orange);">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+        +'<div style="font-size:15.5px;font-weight:800;line-height:1.5;">'+esc(o.fromName)+' → '+esc(o.toName)+'</div>'
+        +'<span style="flex:none;font-size:12px;font-weight:800;padding:5px 11px;border-radius:20px;color:#fff;background:var(--orange);">'
+        +(o.status==='accepted'?'픽업 전':'배송 중')+'</span></div>'
+        +'<div style="font-size:13px;color:var(--ink-soft);margin-top:6px;">'
+        +(QVEH[o.vehicle]||'')+' '+esc(o.vehicle)+' · '+esc(o.item)+' · <b style="color:var(--orange);">'+won(o.fare)+'</b></div>'
+        +'<div style="background:var(--navy-soft);border-radius:10px;padding:11px;margin-top:10px;font-size:13px;color:var(--navy);">'
+        +'👤 '+esc(o.customerName)+' · '+fmtPhone(o.customerPhone)
+        +'<a class="btn btn-main" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-top:9px;padding:11px;font-size:14px;" href="tel:'+esc(o.customerPhone)+'">📞 고객에게 전화</a>'
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:10px;">'
+        +'<button class="btn btn-ghost" style="padding:12px;font-size:14px;" onclick="navTo('+i+')">🗺 길찾기</button>'
+        +(o.status==='accepted'
+           ? '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#7C3AED;" onclick="orderPicked('+i+')">📦 픽업 완료</button>'
+           : '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#12B76A;" onclick="orderDone('+i+')">✅ 배송 완료</button>')
+        +'</div></div>';
+    }).join('');
+    h += '<div style="height:8px;"></div>';
+  }
+
+  /* 대기 중인 일감 */
+  if(!quickOpen.length){
+    h += '<div style="text-align:center;padding:'+(mine.length?'30px':'60px')+' 20px;color:var(--ink-soft);">'
+      +'<div style="font-size:46px;">🚚</div>'
+      +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">지금은 일감이 없습니다</p>'
+      +'<p style="font-size:13.5px;">새 주문이 들어오면 여기에 표시됩니다.</p></div>';
+    return h + quickNotice();
+  }
+
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-soft);margin-bottom:10px;">대기 중인 일감 '+quickOpen.length+'건 · 먼저 수락하는 기사님이 배정됩니다</div>';
+  h += quickOpen.map(function(o,i){
+    return '<div class="card" style="margin-top:0;margin-bottom:12px;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+      +'<div style="font-size:15.5px;font-weight:800;line-height:1.5;">'+esc(o.fromName)+'<br><span style="color:var(--orange);">→ '+esc(o.toName)+'</span></div>'
+      +'<div style="flex:none;text-align:right;"><div style="font-size:19px;font-weight:900;color:var(--orange);">'+won(o.fare)+'</div>'
+      +'<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">'+(o.distanceKm||0)+'km</div></div></div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">'
+      + tag((QVEH[o.vehicle]||'')+' '+esc(o.vehicle)) + tag('📦 '+esc(o.item))
+      +'</div>'
+      +(o.note?'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:9px;">💬 '+esc(o.note)+'</div>':'')
+      +'<button class="btn btn-main" style="margin-top:12px;padding:13px;font-size:15px;background:var(--orange);" onclick="acceptOrder('+i+')">이 일감 수락하기</button>'
+      +'</div>';
+  }).join('');
+  h += quickNotice();
+  return h;
+},
 jobs:function(){
   var list = jobs.filter(function(j){
     if(jobFilter.type && j.jobType!==jobFilter.type) return false;
@@ -738,6 +829,156 @@ function withdraw(){
     })
     .then(function(){ location.replace('index.html'); })
     .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
+}
+
+function quickNotice(){
+  return '<div class="note-mid">'
+    +'<b>로드크루는 통신판매중개자입니다.</b><br>'
+    +'운송계약은 고객과 기사님 사이에 직접 체결되며, 요금은 <b>고객에게 직접</b> 받으셔야 합니다.<br>'
+    +'현금·귀중품·위험물은 접수 금지 물품입니다. 안전운행 부탁드립니다.'
+    +'</div>';
+}
+function editSafety(){ window._mode='signup'; step=5; render(); }   // p2 (면허·차량)
+
+/* ── 오토바이 안전 확인 (법정 의무: 생활물류법·산업안전보건법) ── */
+function safetyBox(){
+  if(!needSafety()) return '';
+  return '<div style="background:#FEF3F2;border:1.5px solid #FECDCA;border-radius:14px;padding:16px;margin-top:4px;">'
+    +'<div style="font-size:14.5px;font-weight:850;color:#B42318;margin-bottom:4px;">🛵 오토바이 배송 필수 확인</div>'
+    +'<div style="font-size:12.5px;color:#B42318;line-height:1.6;margin-bottom:12px;">'
+    +'2026년 6월부터 <b>유상운송보험 가입이 법으로 의무화</b>되었습니다.<br>'
+    +'아래 두 가지를 확인해야 퀵 일감을 받을 수 있습니다.</div>'
+    +'<div class="agree" style="border-bottom:1px solid #FECDCA;" onclick="togSafe(\'insurance\')">'
+    +'<span class="chk '+(D.insurance?'on':'')+'">✓</span>'
+    +'<span class="tx" style="font-size:13.5px;"><b>유상운송보험에 가입</b>되어 있습니다<br>'
+    +'<span style="font-size:12px;color:#B42318;">대인 무한 · 대물 2천만원 이상 (일반 종합보험으로는 배달 중 사고가 보장되지 않습니다)</span></span></div>'
+    +'<div class="agree" onclick="togSafe(\'helmet\')">'
+    +'<span class="chk '+(D.helmet?'on':'')+'">✓</span>'
+    +'<span class="tx" style="font-size:13.5px;"><b>안전모(헬멧)를 보유</b>하고 있으며 항상 착용합니다</span></div>'
+    +'<div style="font-size:12px;color:#B42318;margin-top:10px;line-height:1.6;">'
+    +'⚠️ 미체크 시에도 채용 공고 지원은 가능하지만, <b>퀵 일감은 받을 수 없습니다.</b></div>'
+    +'</div>';
+}
+function togSafe(k){ D[k] = !D[k]; save(); render(); }
+
+/* 퀵 일감을 받을 자격이 있는가 */
+function canQuick(){
+  if(!needSafety()) return true;          // 자전거·승용차만 있으면 해당 없음
+  return D.insurance === true && D.helmet === true;
+}
+
+/* ═══════════ 퀵 일감 ═══════════ */
+function won(n){ return Number(n||0).toLocaleString()+'원'; }
+
+function loadQuick(){
+  var u = window._auth && window._auth.currentUser;
+  if(!u || !live()) return Promise.resolve();
+  var fb = window._fb, db = window._db;
+
+  /* 내 차량으로 갈 수 있는 일감만 보여준다 */
+  var myVeh = (D.vehicles||[]);
+
+  return fb.getDocs(fb.query(fb.collection(db,'orders'), fb.where('status','==','open')))
+    .then(function(snap){
+      quickOpen = [];
+      snap.forEach(function(d){
+        var o = d.data(); o.id = d.id;
+        if(!myVeh.length || myVeh.indexOf(o.vehicle) >= 0) quickOpen.push(o);
+      });
+      quickOpen.sort(function(a,b){ return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0); });
+      return fb.getDocs(fb.query(fb.collection(db,'orders'), fb.where('driverId','==',u.uid)));
+    })
+    .then(function(snap){
+      quickMine = [];
+      snap.forEach(function(d){ var o=d.data(); o.id=d.id; quickMine.push(o); });
+    })
+    .catch(function(e){ console.warn('일감 불러오기 실패', e); quickOpen=[]; quickMine=[]; });
+}
+
+var qBusy = false;
+function acceptOrder(i){
+  var o = quickOpen[i];
+  if(!o || qBusy) return;
+  if(D.licenseVerify !== 'verified'){
+    if(!confirm('아직 면허 인증이 안 됐습니다.\n\n인증된 기사님이 우선 배정됩니다.\n그래도 수락할까요?')) return;
+  }
+  if(!confirm('이 일감을 수락할까요?\n\n'+o.fromName+' → '+o.toName+'\n'+won(o.fare)+'\n\n수락하면 고객에게 내 연락처가 전달됩니다.')) return;
+
+  qBusy = true;
+  var u = window._auth.currentUser, fb = window._fb;
+
+  /* 선착순 — 이미 다른 기사가 가져갔는지 다시 확인 */
+  fb.getDoc(fb.doc(window._db,'orders',o.id))
+    .then(function(snap){
+      if(!snap.exists()) throw new Error('주문이 사라졌습니다.');
+      if(snap.data().status !== 'open') throw new Error('이미 다른 기사님이 수락했습니다.');
+      return fb.updateDoc(fb.doc(window._db,'orders',o.id), {
+        status:'accepted', driverId:u.uid, driverName:D.name, driverPhone:D.phone,
+        driverVehicle:o.vehicle, acceptedAt:new Date().toISOString()
+      });
+    })
+    .then(function(){
+      toast('✅ 일감을 수락했습니다!');
+      notifySMS(o.id, 'order_accepted').then(function(j){
+        if(j && !j.ok && !j.skipped) toast('수락은 됐지만 고객 알림 문자는 못 보냈습니다.');
+      });
+      return loadQuick();
+    })
+    .then(renderMain)
+    .catch(function(e){
+      toast(e.message || ('실패: '+(e.code||'')));
+      loadQuick().then(renderMain);
+    })
+    .then(function(){ qBusy=false; });
+}
+
+function orderPicked(i){
+  var o = quickMine[i];
+  if(!o || qBusy) return;
+  if(!confirm('물품을 픽업하셨나요?\n\n고객에게 「픽업 완료」 문자가 갑니다.')) return;
+  qBusy = true;
+  var fb = window._fb;
+  fb.updateDoc(fb.doc(window._db,'orders',o.id), { status:'picked', pickedAt:new Date().toISOString() })
+    .then(function(){
+      toast('📦 픽업 처리했습니다.');
+      notifySMS(o.id, 'order_picked');
+      return loadQuick();
+    })
+    .then(renderMain)
+    .catch(function(e){ toast('실패: '+(e.code||e.message)); })
+    .then(function(){ qBusy=false; });
+}
+
+function orderDone(i){
+  var o = quickMine[i];
+  if(!o || qBusy) return;
+  if(!confirm('배송을 완료하셨나요?\n\n요금 '+won(o.fare)+'을 받으셨는지 확인해 주세요.\n고객에게 「배송 완료」 문자가 갑니다.')) return;
+  qBusy = true;
+  var fb = window._fb;
+  fb.updateDoc(fb.doc(window._db,'orders',o.id), { status:'done', doneAt:new Date().toISOString() })
+    .then(function(){
+      toast('✅ 배송 완료!');
+      notifySMS(o.id, 'order_done');
+      return loadQuick();
+    })
+    .then(renderMain)
+    .catch(function(e){ toast('실패: '+(e.code||e.message)); })
+    .then(function(){ qBusy=false; });
+}
+
+/* 길찾기 — 픽업 전이면 출발지로, 배송 중이면 도착지로 */
+function navTo(i){
+  var o = quickMine[i]; if(!o) return;
+  var pick = (o.status === 'accepted');
+  var lat = pick ? o.fromLat : o.toLat;
+  var lon = pick ? o.fromLon : o.toLon;
+  var nm  = pick ? o.fromName : o.toName;
+  if(!lat || !lon){ toast('좌표가 없습니다.'); return; }
+  var app = 'tmap://route?goalname='+encodeURIComponent(nm)+'&goalx='+lon+'&goaly='+lat+'&coordType=WGS84GEO';
+  var web = 'https://www.tmap.co.kr/tmap2/public/tmap.jsp?rGoName='+encodeURIComponent(nm)+'&rGoX='+lon+'&rGoY='+lat;
+  var t = Date.now();
+  location.href = app;
+  setTimeout(function(){ if(Date.now()-t < 2000) window.open(web,'_blank'); }, 1200);
 }
 
 /* ── 채용 제안 수락 / 거절 ── */
@@ -944,6 +1185,7 @@ function clearLocal(){
     localStorage.removeItem('rc_role');
     localStorage.removeItem('rc_driver');
     localStorage.removeItem('rc_company');
+    localStorage.removeItem('rc_order');
     localStorage.removeItem('rc_home');
   }catch(e){}
 }
@@ -967,9 +1209,9 @@ function boot(){
   var forceHome = wantHome();      // 한 번만 읽고 즉시 지운다
   if(!forceHome){
     try{
-      if(localStorage.getItem('rc_role')==='company' && localStorage.getItem('rc_company')){
-        location.replace('company.html'); return;
-      }
+      var _r = localStorage.getItem('rc_role');
+      if(_r==='company' && localStorage.getItem('rc_company')){ location.replace('company.html'); return; }
+      if(_r==='order' && localStorage.getItem('rc_order')){ location.replace('order.html'); return; }
     }catch(e){}
   }
   if(!live()){ render(); return; }
@@ -985,6 +1227,7 @@ function boot(){
         D.intro=p.intro||''; D.licenseVerify=p.licenseVerify||'none';
         D.agree1=p.agreePrivacy!==false; D.agree2=p.agreeUniqueId!==false;
         D.agree3=p.agreeOpenProfile===true;
+        D.insurance=p.insurance===true; D.helmet=p.helmet===true;
         try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
         save();
         joined = true;
