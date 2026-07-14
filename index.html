@@ -218,10 +218,7 @@ function pickCompany(){
   try{ localStorage.setItem('rc_role','company'); }catch(e){}
   location.href='company.html';
 }
-function pickOrder(){
-  try{ localStorage.setItem('rc_role','order'); }catch(e){}
-  location.href='order.html';
-}
+
 function prev(){ if(step>0) go(step-1); }
 function render(){
   if(isMain()){ renderMain(); return; }
@@ -247,30 +244,27 @@ intro:function(){ return ''
   +'<p class="sub">기사와 일자리를 잇는 곳.<br>구인 · 구직 · 퀵을 한곳에서.</p>'
   +'</div>'
   +'<div style="display:grid;gap:12px;">'
+
   +'<div onclick="pickDriver()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
   +'onmouseover="this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
   +'<span style="font-size:38px;">🚚</span>'
   +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">기사예요</div>'
-  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">일자리를 찾고 있어요</div></div>'
+  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">일자리도 찾고, 퀵도 해드려요</div></div>'
   +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
   +'<div onclick="pickCompany()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
   +'onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
-  +'<span style="font-size:38px;">🏢</span>'
-  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">업체예요</div>'
-  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">기사를 구하고 있어요</div></div>'
+  +'<span style="font-size:38px;">📦</span>'
+  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">보내거나 뽑아요</div>'
+  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">퀵도 보내고, 기사도 채용해보세요</div>'
+  +'<div style="font-size:12px;color:#9AA4B4;margin-top:2px;">개인 · 사업자 모두 가능</div></div>'
   +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
-  +'<div onclick="pickOrder()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
-  +'onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
-  +'<span style="font-size:38px;">📦</span>'
-  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">보낼 게 있어요</div>'
-  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">퀵 · 소형화물 배송</div></div>'
-  +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
   +'</div>'
 
   +'<div class="pts" style="margin-top:26px;">'
   +'<div class="pt"><span class="e">💼</span><div><div class="t">일자리 찾기</div><div class="d">셔틀·택배·물류·소형화물 기사 채용 공고</div></div></div>'
+  +'<div class="pt"><span class="e">🚚</span><div><div class="t">퀵 · 소형화물</div><div class="d">서류 한 장부터 소형 박스까지</div></div></div>'
   +'<div class="pt"><span class="e">✅</span><div><div class="t">실적이 곧 이력서</div><div class="d">수행 실적·평점으로 검증되는 기사</div></div></div>'
   +'</div>'; },
 phone:function(){ return demoBar()
@@ -587,7 +581,7 @@ if('serviceWorker' in navigator){
 
 /* ══════════════ 메인 앱 (가입 완료 후) ══════════════ */
 var JOBTYPE = ['소형화물 배송','셔틀 기사(학원·복지)','택배','물류 배송','일용·대타'];
-var mainTab = 'jobs';
+var mainTab = 'home';
 var jobs = [], myApps = [], curJob = null, jobFilter = { type:'', worktype:'' };
 var quickOpen = [], quickMine = [], curOrder = null;   // 퀵 일감
 var newOrderIds = {};        // 방금 도착한 일감 (강조 표시용)
@@ -599,7 +593,7 @@ var QVEH = { '자전거':'🚲', '오토바이':'🛵', '승용차':'🚗', '다
 
 function isMain(){ return window._mode === 'main'; }
 function enterMain(){
-  window._mode='main'; mainTab='quick';
+  window._mode='main'; mainTab='home';
   loadJobs();
   loadQuick().then(function(){
     if(window._mode==='main') renderMain();
@@ -609,8 +603,8 @@ function enterMain(){
 
 function renderMain(){
   var top = document.getElementById('topbar');
-  var titles = { jobs:'일자리 찾기', apps:'지원 현황', me:'내 정보' };
-  top.innerHTML = '<div class="top"><h1>'+titles[mainTab]+'</h1>'
+  var titles = { home:'로드잡', jobs:'일자리 찾기', quick:'퀵 일감', active:'진행중', me:'내 정보' };
+  top.innerHTML = '<div class="top"><h1>'+(titles[mainTab]||'로드잡')+'</h1>'
     + (mainTab==='jobs' ? '<button class="back" style="font-size:15px;font-weight:800;color:var(--navy);" onclick="openFilter()">필터</button>' : '')
     + '</div>';
   document.getElementById('progbar').style.width='0';
@@ -618,24 +612,102 @@ function renderMain(){
   document.getElementById('foot').innerHTML = tabbar();
 }
 function tabbar(){
-  var t = [['quick','🚚','일감'],['jobs','💼','일자리'],['apps','📋','지원현황'],['me','👤','내 정보']];
-  return '<div style="display:flex;">'+ t.map(function(x){
-    var on = mainTab===x[0];
-    return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;'
-      +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
-      +'<div style="font-size:21px;">'+x[1]+'</div><div style="font-size:11.5px;margin-top:2px;">'+x[2]+'</div></div>';
-  }).join('')
-  +'<div onclick="goHome()" style="flex:1;text-align:center;padding:4px 0;cursor:pointer;color:#9AA4B4;font-weight:600;">'
-  +'<div style="font-size:21px;">🏠</div><div style="font-size:11.5px;margin-top:2px;">홈</div></div>'
+  var t = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['home','','홈'],['active','📋','진행중'],['me','👤','내정보']];
+  return '<div style="display:flex;align-items:flex-end;">'
+  + t.map(function(x){
+      var on = mainTab===x[0];
+      if(x[0]==='home'){
+        return '<div onclick="mainTab=\'home\';renderMain()" style="flex:1.15;text-align:center;padding:0 0 2px;cursor:pointer;">'
+          +'<div style="width:46px;height:46px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;'
+          +'background:'+(on?'var(--orange)':'var(--navy)')+';color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);">🏠</div>'
+          +'<div style="font-size:11px;margin-top:3px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
+      }
+      return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:6px 0 4px;cursor:pointer;'
+        +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
+        +'<div style="font-size:19px;">'+x[1]+'</div><div style="font-size:11px;margin-top:2px;">'+x[2]+'</div></div>';
+    }).join('')
   +'</div>';
 }
 
 var MAIN = {
-quick:function(){
-  var mine = quickMine.filter(function(o){ return o.status==='accepted' || o.status==='picked'; });
-  var h = onlineBar();
 
-  /* 오토바이 기사인데 보험·안전모 미확인 → 일감 차단 (법정 의무) */
+/* ═══════════ 🏠 홈 — 처음엔 안내, 익숙해지면 실시간 ═══════════ */
+home:function(){
+  if(!landingOff()) return landingView();
+
+  var h = onlineBar() + earnBar();
+
+  /* 실시간 피드: 새 퀵 + 새 공고를 시간순으로 */
+  var feed = [];
+  quickOpen.forEach(function(o){
+    feed.push({ kind:'quick', t:(o.createdAt&&o.createdAt.seconds)||0, o:o });
+  });
+  jobs.slice(0, 20).forEach(function(j){
+    feed.push({ kind:'job', t:(j.createdAt&&j.createdAt.seconds)||0, o:j });
+  });
+  feed.sort(function(a,b){ return b.t - a.t; });
+
+  if(!feed.length){
+    return h + '<div style="text-align:center;padding:50px 20px;color:var(--ink-soft);">'
+      +'<div style="font-size:46px;">🕐</div>'
+      +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">아직 새 소식이 없습니다</p>'
+      +'<p style="font-size:13.5px;">새 퀵 일감이나 채용 공고가 오면<br>여기에 바로 뜹니다.</p></div>';
+  }
+
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-soft);margin-bottom:10px;">실시간 · 새 소식이 오면 바로 뜹니다</div>';
+
+  h += feed.slice(0, 30).map(function(f){
+    if(f.kind === 'quick'){
+      var o = f.o;
+      var i = quickOpen.indexOf(o);
+      var isNew = !!newOrderIds[o.id] && (Date.now() - newOrderIds[o.id] < 60000);
+      var near = (myPos && o.fromLat) ? distKm(myPos.lat, myPos.lon, o.fromLat, o.fromLon) : null;
+      return '<div class="card" style="margin-top:0;margin-bottom:12px;'
+        +(isNew?'border:2px solid var(--orange);background:var(--orange-soft);':'')+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+        +'<span style="font-size:11.5px;font-weight:800;color:#fff;background:var(--orange);padding:4px 9px;border-radius:20px;">'
+        +(isNew?'🔔 방금 도착 · 퀵':'🚚 퀵')+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+        +'<div style="font-size:15px;font-weight:800;line-height:1.5;">'+esc(o.fromName)+'<br><span style="color:var(--orange);">→ '+esc(o.toName)+'</span></div>'
+        +'<div style="flex:none;text-align:right;"><div style="font-size:18px;font-weight:900;color:var(--orange);">'+won(o.fare)+'</div>'
+        +'<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">'+(o.distanceKm||0)+'km'
+        +(near!==null?' · 📍'+near.toFixed(1)+'km':'')+'</div></div></div>'
+        +'<button class="btn btn-main" style="margin-top:11px;padding:12px;font-size:14.5px;background:var(--orange);" onclick="acceptOrder('+i+')">수락하기</button>'
+        +'</div>';
+    }
+    var j = f.o;
+    var k = jobs.indexOf(j);
+    return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;" onclick="openJobById(\''+j.id+'\')">'
+      +'<span style="font-size:11.5px;font-weight:800;color:#185FA5;background:#E6F1FB;padding:4px 9px;border-radius:20px;">💼 채용</span>'
+      +'<div style="font-size:15px;font-weight:800;margin-top:8px;">'+esc(j.title)+'</div>'
+      +'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px;">'+esc(j.company)+' · '+esc(j.area)+' · '+esc(j.workType)+'</div>'
+      +'</div>';
+  }).join('');
+
+  return h + quickNotice();
+},
+
+/* ═══════════ 📋 진행중 ═══════════ */
+active:function(){
+  var mine = quickMine.filter(function(o){ return o.status==='accepted' || o.status==='picked'; });
+  var h = '';
+
+  if(mine.length){
+    h += '<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:10px;">🚚 수행 중인 퀵 '+mine.length+'건</div>';
+    h += mine.map(function(o){
+      var i = quickMine.indexOf(o);
+      return quickJobCard(o, i);
+    }).join('');
+    h += '<div style="height:12px;"></div>';
+  }
+
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-soft);margin-bottom:10px;">💼 지원 현황</div>';
+  h += MAIN.apps();
+  return h;
+},
+
+quick:function(){
+  /* 오토바이 기사인데 보험·안전모 미확인 -> 일감 차단 (법정 의무) */
   if(!canQuick()){
     return '<div style="background:#FEF3F2;border:1.5px solid #FECDCA;border-radius:16px;padding:20px;">'
       +'<div style="font-size:16px;font-weight:850;color:#B42318;margin-bottom:8px;">🛵 확인이 필요합니다</div>'
@@ -647,60 +719,28 @@ quick:function(){
       +'</div>'
       +'<button class="btn btn-main" style="margin-top:16px;background:#F04438;" onclick="editSafety()">확인하러 가기</button>'
       +'</div>'
-      +'<div class="note-mid">로드잡는 <b>통신판매중개자</b>이며 운송계약의 당사자가 아닙니다.</div>';
+      + quickNotice();
   }
 
-  /* 내가 수행 중인 일감 — 맨 위 */
-  if(mine.length){
-    h += '<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:10px;">진행 중 '+mine.length+'건</div>';
-    h += mine.map(function(o){
-      var i = quickMine.indexOf(o);
-      return '<div class="card" style="margin-top:0;margin-bottom:12px;border:2px solid var(--orange);">'
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
-        +'<div style="font-size:15.5px;font-weight:800;line-height:1.5;">'+esc(o.fromName)+' → '+esc(o.toName)+'</div>'
-        +'<span style="flex:none;font-size:12px;font-weight:800;padding:5px 11px;border-radius:20px;color:#fff;background:var(--orange);">'
-        +(o.status==='accepted'?'픽업 전':'배송 중')+'</span></div>'
-        +'<div style="font-size:13px;color:var(--ink-soft);margin-top:6px;">'
-        +(QVEH[o.vehicle]||'')+' '+esc(o.vehicle)+' · '+esc(o.item)+' · <b style="color:var(--orange);">'+won(o.fare)+'</b></div>'
-        +'<div style="background:var(--navy-soft);border-radius:10px;padding:11px;margin-top:10px;font-size:13px;color:var(--navy);">'
-        +'👤 '+esc(o.customerName)+' · '+fmtPhone(o.customerPhone)
-        +'<a class="btn btn-main" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-top:9px;padding:11px;font-size:14px;" href="tel:'+esc(o.customerPhone)+'">📞 고객에게 전화</a>'
-        +'</div>'
-        +'<div style="display:flex;gap:8px;margin-top:10px;">'
-        +'<button class="btn btn-ghost" style="padding:12px;font-size:14px;" onclick="navTo('+i+')">🗺 길찾기</button>'
-        +(o.status==='accepted'
-           ? '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#7C3AED;" onclick="orderPicked('+i+')">📦 픽업 완료</button>'
-           : '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#12B76A;" onclick="orderDone('+i+')">✅ 배송 완료</button>')
-        +'</div>'
-        +(o.status==='picked'
-           ? '<button class="btn btn-main" style="margin-top:8px;padding:12px;font-size:14px;background:var(--orange);" onclick="orderSoon('+i+')" '
-             +(o.sms_order_soon?'disabled':'')+'>'
-             +(o.sms_order_soon?'✓ 곧 도착 문자 보냄':'🚚 곧 도착 + 문자')+'</button>'
-           : '')
-        +'</div>';
-    }).join('');
-    h += '<div style="height:8px;"></div>';
-  }
+  var h = onlineBar() + geoBar();
 
-  /* 대기 중인 일감 */
   if(!quickOpen.length){
-    h += '<div style="text-align:center;padding:'+(mine.length?'30px':'60px')+' 20px;color:var(--ink-soft);">'
+    return h + '<div style="text-align:center;padding:50px 20px;color:var(--ink-soft);">'
       +'<div style="font-size:46px;">🚚</div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">지금은 일감이 없습니다</p>'
-      +'<p style="font-size:13.5px;">새 주문이 들어오면 여기에 표시됩니다.</p></div>';
-    return h + quickNotice();
+      +'<p style="font-size:13.5px;">새 주문이 들어오면 바로 알려드립니다.</p></div>'
+      + quickNotice();
   }
 
-  h += geoBar();
-  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-soft);margin-bottom:10px;">대기 중인 일감 '+quickOpen.length+'건 · 먼저 수락하는 기사님이 배정됩니다'
+  h += '<div style="font-size:13px;font-weight:800;color:var(--ink-soft);margin-bottom:10px;">대기 중 '+quickOpen.length+'건 · 먼저 수락하는 기사님이 배정됩니다'
     + (myPos?' · <span style="color:var(--orange);">가까운 순</span>':'') + '</div>';
+
   h += quickOpen.map(function(o,i){
     var near = (myPos && o.fromLat) ? distKm(myPos.lat, myPos.lon, o.fromLat, o.fromLon) : null;
-    var isNew = !!newOrderIds[o.id] && (Date.now() - newOrderIds[o.id] < 60000);   // 1분간 강조
+    var isNew = !!newOrderIds[o.id] && (Date.now() - newOrderIds[o.id] < 60000);
     return '<div class="card" style="margin-top:0;margin-bottom:12px;'
       +(isNew?'border:2px solid var(--orange);background:var(--orange-soft);':'')+'">'
-      +(isNew?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
-          +'<span style="font-size:11.5px;font-weight:800;color:#fff;background:var(--orange);padding:4px 9px;border-radius:20px;">🔔 방금 도착</span></div>':'')
+      +(isNew?'<div style="margin-bottom:8px;"><span style="font-size:11.5px;font-weight:800;color:#fff;background:var(--orange);padding:4px 9px;border-radius:20px;">🔔 방금 도착</span></div>':'')
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
       +'<div style="font-size:15.5px;font-weight:800;line-height:1.5;">'+esc(o.fromName)+'<br><span style="color:var(--orange);">→ '+esc(o.toName)+'</span></div>'
       +'<div style="flex:none;text-align:right;"><div style="font-size:19px;font-weight:900;color:var(--orange);">'+won(o.fare)+'</div>'
@@ -713,8 +753,8 @@ quick:function(){
       +'<button class="btn btn-main" style="margin-top:12px;padding:13px;font-size:15px;background:var(--orange);" onclick="acceptOrder('+i+')">이 일감 수락하기</button>'
       +'</div>';
   }).join('');
-  h += quickNotice();
-  return h;
+
+  return h + quickNotice();
 },
 jobs:function(){
   var list = jobs.filter(function(j){
@@ -806,8 +846,10 @@ me:function(){
    + row('희망 근무형태', D.worktypes.length?D.worktypes.join(', '):'-')
    + row('희망 급여','협의')
    +'</div>'
+   + earnCard()
    + openProfileBox()
    + geoBox()
+   + guideBox()
    +'<button class="btn btn-ghost" style="margin-top:14px;" onclick="editProfile()">프로필 수정</button>'
    +'<button class="btn btn-ghost" style="margin-top:18px;padding:13px;font-size:14px;" onclick="goHome()">🏠 처음 화면으로</button>'
    +'<div style="display:flex;justify-content:center;gap:18px;margin-top:14px;">'
@@ -864,6 +906,160 @@ function withdraw(){
     })
     .then(function(){ location.replace('index.html'); })
     .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
+}
+
+/* ═══════════ 📖 사용안내 ═══════════ */
+function guideBox(){
+  return '<div class="card" style="margin-top:12px;">'
+    +'<div style="font-size:14.5px;font-weight:800;margin-bottom:10px;">📖 사용안내</div>'
+    +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
+    +'<b style="color:var(--ink);">🚚 퀵 일감</b><br>'
+    +'홈 또는 퀵수락 탭에서 <b>먼저 수락</b>하면 배정됩니다.<br>'
+    +'수락 → 픽업 완료 → 배송 완료 순으로 눌러주세요.<br>'
+    +'요금은 <b>고객에게 직접</b> 받으세요 (현금·계좌·송금).<br><br>'
+    +'<b style="color:var(--ink);">💼 일자리</b><br>'
+    +'구직 탭에서 공고에 지원하면 업체에 문자가 갑니다.<br>'
+    +'업체가 먼저 제안하면 진행중 탭에서 수락/거절하세요.<br><br>'
+    +'<b style="color:var(--ink);">🔔 알림</b><br>'
+    +'새 일감이 오면 소리·진동으로 알려드립니다.<br>'
+    +'쉬실 땐 「일감 받는 중」을 꺼두세요.<br><br>'
+    +'<b style="color:var(--ink);">✅ 면허 인증</b><br>'
+    +'인증된 기사는 업체가 훨씬 신뢰합니다.<br>'
+    +'면허증 사진은 <b>검수 즉시 파기</b>합니다.'
+    +'</div>'
+    +'<button class="btn btn-ghost" style="margin-top:14px;padding:11px;font-size:13.5px;" onclick="showLanding()">🏠 홈 안내 화면 다시 보기</button>'
+    +'<div class="note-mid" style="margin-top:12px;">'
+    +'<b>로드잡은 통신판매중개자입니다.</b><br>'
+    +'운송·고용 계약의 당사자가 아닙니다. 문의: 고객센터'
+    +'</div>'
+    +'</div>';
+}
+
+/* 수행 중인 퀵 카드 */
+function quickJobCard(o, i){
+  return '<div class="card" style="margin-top:0;margin-bottom:12px;border:2px solid var(--orange);">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+    +'<div style="font-size:15.5px;font-weight:800;line-height:1.5;">'+esc(o.fromName)+' → '+esc(o.toName)+'</div>'
+    +'<span style="flex:none;font-size:12px;font-weight:800;padding:5px 11px;border-radius:20px;color:#fff;background:var(--orange);">'
+    +(o.status==='accepted'?'픽업 전':'배송 중')+'</span></div>'
+    +'<div style="font-size:13px;color:var(--ink-soft);margin-top:6px;">'
+    +(QVEH[o.vehicle]||'')+' '+esc(o.vehicle)+' · '+esc(o.item)+' · <b style="color:var(--orange);">'+won(o.fare)+'</b></div>'
+    +'<div style="background:var(--navy-soft);border-radius:10px;padding:11px;margin-top:10px;font-size:13px;color:var(--navy);">'
+    +'👤 '+esc(o.customerName)+' · '+fmtPhone(o.customerPhone)
+    +'<a class="btn btn-main" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-top:9px;padding:11px;font-size:14px;" href="tel:'+esc(o.customerPhone)+'">📞 고객에게 전화</a>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px;">'
+    +'<button class="btn btn-ghost" style="padding:12px;font-size:14px;" onclick="navTo('+i+')">🗺 길찾기</button>'
+    +(o.status==='accepted'
+       ? '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#7C3AED;" onclick="orderPicked('+i+')">📦 픽업 완료</button>'
+       : '<button class="btn btn-main" style="padding:12px;font-size:14px;background:#12B76A;" onclick="orderDone('+i+')">✅ 배송 완료</button>')
+    +'</div>'
+    +(o.status==='picked'
+       ? '<button class="btn btn-main" style="margin-top:8px;padding:12px;font-size:14px;background:var(--orange);" onclick="orderSoon('+i+')" '
+         +(o.sms_order_soon?'disabled':'')+'>'
+         +(o.sms_order_soon?'✓ 곧 도착 문자 보냄':'🚚 곧 도착 + 문자')+'</button>'
+       : '')
+    +'</div>';
+}
+
+/* ═══════════ 홈 안내 랜딩 (처음 오는 사람용) ═══════════ */
+function landingOff(){
+  try{ return localStorage.getItem('rj_landing_off') === '1'; }catch(e){ return false; }
+}
+function hideLanding(){
+  try{ localStorage.setItem('rj_landing_off','1'); }catch(e){}
+  renderMain();
+  toast('앞으로 홈에 실시간 소식이 뜹니다.');
+}
+function showLanding(){
+  try{ localStorage.removeItem('rj_landing_off'); }catch(e){}
+  mainTab='home'; renderMain();
+}
+function goTab(t){ mainTab = t; renderMain(); window.scrollTo(0,0); }
+
+function landingView(){
+  return '<div style="text-align:center;padding:8px 0 20px;">'
+    +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
+    +'<p class="sub" style="margin-top:8px;">'+esc(D.name||'기사')+'님, 무엇을 하시겠어요?</p></div>'
+
+    +'<div style="display:grid;gap:12px;">'
+
+    +'<div onclick="goTab(\'quick\')" style="cursor:pointer;background:var(--orange-soft);border:2px solid var(--orange);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<span style="font-size:34px;">🚚</span>'
+    +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;color:#993C1D;">퀵 일감 받기</div>'
+    +'<div style="font-size:13px;color:#993C1D;margin-top:3px;">지금 바로 수입. 먼저 수락하면 배정</div>'
+    + (quickOpen.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--orange);margin-top:5px;">지금 대기 중 '+quickOpen.length+'건</div>' : '')
+    +'</div><span style="font-size:22px;color:var(--orange);">›</span></div>'
+
+    +'<div onclick="goTab(\'jobs\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<span style="font-size:34px;">💼</span>'
+    +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">일자리 찾기</div>'
+    +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">셔틀·택배·물류 기사 채용 공고에 지원</div>'
+    + (jobs.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--navy);margin-top:5px;">공고 '+jobs.length+'건</div>' : '')
+    +'</div><span style="font-size:22px;color:#C4CBD6;">›</span></div>'
+
+    +'<div onclick="goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<span style="font-size:34px;">📋</span>'
+    +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">진행중 보기</div>'
+    +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">수행 중인 퀵 · 지원한 공고 상태</div></div>'
+    +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
+
+    +'</div>'
+
+    +'<button class="btn btn-ghost" style="margin-top:18px;padding:13px;font-size:14px;" onclick="hideLanding()">이 안내 그만 보기 · 홈을 실시간 화면으로</button>'
+    +'<div class="hint" style="text-align:center;margin-top:8px;">언제든 내 정보에서 다시 켤 수 있습니다.</div>';
+}
+
+/* ═══════════ 💰 수입 ═══════════ */
+function earnSum(){
+  var now = new Date();
+  var today = now.toISOString().slice(0,10);
+  var mon = today.slice(0,7);
+  var d0 = 0, dCnt = 0, m0 = 0, mCnt = 0, total = 0, tCnt = 0;
+  (quickMine||[]).forEach(function(o){
+    if(o.status !== 'done') return;
+    var f = Number(o.fare)||0;
+    total += f; tCnt++;
+    var day = (o.doneAt||'').slice(0,10);
+    if(day === today){ d0 += f; dCnt++; }
+    if(day.slice(0,7) === mon){ m0 += f; mCnt++; }
+  });
+  return { today:d0, todayCnt:dCnt, month:m0, monthCnt:mCnt, total:total, totalCnt:tCnt };
+}
+function earnBar(){
+  var e = earnSum();
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
+    +'<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;">'
+    +'<div style="font-size:11.5px;color:var(--ink-soft);">오늘 수입</div>'
+    +'<div style="font-size:18px;font-weight:900;color:var(--navy);margin-top:2px;">'+won(e.today)+'</div></div>'
+    +'<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;">'
+    +'<div style="font-size:11.5px;color:var(--ink-soft);">오늘 완료</div>'
+    +'<div style="font-size:18px;font-weight:900;color:var(--navy);margin-top:2px;">'+e.todayCnt+'건</div></div>'
+    +'</div>';
+}
+function earnCard(){
+  var e = earnSum();
+  return '<div style="background:var(--navy);color:#fff;border-radius:16px;padding:18px;margin-top:12px;">'
+    +'<div style="font-size:12.5px;opacity:.75;">💰 이번 달 수입</div>'
+    +'<div style="font-size:26px;font-weight:900;letter-spacing:-.02em;margin-top:2px;">'+won(e.month)+'</div>'
+    +'<div style="font-size:12.5px;opacity:.75;margin-top:8px;line-height:1.7;">'
+    +'이번 달 '+e.monthCnt+'건 완료<br>'
+    +'전체 누적 '+won(e.total)+' · '+e.totalCnt+'건</div>'
+    +'<div style="font-size:11.5px;opacity:.6;margin-top:8px;">요금은 고객에게 직접 받으신 금액 기준입니다.</div>'
+    +'</div>';
+}
+
+/* 공고를 id로 열기 (홈 피드에서) */
+function openJobById(id){
+  var idx = -1;
+  var list = jobs.filter(function(j){
+    if(jobFilter.type && j.jobType!==jobFilter.type) return false;
+    if(jobFilter.worktype && j.workType!==jobFilter.worktype) return false;
+    return true;
+  });
+  for(var i=0;i<list.length;i++){ if(list[i].id===id){ idx=i; break; } }
+  if(idx<0){ toast('공고를 찾을 수 없습니다.'); return; }
+  openJob(idx);
 }
 
 /* ── 알림음 · 진동 ── */
@@ -1074,7 +1270,7 @@ function startRealtime(){
         alertNewOrder(fresh.length);
       }
       firstFeed = false;
-      if(window._mode==='main' && mainTab==='quick') renderMain();
+      if(window._mode==='main' && (mainTab==='quick'||mainTab==='home'||mainTab==='active')) renderMain();
     },
     function(e){ console.warn('일감 구독 실패', e); }
   );
@@ -1085,7 +1281,7 @@ function startRealtime(){
     function(snap){
       quickMine = [];
       snap.forEach(function(d){ var o=d.data(); o.id=d.id; quickMine.push(o); });
-      if(window._mode==='main' && mainTab==='quick') renderMain();
+      if(window._mode==='main' && (mainTab==='quick'||mainTab==='home'||mainTab==='active')) renderMain();
     },
     function(e){ console.warn('내 일감 구독 실패', e); }
   );
@@ -1479,7 +1675,6 @@ function boot(){
     try{
       var _r = localStorage.getItem('rc_role');
       if(_r==='company' && localStorage.getItem('rc_company')){ location.replace('company.html'); return; }
-      if(_r==='order' && localStorage.getItem('rc_order')){ location.replace('order.html'); return; }
     }catch(e){}
   }
   if(!live()){ render(); return; }
