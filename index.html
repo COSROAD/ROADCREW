@@ -94,6 +94,34 @@ textarea{min-height:90px;resize:vertical;}
 .demo{background:#FFF7E6;border:1px solid #FFE0A3;color:#8A5A00;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:16px;}
 .note-mid{background:#F2F4F7;border-radius:10px;padding:12px;margin-top:16px;font-size:12px;color:var(--ink-soft);line-height:1.7;}
 .note-mid b{color:var(--ink);}
+.gate{position:fixed;inset:0;max-width:520px;margin:0 auto;background:var(--bg);
+  display:flex;flex-direction:column;z-index:30;}
+.gate-tab{background:#fff;display:flex;padding:7px 0 6px;cursor:pointer;}
+.gate-tab.top{padding-top:calc(7px + env(safe-area-inset-top));}
+.gate-tab.bot{border-top:1px solid var(--line);}
+.gate-login{background:#fff;text-align:right;padding:0 12px 5px;}
+.gate-login.top{border-bottom:1px solid var(--line);}
+.gate-login.bot{padding:5px 12px calc(5px + env(safe-area-inset-bottom));}
+.gate-tab .gi{flex:1;text-align:center;color:#9AA4B4;transition:.15s;}
+.gate-tab .gi.mid{flex:1.15;}
+.gate-tab .gi:active{transform:scale(.94);}
+.gate-tab .gi .e{font-size:17px;line-height:1.1;}
+.gate-tab .gi .n{font-size:9.5px;margin-top:2px;font-weight:700;}
+.gate-tab .gi .ball{width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:16px;color:#fff;}
+.gate-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 16px;min-height:0;}
+.gate-hint{text-align:center;font-size:11.5px;font-weight:800;padding:5px 0;}
+.slide{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 14px;text-align:center;}
+.slide .ic{font-size:38px;line-height:1;}
+.slide .ti{font-size:17px;font-weight:850;margin-top:9px;}
+.slide .de{font-size:13px;color:var(--ink-soft);margin-top:6px;line-height:1.6;}
+.slide .go{margin-top:12px;font-size:12.5px;font-weight:800;color:var(--orange);}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:11px;}
+.dots i{width:6px;height:6px;border-radius:50%;background:#D3D1C7;transition:.2s;}
+.dots i.on{width:16px;background:var(--orange);}
+.arw-btn{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);
+  background:#fff;color:#9AA4B4;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.arw-btn:active{background:var(--bg);}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(20,28,42,.94);color:#fff;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:700;z-index:200;display:none;max-width:88%;text-align:center;}
 </style>
 </head>
@@ -200,6 +228,103 @@ function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.st
 function go(i){ step=i; render(); window.scrollTo(0,0); }
 function next(){ if(step<STEPS.length-1) go(step+1); }
 
+/* ═══════════════════════════════════════════════
+   로그인 전 첫 화면 — 스크롤 없이 한 화면
+     상단 = 업체 탭 (누르면 업체 가입 → 그 탭으로)
+     중앙 = 넘기는 안내 (구인 → 구직 → 퀵)
+     하단 = 기사 탭 (누르면 기사 가입 → 그 탭으로)
+   ═══════════════════════════════════════════════ */
+var CO_TABS = [['jobs','📢','구인'],['quick','📦','퀵발송'],['home','🏠','홈'],['guide','📖','안내'],['active','📋','진행중'],['me','👤','내정보']];
+var DR_TABS = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['home','🏠','홈'],['guide','📖','안내'],['active','📋','진행중'],['me','👤','내정보']];
+
+var SLIDES = [
+  { ic:'📢', ti:'구인 — 기사를 뽑아요', de:'공고를 올리면 기사님이 지원합니다.<br>마음에 드는 기사님께 먼저 제안도 가능.', go:'위 「구인」을 눌러 시작 ↑', role:'company', tab:'jobs' },
+  { ic:'💼', ti:'구직 — 일자리를 찾아요', de:'셔틀·택배·물류·소형화물 채용 공고.<br>지원하면 업체에 바로 문자가 갑니다.', go:'아래 「구직」을 눌러 시작 ↓', role:'driver', tab:'jobs' },
+  { ic:'🚚', ti:'퀵 — 보내고, 받아요', de:'서류 한 장부터 소형 박스까지.<br>거리로 요금 자동 계산 · 가까운 기사님이 바로.', go:'보낼 분은 위 ↑ · 기사님은 아래 ↓', role:'', tab:'quick' }
+];
+var slideIdx = 0;
+
+function gateTabHtml(tabs, role, cls){
+  var login = '<div class="gate-login '+cls+'">'
+    +'<button class="viewmore" style="font-size:11px;" onclick="gateGo(\''+role+'\',\'home\')">'
+    + (role==='company' ? '업체 로그인' : '기사 로그인') + '</button></div>';
+  var bar = '<div class="gate-tab '+cls+'">'
+    + tabs.map(function(x){
+        if(x[0]==='home'){
+          return '<div class="gi mid" onclick="gateGo(\''+role+'\',\'home\')">'
+            +'<div class="ball" style="background:'+(role==='company'?'var(--orange)':'var(--navy)')+';">🏠</div>'
+            +'<div class="n" style="color:'+(role==='company'?'var(--orange)':'var(--navy)')+';">홈</div></div>';
+        }
+        return '<div class="gi" onclick="gateGo(\''+role+'\',\''+x[0]+'\')">'
+          +'<div class="e">'+x[1]+'</div><div class="n">'+x[2]+'</div></div>';
+      }).join('')
+    +'</div>';
+  /* 상단은 탭 아래에, 하단은 탭 위에 로그인을 둔다 (화면 안쪽) */
+  return (cls==='top') ? (bar + login) : (login + bar);
+}
+
+function gateView(){
+  var sl = SLIDES[slideIdx];
+  return '<div class="gate" id="gate">'
+
+    + gateTabHtml(CO_TABS, 'company', 'top')
+    + '<div class="gate-hint" style="color:var(--orange);background:var(--orange-soft);">📦 보내거나 뽑으시나요? 위 탭을 누르세요 (개인 · 사업자)</div>'
+
+    + '<div class="gate-body">'
+    +   '<div style="text-align:center;margin-bottom:12px;">'
+    +     '<div class="brand"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
+    +     '<p class="sub" style="margin-top:5px;font-size:13px;">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</p>'
+    +   '</div>'
+    +   '<div style="display:flex;align-items:center;gap:8px;">'
+    +     '<button class="arw-btn" onclick="slideMove(-1)" aria-label="이전">‹</button>'
+    +     '<div class="slide" id="slide" style="flex:1;">'
+    +       '<div class="ic">'+sl.ic+'</div>'
+    +       '<div class="ti">'+sl.ti+'</div>'
+    +       '<div class="de">'+sl.de+'</div>'
+    +       '<div class="go">'+sl.go+'</div>'
+    +     '</div>'
+    +     '<button class="arw-btn" onclick="slideMove(1)" aria-label="다음">›</button>'
+    +   '</div>'
+    +   '<div class="dots">'
+    +     SLIDES.map(function(x,i){ return '<i class="'+(i===slideIdx?'on':'')+'" onclick="slideTo('+i+')"></i>'; }).join('')
+    +   '</div>'
+    + '</div>'
+
+    + '<div class="gate-hint" style="color:var(--navy);background:var(--navy-soft);">🚚 기사이신가요? 아래 탭을 누르세요</div>'
+    + gateTabHtml(DR_TABS, 'driver', 'bot')
+
+    + '</div>';
+}
+
+function slideTo(i){
+  slideIdx = (i + SLIDES.length) % SLIDES.length;
+  var g = document.getElementById('gate');
+  if(g && g.parentNode) g.parentNode.innerHTML = gateView();
+  bindSwipe();
+}
+function slideMove(d){ slideTo(slideIdx + d); }
+
+/* 손가락으로 밀어서 넘기기 */
+function bindSwipe(){
+  var el = document.getElementById('slide');
+  if(!el) return;
+  var x0 = null;
+  el.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, {passive:true});
+  el.addEventListener('touchend', function(e){
+    if(x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if(Math.abs(dx) > 40) slideMove(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, {passive:true});
+}
+
+/* 탭을 누르면 그 역할로 가입/로그인 → 끝나면 그 탭이 열린다 */
+function gateGo(role, tab){
+  try{ localStorage.setItem('rj_goto', tab); }catch(e){}
+  if(role === 'company'){ pickCompany(); return; }
+  pickDriver();
+}
+
 /* ── 첫 화면: 역할 선택 (입구는 하나, 들어가면 별개) ── */
 var joined = false;   // 이미 기사 가입을 마친 사람인가
 
@@ -234,39 +359,12 @@ function render(){
   document.getElementById('view').innerHTML = VIEWS[s]();
   document.getElementById('foot').innerHTML = FOOT[s]();
   if(s==='p1') fillSido();
+  if(s==='intro') setTimeout(bindSwipe, 30);
 }
 function demoBar(){ return live()? '' : '<div class="demo">⚠️ 시안 모드 — 파일을 직접 열어서 실제 인증이 안 됩니다. 웹(https)에 올리면 진짜 인증이 됩니다.</div>'; }
 
 var VIEWS = {
-intro:function(){ return ''
-  +'<div class="hero" style="padding:44px 0 20px;">'
-  +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
-  +'<p class="sub">기사와 일자리를 잇는 곳.<br>구인 · 구직 · 퀵을 한곳에서.</p>'
-  +'</div>'
-  +'<div style="display:grid;gap:12px;">'
-
-  +'<div onclick="pickDriver()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
-  +'onmouseover="this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
-  +'<span style="font-size:38px;">🚚</span>'
-  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">기사예요</div>'
-  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">일자리도 찾고, 퀵도 해드려요</div></div>'
-  +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
-
-  +'<div onclick="pickCompany()" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:22px 20px;display:flex;align-items:center;gap:16px;transition:.15s;" '
-  +'onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--line)\'">'
-  +'<span style="font-size:38px;">📦</span>'
-  +'<div style="flex:1;"><div style="font-size:18px;font-weight:850;">보내거나 뽑아요</div>'
-  +'<div style="font-size:13.5px;color:var(--ink-soft);margin-top:3px;">퀵도 보내고, 기사도 채용해보세요</div>'
-  +'<div style="font-size:12px;color:#9AA4B4;margin-top:2px;">개인 · 사업자 모두 가능</div></div>'
-  +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
-
-  +'</div>'
-
-  +'<div class="pts" style="margin-top:26px;">'
-  +'<div class="pt"><span class="e">💼</span><div><div class="t">일자리 찾기</div><div class="d">셔틀·택배·물류·소형화물 기사 채용 공고</div></div></div>'
-  +'<div class="pt"><span class="e">🚚</span><div><div class="t">퀵 · 소형화물</div><div class="d">서류 한 장부터 소형 박스까지</div></div></div>'
-  +'<div class="pt"><span class="e">✅</span><div><div class="t">실적이 곧 이력서</div><div class="d">수행 실적·평점으로 검증되는 기사</div></div></div>'
-  +'</div>'; },
+intro:function(){ return gateView(); },
 phone:function(){ return demoBar()
   +'<h2 class="step-title">휴대폰 번호를<br>입력해 주세요</h2>'
   +'<p class="step-desc">본인 확인과 일자리 연락에 사용됩니다.</p>'
@@ -592,8 +690,15 @@ var audioCtx = null;
 var QVEH = { '자전거':'🚲', '오토바이':'🛵', '승용차':'🚗', '다마스':'🚐', '라보':'🛻' };
 
 function isMain(){ return window._mode === 'main'; }
+/* 첫 화면에서 누른 탭으로 (한 번만) */
+function wantTab(){
+  var t = null;
+  try{ t = localStorage.getItem('rj_goto'); localStorage.removeItem('rj_goto'); }catch(e){}
+  var ok = ['jobs','quick','home','guide','active','me'];
+  return (t && ok.indexOf(t) >= 0) ? t : null;
+}
 function enterMain(){
-  window._mode='main'; mainTab='home';
+  window._mode='main'; mainTab = wantTab() || 'home';
   loadJobs();
   loadQuick().then(function(){
     if(window._mode==='main') renderMain();
@@ -1711,6 +1816,7 @@ function clearLocal(){
     localStorage.removeItem('rc_company');
     localStorage.removeItem('rc_order');
     localStorage.removeItem('rc_home');
+    localStorage.removeItem('rj_goto');
   }catch(e){}
 }
 function goHome(){

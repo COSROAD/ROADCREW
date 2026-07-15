@@ -369,7 +369,14 @@ function finish(){
 }
 
 /* ═══════════ 업체 메인 ═══════════ */
-function enterMain(){ mode='main'; tab='home'; loadAll(); startRealtime(); }
+/* 첫 화면에서 누른 탭으로 (한 번만) */
+function wantTab(){
+  var t = null;
+  try{ t = localStorage.getItem('rj_goto'); localStorage.removeItem('rj_goto'); }catch(e){}
+  var ok = ['jobs','quick','home','guide','active','me'];
+  return (t && ok.indexOf(t) >= 0) ? t : null;
+}
+function enterMain(){ mode='main'; tab = wantTab() || 'home'; loadAll(); startRealtime(); }
 function renderMain(){
   var titles={home:'로드잡',jobs:'구인',quick:'퀵 보내기',active:'진행중',guide:'앱 사용안내',me:'내 정보'};
   document.getElementById('topbar').innerHTML =
@@ -1371,6 +1378,7 @@ function clearLocal(){
     localStorage.removeItem('rc_driver');
     localStorage.removeItem('rc_company');
     localStorage.removeItem('rc_home');
+    localStorage.removeItem('rj_goto');
   }catch(e){}
 }
 function switchRole(){ clearLocal(); location.replace('index.html'); }
