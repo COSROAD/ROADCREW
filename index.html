@@ -603,7 +603,7 @@ function enterMain(){
 
 function renderMain(){
   var top = document.getElementById('topbar');
-  var titles = { home:'로드잡', jobs:'일자리 찾기', quick:'퀵 일감', active:'진행중', me:'내 정보' };
+  var titles = { home:'로드잡', jobs:'일자리 찾기', quick:'퀵 일감', active:'진행중', guide:'앱 사용안내', me:'내 정보' };
   top.innerHTML = '<div class="top"><h1>'+(titles[mainTab]||'로드잡')+'</h1>'
     + (mainTab==='jobs' ? '<button class="back" style="font-size:15px;font-weight:800;color:var(--navy);" onclick="openFilter()">필터</button>' : '')
     + '</div>';
@@ -612,7 +612,7 @@ function renderMain(){
   document.getElementById('foot').innerHTML = tabbar();
 }
 function tabbar(){
-  var t = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['home','','홈'],['active','📋','진행중'],['me','👤','내정보']];
+  var t = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['home','','홈'],['guide','📖','안내'],['active','📋','진행중'],['me','👤','내정보']];
   return '<div style="display:flex;align-items:flex-end;">'
   + t.map(function(x){
       var on = mainTab===x[0];
@@ -624,9 +624,11 @@ function tabbar(){
       }
       return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:6px 0 4px;cursor:pointer;'
         +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
-        +'<div style="font-size:19px;">'+x[1]+'</div><div style="font-size:11px;margin-top:2px;">'+x[2]+'</div></div>';
+        +'<div style="font-size:18px;">'+x[1]+'</div><div style="font-size:10px;margin-top:2px;">'+x[2]+'</div></div>';
     }).join('')
-  +'</div>';
+  +'</div>'
+  +'<div style="text-align:right;padding:0 12px 4px;">'
+  +'<button class="viewmore" style="font-size:11px;" onclick="logout()">로그아웃</button></div>';
 }
 
 var MAIN = {
@@ -635,7 +637,7 @@ var MAIN = {
 home:function(){
   if(!landingOff()) return landingView();
 
-  var h = onlineBar() + earnBar();
+  var h = onlineBar() + earnBar() + activeBar();
 
   /* 실시간 피드: 새 퀵 + 새 공고를 시간순으로 */
   var feed = [];
@@ -685,6 +687,70 @@ home:function(){
   }).join('');
 
   return h + quickNotice();
+},
+
+/* ═══════════ 📖 앱 사용안내 ═══════════ */
+guide:function(){
+  return ''
+  +'<div style="background:var(--navy);color:#fff;border-radius:16px;padding:18px;margin-bottom:14px;">'
+  +'<div style="font-size:17px;font-weight:850;margin-bottom:6px;">📲 설치 없이 바로 사용</div>'
+  +'<div style="font-size:13px;opacity:.85;line-height:1.8;">'
+  +'앱스토어에서 <b>내려받지 않아도 됩니다.</b><br>'
+  +'주소(roadjob.co.kr)로 접속하면 그 자체가 앱이에요.<br>'
+  +'업데이트도 자동이라 다시 설치할 일이 없습니다.'
+  +'</div></div>'
+
+  +'<div class="card" style="margin-top:0;">'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🏠 폰 홈 화면에 추가하기</div>'
+  +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
+  +'추가하면 <b>일반 앱처럼 아이콘</b>이 생겨 바로 실행됩니다.<br><br>'
+  +'<b style="color:var(--ink);">📱 안드로이드 (크롬)</b><br>'
+  +'우측 상단 <b>⋮ 메뉴</b> → <b>홈 화면에 추가</b><br>'
+  +'안 보이면 → <b>⋮ → 공유 → 홈 화면에 추가</b><br><br>'
+  +'<b style="color:var(--ink);">🍎 아이폰 (사파리)</b><br>'
+  +'하단 <b>공유 버튼(⬆️)</b> → <b>홈 화면에 추가</b><br>'
+  +'<span style="font-size:12px;color:#9AA4B4;">※ 아이폰은 사파리에서만 됩니다</span>'
+  +'</div></div>'
+
+  +'<div class="card">'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🚚 퀵 일감 받는 법</div>'
+  +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
+  +'<b style="color:var(--ink);">1.</b> 홈 또는 <b>퀵수락</b> 탭에서 일감을 봅니다<br>'
+  +'<b style="color:var(--ink);">2.</b> <b>먼저 수락</b>하는 기사님이 배정됩니다<br>'
+  +'<b style="color:var(--ink);">3.</b> 수락 → <b>픽업 완료</b> → <b>배송 완료</b> 순으로 누르세요<br>'
+  +'<b style="color:var(--ink);">4.</b> 요금은 <b>고객에게 직접</b> 받으세요 (현금·계좌·송금)<br><br>'
+  +'🔔 새 일감이 오면 <b>소리·진동</b>으로 알려드립니다.<br>'
+  +'쉬실 땐 홈에서 <b>「일감 받는 중」</b>을 꺼두세요.'
+  +'</div></div>'
+
+  +'<div class="card">'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">💼 일자리 찾는 법</div>'
+  +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
+  +'<b style="color:var(--ink);">구직</b> 탭에서 공고에 지원하면 업체에 문자가 갑니다.<br>'
+  +'업체가 먼저 제안하면 <b>홈</b>에서 수락/거절하세요.<br><br>'
+  +'👁 <b>내정보 → 업체에 프로필 공개</b>를 켜두면<br>'
+  +'업체가 나를 찾아 <b>먼저 제안</b>할 수 있습니다.'
+  +'</div></div>'
+
+  +'<div class="card">'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">✅ 면허 인증</div>'
+  +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
+  +'인증된 기사는 업체가 훨씬 <b>믿고 연락</b>합니다.<br>'
+  +'면허증 사진은 <b>확인 즉시 파기</b>하며 보관하지 않습니다.'
+  +'</div></div>'
+
+  +'<div class="card">'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🛠️ 이럴 땐 이렇게</div>'
+  +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
+  +'<b style="color:var(--ink);">Q. 글씨가 너무 작게 나와요</b><br>'
+  +'크롬 <b>⋮ → 데스크톱 사이트</b> 체크를 해제하고 새로고침하세요.<br><br>'
+  +'<b style="color:var(--ink);">Q. 알림 소리가 안 나요</b><br>'
+  +'홈에서 <b>🔔 알림음 켜기</b>를 한 번 눌러주세요. 브라우저는 한 번 눌러야 소리를 낼 수 있습니다.<br><br>'
+  +'<b style="color:var(--ink);">Q. 내 위치가 안 잡혀요</b><br>'
+  +'<b>내정보 → 위치정보 이용</b>을 켜고, 브라우저가 물어보면 <b>허용</b>하세요.'
+  +'</div></div>'
+
+  + quickNotice();
 },
 
 /* ═══════════ 📋 진행중 ═══════════ */
@@ -849,11 +915,8 @@ me:function(){
    + earnCard()
    + openProfileBox()
    + geoBox()
-   + guideBox()
    +'<button class="btn btn-ghost" style="margin-top:14px;" onclick="editProfile()">프로필 수정</button>'
-   +'<button class="btn btn-ghost" style="margin-top:18px;padding:13px;font-size:14px;" onclick="goHome()">🏠 처음 화면으로</button>'
-   +'<div style="display:flex;justify-content:center;gap:18px;margin-top:14px;">'
-   +'<button class="viewmore" onclick="logout()">로그아웃</button>'
+   +'<div style="display:flex;justify-content:center;margin-top:18px;">'
    +'<button class="viewmore" style="color:#F04438;" onclick="withdraw()">회원 탈퇴</button>'
    +'</div>';
 }
@@ -908,32 +971,6 @@ function withdraw(){
     .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
 }
 
-/* ═══════════ 📖 사용안내 ═══════════ */
-function guideBox(){
-  return '<div class="card" style="margin-top:12px;">'
-    +'<div style="font-size:14.5px;font-weight:800;margin-bottom:10px;">📖 사용안내</div>'
-    +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
-    +'<b style="color:var(--ink);">🚚 퀵 일감</b><br>'
-    +'홈 또는 퀵수락 탭에서 <b>먼저 수락</b>하면 배정됩니다.<br>'
-    +'수락 → 픽업 완료 → 배송 완료 순으로 눌러주세요.<br>'
-    +'요금은 <b>고객에게 직접</b> 받으세요 (현금·계좌·송금).<br><br>'
-    +'<b style="color:var(--ink);">💼 일자리</b><br>'
-    +'구직 탭에서 공고에 지원하면 업체에 문자가 갑니다.<br>'
-    +'업체가 먼저 제안하면 진행중 탭에서 수락/거절하세요.<br><br>'
-    +'<b style="color:var(--ink);">🔔 알림</b><br>'
-    +'새 일감이 오면 소리·진동으로 알려드립니다.<br>'
-    +'쉬실 땐 「일감 받는 중」을 꺼두세요.<br><br>'
-    +'<b style="color:var(--ink);">✅ 면허 인증</b><br>'
-    +'인증된 기사는 업체가 훨씬 신뢰합니다.<br>'
-    +'면허증 사진은 <b>검수 즉시 파기</b>합니다.'
-    +'</div>'
-    +'<button class="btn btn-ghost" style="margin-top:14px;padding:11px;font-size:13.5px;" onclick="showLanding()">🏠 홈 안내 화면 다시 보기</button>'
-    +'<div class="note-mid" style="margin-top:12px;">'
-    +'<b>로드잡은 통신판매중개자입니다.</b><br>'
-    +'운송·고용 계약의 당사자가 아닙니다. 문의: 고객센터'
-    +'</div>'
-    +'</div>';
-}
 
 /* 수행 중인 퀵 카드 */
 function quickJobCard(o, i){
@@ -980,7 +1017,8 @@ function goTab(t){ mainTab = t; renderMain(); window.scrollTo(0,0); }
 function landingView(){
   return '<div style="text-align:center;padding:8px 0 20px;">'
     +'<div class="brand"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
-    +'<p class="sub" style="margin-top:8px;">'+esc(D.name||'기사')+'님, 무엇을 하시겠어요?</p></div>'
+    +'<p class="sub" style="margin-top:8px;">'+esc(D.name||'기사')+'님, 무엇을 하시겠어요?</p>'
+    +'<p class="sub" style="margin-top:4px;font-size:13px;color:#9AA4B4;">아래 탭을 눌러 확인하세요</p></div>'
 
     +'<div style="display:grid;gap:12px;">'
 
@@ -1001,13 +1039,36 @@ function landingView(){
     +'<div onclick="goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
     +'<span style="font-size:34px;">📋</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">진행중 보기</div>'
-    +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">수행 중인 퀵 · 지원한 공고 상태</div></div>'
-    +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
+    +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">수행 중인 퀵 · 지원한 공고 상태</div>'
+    + (quickMine.filter(function(o){return o.status==='accepted'||o.status==='picked';}).length
+        ? '<div style="font-size:12.5px;font-weight:800;color:var(--orange);margin-top:5px;">수행 중 '+quickMine.filter(function(o){return o.status==='accepted'||o.status==='picked';}).length+'건</div>' : '')
+    +'</div><span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
     +'</div>'
 
     +'<button class="btn btn-ghost" style="margin-top:18px;padding:13px;font-size:14px;" onclick="hideLanding()">이 안내 그만 보기 · 홈을 실시간 화면으로</button>'
     +'<div class="hint" style="text-align:center;margin-top:8px;">언제든 내 정보에서 다시 켤 수 있습니다.</div>';
+}
+
+/* 진행중 바로가기 — 수행 중인 퀵이 있으면 홈 위에 */
+function activeBar(){
+  var mine = quickMine.filter(function(o){ return o.status==='accepted' || o.status==='picked'; });
+  var waiting = myApps.filter(function(a){ return a.direction==='offer' && a.status==='applied'; });
+  if(!mine.length && !waiting.length){
+    return '<div onclick="goTab(\'active\')" style="cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-size:17px;">📋</span>'
+      +'<div style="flex:1;font-size:13px;font-weight:700;color:var(--ink-soft);">진행중 보기</div>'
+      +'<span style="color:#C4CBD6;font-size:16px;">›</span></div>';
+  }
+  return '<div onclick="goTab(\'active\')" style="cursor:pointer;background:var(--orange-soft);border:1.5px solid var(--orange);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">'
+    +'<span style="font-size:18px;">📋</span>'
+    +'<div style="flex:1;"><div style="font-size:13.5px;font-weight:800;color:#993C1D;">진행중</div>'
+    +'<div style="font-size:12px;color:#993C1D;margin-top:2px;">'
+    + (mine.length ? '수행 중인 퀵 '+mine.length+'건' : '')
+    + (mine.length && waiting.length ? ' · ' : '')
+    + (waiting.length ? '받은 제안 '+waiting.length+'건' : '')
+    +'</div></div>'
+    +'<span style="color:var(--orange);font-size:16px;">›</span></div>';
 }
 
 /* ═══════════ 💰 수입 ═══════════ */
