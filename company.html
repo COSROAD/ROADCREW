@@ -394,7 +394,7 @@ function renderMain(){
     '<div class="top" style="flex-direction:column;align-items:stretch;gap:0;padding:0;">'
     + '<div style="display:flex;align-items:center;gap:10px;padding:13px 16px 9px;">'
     +   brandHtml()
-    +   (tab==='jobs' ? '<button class="back" style="font-size:14px;font-weight:800;color:var(--navy);" onclick="newJob()">+ 공고 등록</button>' : '')
+    +   ((tab==='jobs'||tab==='find') ? '<button class="back" style="font-size:14px;font-weight:800;color:var(--navy);" onclick="newJob()">+ 공고 등록</button>' : '')
     + '</div>'
     + tabbar()
     + '</div>';
@@ -406,7 +406,8 @@ function tabbar(){
   var t=[['jobs','📢','구인'],['quick','📦','퀵발송'],['home','🏠','홈'],['guide','📖','안내'],['active','📋','진행중'],['me','👤','내정보']];
   return '<div style="display:flex;border-top:1px solid var(--line);padding-bottom:15px;">'
     + t.map(function(x){
-        var on = tab===x[0];
+        /* find 는 구인의 하위 화면이므로 구인 탭을 켜둔다 */
+        var on = (tab===x[0]) || (x[0]==='jobs' && tab==='find');
         if(x[0]==='home'){
           return '<div onclick="tab=\'home\';renderMain()" style="flex:1.1;text-align:center;padding:9px 0 8px;cursor:pointer;'
             +'border-bottom:3px solid '+(on?'var(--orange)':'transparent')+';">'
@@ -647,9 +648,17 @@ active:function(){
 },
 
 jobs:function(){
-  if(!myJobs.length) return empty('📢','등록한 공고가 없습니다','첫 채용 공고를 올려보세요.',
+  /* 안내에 「구인 탭 → 기사 찾기」라고 적어놨으므로 여기에 진입구가 있어야 한다 */
+  var findBtn = '<div onclick="goTab(\'find\')" style="cursor:pointer;background:#fff;border:1.5px solid var(--line);'
+    +'border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">'
+    +'<span style="font-size:20px;">🔎</span>'
+    +'<div style="flex:1;"><div style="font-size:14.5px;font-weight:800;">기사 찾기</div>'
+    +'<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">마음에 드는 기사님께 먼저 제안</div></div>'
+    +'<span style="font-size:19px;color:#9AA4B4;">›</span></div>';
+
+  if(!myJobs.length) return findBtn + empty('📢','등록한 공고가 없습니다','첫 채용 공고를 올려보세요.',
     '<button class="btn btn-main" style="margin-top:22px;" onclick="newJob()">+ 공고 등록하기</button>');
-  return myJobs.map(function(j,i){
+  return findBtn + myJobs.map(function(j,i){
     var cnt = apps.filter(function(a){return a.jobId===j.id;}).length;
     var open = j.status==='open';
     return '<div class="card" style="margin-top:0;margin-bottom:12px;">'
@@ -695,8 +704,12 @@ apps:function(){
   }).join('');
 },
 find:function(){
-  if(!drivers.length) return empty('🔎','공개된 기사가 없습니다','프로필 공개에 동의한 기사만 표시됩니다.');
-  return drivers.map(function(d,i){
+  /* find 는 탭이 아니라 구인 탭의 하위 화면 — 돌아갈 길을 반드시 둔다 */
+  var back = '<div onclick="goTab(\'jobs\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;'
+    +'font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">‹ 구인으로</div>';
+  if(!drivers.length) return back + empty('🔎','공개된 기사가 없습니다','프로필 공개에 동의한 기사만 표시됩니다.');
+  return back + '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">기사님을 누르면 모집중인 공고로 <b>채용 제안</b>을 보낼 수 있습니다.</div>'
+    + drivers.map(function(d,i){
     return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;" onclick="openDriver('+i+')">'
      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
      +'<div style="font-size:16.5px;font-weight:800;">'+esc(d.name)+' 기사님'

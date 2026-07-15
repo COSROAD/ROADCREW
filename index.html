@@ -1876,7 +1876,12 @@ function boot(){
         joined = true;
         if(forceHome){ window._mode='signup'; step=0; render(); }
         else enterMain();
-      } else { window._mode='signup'; step=0; render(); }
+      } else {
+        /* 아직 가입 안 한 사람. step 을 건드리면 안 된다 —
+           인증번호를 막 맞춘 사람(step=code)까지 첫 화면으로 튕겨서 가입이 막힌다.
+           「처음 화면으로」는 location.replace 로 새로 열리므로 step 은 이미 0이다. */
+        window._mode='signup'; render();
+      }
     }).catch(function(){ window._mode='signup'; render(); });
   });
 }
