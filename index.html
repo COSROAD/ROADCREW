@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="ROADJOB">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ROADJOB 로드잡">
-<meta property="og:title" content="cosROADJOB 로드잡">
+<meta property="og:title" content="ROADJOB 로드잡">
 <meta property="og:description" content="기사와 일자리를 잇는 곳. 구인 · 구직 · 퀵을 한곳에서.">
 <meta property="og:image" content="https://roadjob.co.kr/og-roadjob.png?v=1">
 <meta property="og:image:width" content="1200">
@@ -89,13 +89,7 @@ textarea{min-height:90px;resize:vertical;}
 .brand{display:flex;align-items:center;justify-content:center;gap:2px;font-weight:900;letter-spacing:-.02em;}
 .brand .cos{font-size:15px;color:var(--orange);opacity:.9;}
 .brand .rc{font-size:26px;color:var(--navy);}
-.hero{text-align:center;padding:56px 0 30px;}
-.hero .sub{font-size:15px;color:var(--ink-soft);margin-top:10px;}
-.hero .pts{margin-top:30px;display:grid;gap:10px;text-align:left;}
-.pt{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;display:flex;gap:12px;align-items:center;}
-.pt .e{font-size:24px;}
-.pt .t{font-size:14.5px;font-weight:700;}
-.pt .d{font-size:13px;color:var(--ink-soft);}
+/* 옛 시작화면(.hero/.pt/.pts)은 게이트 화면으로 대체되어 제거함 */
 .demo{background:#FFF7E6;border:1px solid #FFE0A3;color:#8A5A00;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;margin-bottom:16px;}
 .note-mid{background:#F2F4F7;border-radius:10px;padding:12px;margin-top:16px;font-size:12px;color:var(--ink-soft);line-height:1.7;}
 .note-mid b{color:var(--ink);}
@@ -278,7 +272,7 @@ function gateView(){
     + '<div class="gate-body">'
     +   '<div style="text-align:center;margin-bottom:12px;">'
     +     '<div class="brand"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
-    +     '<p class="sub" style="margin-top:5px;font-size:13px;">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</p>'
+    +     '<div style="margin-top:5px;font-size:13px;color:var(--ink-soft);line-height:1.5;">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</div>'
     +   '</div>'
     +   '<div style="display:flex;align-items:center;gap:8px;">'
     +     '<button class="arw-btn" onclick="slideMove(-1)" aria-label="이전">‹</button>'
@@ -1035,6 +1029,7 @@ me:function(){
    + openProfileBox()
    + geoBox()
    +'<button class="btn btn-ghost" style="margin-top:14px;" onclick="editProfile()">프로필 수정</button>'
+   + (landingOff() ? '<button class="btn btn-ghost" style="margin-top:8px;" onclick="showLanding()">🏠 홈 안내 다시 보기</button>' : '')
    +'<div style="display:flex;justify-content:center;margin-top:18px;">'
    +'<button class="viewmore" style="color:#F04438;" onclick="withdraw()">회원 탈퇴</button>'
    +'</div>';

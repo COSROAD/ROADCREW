@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="ROADJOB 업체">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ROADJOB 로드잡">
-<meta property="og:title" content="cosROADJOB 로드잡">
+<meta property="og:title" content="ROADJOB 로드잡">
 <meta property="og:description" content="기사와 일자리를 잇는 곳. 구인 · 구직 · 퀵을 한곳에서.">
 <meta property="og:image" content="https://roadjob.co.kr/og-roadjob.png?v=1">
 <meta property="og:image:width" content="1200">
@@ -406,8 +406,10 @@ function tabbar(){
   var t=[['jobs','📢','구인'],['quick','📦','퀵발송'],['home','🏠','홈'],['guide','📖','안내'],['active','📋','진행중'],['me','👤','내정보']];
   return '<div style="display:flex;border-top:1px solid var(--line);padding-bottom:15px;">'
     + t.map(function(x){
-        /* find 는 구인의 하위 화면이므로 구인 탭을 켜둔다 */
-        var on = (tab===x[0]) || (x[0]==='jobs' && tab==='find');
+        /* find 는 구인의, apps 는 진행중의 하위 화면 — 부모 탭을 켜둔다 */
+        var on = (tab===x[0])
+              || (x[0]==='jobs'   && tab==='find')
+              || (x[0]==='active' && tab==='apps');
         if(x[0]==='home'){
           return '<div onclick="tab=\'home\';renderMain()" style="flex:1.1;text-align:center;padding:9px 0 8px;cursor:pointer;'
             +'border-bottom:3px solid '+(on?'var(--orange)':'transparent')+';">'
@@ -670,7 +672,7 @@ jobs:function(){
      +'</div>'
      + (j.deadline ? '<div style="font-size:12.5px;color:'+(isExpired(j)?'#F04438':'var(--ink-soft)')+';margin-top:8px;font-weight:700;">🗓 '+esc(j.deadline)+(isExpired(j)?' (기간 지남)':'')+'</div>' : '')
      +'<div style="display:flex;gap:8px;margin-top:14px;">'
-     +'<button class="btn btn-ghost" style="padding:11px;font-size:14px;" onclick="tab=\'apps\';renderMain()">지원자 '+cnt+'명</button>'
+     +'<button class="btn btn-ghost" style="padding:11px;font-size:14px;" onclick="goTab(\'apps\')">지원자 '+cnt+'명</button>'
      +(open
         ? '<button class="btn btn-ghost" style="padding:11px;font-size:14px;" onclick="editJob('+i+')">수정</button>'
         : '<button class="btn btn-ghost" style="padding:11px;font-size:14px;color:#12B76A;border-color:#12B76A;" onclick="reopenJob(\''+j.id+'\')">다시 모집</button>')
@@ -682,11 +684,16 @@ jobs:function(){
   }).join('');
 },
 apps:function(){
-  if(!apps.length) return empty('📥','아직 지원자가 없습니다','공고를 올리면 기사님들이 지원합니다.');
+  /* 진행중 탭이 이 화면을 품고 있지만, 「지원자 N명」으로 직접 들어오기도 한다 */
+  var back = (tab==='apps')
+    ? '<div onclick="goTab(\'jobs\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;'
+      +'font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">‹ 구인으로</div>'
+    : '';
+  if(!apps.length) return back + empty('📥','아직 지원자가 없습니다','공고를 올리면 기사님들이 지원합니다.');
   var ST={applied:['새 지원','#1570EF','#EFF8FF'],viewed:['열람함','#7C3AED','#F4EBFF'],
           contact:['연락중','#EA580C','#FFF4ED'],hired:['채용확정','#12B76A','#ECFDF3'],rejected:['미선정','#98A2B3','#F2F4F7'],
           accepted:['제안 수락','#12B76A','#ECFDF3'],declined:['제안 거절','#98A2B3','#F2F4F7']};
-  return apps.map(function(a,i){
+  return back + apps.map(function(a,i){
     var s=ST[a.status]||ST.applied;
     if(a.direction==='offer' && a.status==='applied') s=['제안함 · 대기','#EA580C','#FFF4ED'];
     var from = (a.direction==='offer')
@@ -725,6 +732,7 @@ me:function(){
    + row('담당자',esc(C.manager)) + row('연락처',fmtPhone(C.phone))
    + row('업종',esc(C.bizType)) + row('지역',esc(C.area))+'</div>'
    + geoBoxC()
+   + (landingOff() ? '<button class="btn btn-ghost" style="margin-top:14px;" onclick="showLanding()">🏠 홈 안내 다시 보기</button>' : '')
    +'<div style="display:flex;justify-content:center;margin-top:20px;">'
    +'<button class="viewmore" style="color:#F04438;" onclick="withdraw()">회원 탈퇴</button>'
    +'</div>';
