@@ -30,6 +30,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Appl
 .top{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:14px 16px;}
 .back{border:none;background:none;font-size:22px;color:var(--ink-soft);cursor:pointer;padding:0 4px;}
 .top h1{font-size:16px;font-weight:800;margin:0;flex:1;}
+.brand{flex:1;min-width:0;}
+.brand .bn{font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.15;}
+.brand .bn .cos{font-size:11px;font-weight:800;color:var(--orange);vertical-align:2px;}
+.brand .bt{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:3px;}
+.brand .bt2{font-size:11px;font-weight:600;color:#9AA4B4;margin-top:1px;}
 .prog{height:4px;background:var(--line);}
 .prog i{display:block;height:100%;background:var(--orange);width:0;transition:.3s;}
 .wrap{flex:1;padding:22px 18px 120px;}
@@ -377,16 +382,21 @@ function wantTab(){
   return (t && ok.indexOf(t) >= 0) ? t : null;
 }
 function enterMain(){ mode='main'; tab = wantTab() || 'home'; loadAll(); startRealtime(); }
+function brandHtml(){
+  /* 탭을 누르면 어디인지 사용자가 아니까, 바뀌는 제목 대신 브랜드를 고정으로 둔다 */
+  return '<div class="brand">'
+    +'<div class="bn"><span class="cos">cos</span>ROADJOB</div>'
+    +'<div class="bt">기사와 일자리를 잇는 곳</div>'
+    +'<div class="bt2">구인 · 구직 · 퀵을 한곳에서</div></div>';
+}
 function renderMain(){
-  var titles={home:'로드잡',jobs:'구인',quick:'퀵 보내기',active:'진행중',guide:'앱 사용안내',me:'내 정보'};
   document.getElementById('topbar').innerHTML =
     '<div class="top" style="flex-direction:column;align-items:stretch;gap:0;padding:0;">'
     + '<div style="display:flex;align-items:center;gap:10px;padding:13px 16px 9px;">'
-    +   '<h1 style="flex:1;">'+(titles[tab]||'로드잡')+'</h1>'
+    +   brandHtml()
     +   (tab==='jobs' ? '<button class="back" style="font-size:14px;font-weight:800;color:var(--navy);" onclick="newJob()">+ 공고 등록</button>' : '')
     + '</div>'
     + tabbar()
-    + topLogout()
     + '</div>';
   document.getElementById('progbar').style.width='0';
   document.getElementById('view').innerHTML = MAIN[tab]();
@@ -394,7 +404,7 @@ function renderMain(){
 }
 function tabbar(){
   var t=[['jobs','📢','구인'],['quick','📦','퀵발송'],['home','🏠','홈'],['guide','📖','안내'],['active','📋','진행중'],['me','👤','내정보']];
-  return '<div style="display:flex;border-top:1px solid var(--line);">'
+  return '<div style="display:flex;border-top:1px solid var(--line);padding-bottom:15px;">'
     + t.map(function(x){
         var on = tab===x[0];
         if(x[0]==='home'){
@@ -404,16 +414,17 @@ function tabbar(){
             +'background:'+(on?'var(--orange)':'var(--navy)')+';color:#fff;">🏠</div>'
             +'<div style="font-size:10.5px;margin-top:3px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
         }
-        return '<div onclick="tab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:9px 0 8px;cursor:pointer;'
+        /* 내정보 칸 바로 아래에 로그아웃 (탭 줄맞춤을 건드리지 않도록 겹쳐 놓음) */
+        var lg = (x[0]==='me')
+          ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:0;right:0;top:100%;margin-top:2px;'
+            +'font-size:9.5px;font-weight:700;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
+          : '';
+        return '<div onclick="tab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:9px 0 8px;cursor:pointer;'
           +'border-bottom:3px solid '+(on?'var(--navy)':'transparent')+';'
           +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
-          +'<div style="font-size:17px;">'+x[1]+'</div><div style="font-size:10px;margin-top:2px;">'+x[2]+'</div></div>';
+          +'<div style="font-size:17px;">'+x[1]+'</div><div style="font-size:10px;margin-top:2px;">'+x[2]+'</div>'+lg+'</div>';
       }).join('')
     +'</div>';
-}
-function topLogout(){
-  return '<div style="text-align:right;padding:0 12px 6px;">'
-    +'<button class="viewmore" style="font-size:11px;" onclick="logout()">로그아웃</button></div>';
 }
 function empty(icon,t,d,btn){
   return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);"><div style="font-size:46px;">'+icon+'</div>'

@@ -30,6 +30,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Appl
 .top{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:14px 16px;}
 .back{border:none;background:none;font-size:22px;color:var(--ink-soft);cursor:pointer;padding:0 4px;}
 .top h1{font-size:16px;font-weight:800;margin:0;flex:1;}
+.brand{flex:1;min-width:0;}
+.brand .bn{font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.15;}
+.brand .bn .cos{font-size:11px;font-weight:800;color:var(--orange);vertical-align:2px;}
+.brand .bt{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:3px;}
+.brand .bt2{font-size:11px;font-weight:600;color:#9AA4B4;margin-top:1px;}
 .prog{height:4px;background:var(--line);}
 .prog i{display:block;height:100%;background:var(--orange);width:0;transition:.3s;}
 .wrap{flex:1;padding:22px 18px 120px;}
@@ -96,13 +101,12 @@ textarea{min-height:90px;resize:vertical;}
 .note-mid b{color:var(--ink);}
 .gate{position:fixed;inset:0;max-width:520px;margin:0 auto;background:var(--bg);
   display:flex;flex-direction:column;z-index:30;}
-.gate-tab{background:#fff;display:flex;padding:7px 0 6px;cursor:pointer;}
-.gate-tab.top{padding-top:calc(7px + env(safe-area-inset-top));}
-.gate-tab.bot{border-top:1px solid var(--line);}
-.gate-login{background:#fff;text-align:right;padding:0 12px 5px;}
-.gate-login.top{border-bottom:1px solid var(--line);}
-.gate-login.bot{padding:5px 12px calc(5px + env(safe-area-inset-bottom));}
-.gate-tab .gi{flex:1;text-align:center;color:#9AA4B4;transition:.15s;}
+.gate-tab{background:#fff;display:flex;padding:7px 0 19px;cursor:pointer;}
+.gate-tab.top{border-bottom:1px solid var(--line);padding-top:calc(7px + env(safe-area-inset-top));}
+.gate-tab.bot{border-top:1px solid var(--line);padding-bottom:calc(19px + env(safe-area-inset-bottom));}
+.gate-tab .gi .lg{position:absolute;left:0;right:0;top:100%;margin-top:2px;font-size:9px;font-weight:700;
+  color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;}
+.gate-tab .gi{flex:1;position:relative;text-align:center;color:#9AA4B4;transition:.15s;}
 .gate-tab .gi.mid{flex:1.15;}
 .gate-tab .gi:active{transform:scale(.94);}
 .gate-tab .gi .e{font-size:17px;line-height:1.1;}
@@ -245,23 +249,24 @@ var SLIDES = [
 var slideIdx = 0;
 
 function gateTabHtml(tabs, role, cls){
-  var login = '<div class="gate-login '+cls+'">'
-    +'<button class="viewmore" style="font-size:11px;" onclick="gateGo(\''+role+'\',\'home\')">'
-    + (role==='company' ? '업체 로그인' : '기사 로그인') + '</button></div>';
-  var bar = '<div class="gate-tab '+cls+'">'
+  var word = (role==='company') ? '업체 로그인' : '기사 로그인';
+  return '<div class="gate-tab '+cls+'">'
     + tabs.map(function(x){
         if(x[0]==='home'){
           return '<div class="gi mid" onclick="gateGo(\''+role+'\',\'home\')">'
             +'<div class="ball" style="background:'+(role==='company'?'var(--orange)':'var(--navy)')+';">🏠</div>'
             +'<div class="n" style="color:'+(role==='company'?'var(--orange)':'var(--navy)')+';">홈</div></div>';
         }
+        /* 내정보 칸에만 라벨 바로 아래 로그인을 붙인다 (탭 줄을 따로 만들지 않음) */
+        var lg = (x[0]==='me')
+          ? '<span class="lg" onclick="event.stopPropagation();gateGo(\''+role+'\',\'home\')">'+word+'</span>'
+          : '';
         return '<div class="gi" onclick="gateGo(\''+role+'\',\''+x[0]+'\')">'
-          +'<div class="e">'+x[1]+'</div><div class="n">'+x[2]+'</div></div>';
+          +'<div class="e">'+x[1]+'</div><div class="n">'+x[2]+'</div>'+lg+'</div>';
       }).join('')
     +'</div>';
-  /* 상단은 탭 아래에, 하단은 탭 위에 로그인을 둔다 (화면 안쪽) */
-  return (cls==='top') ? (bar + login) : (login + bar);
 }
+
 
 function gateView(){
   var sl = SLIDES[slideIdx];
@@ -706,10 +711,16 @@ function enterMain(){
   });
 }
 
+function brandHtml(){
+  /* 탭을 누르면 어디인지 사용자가 아니까, 바뀌는 제목 대신 브랜드를 고정으로 둔다 */
+  return '<div class="brand">'
+    +'<div class="bn"><span class="cos">cos</span>ROADJOB</div>'
+    +'<div class="bt">기사와 일자리를 잇는 곳</div>'
+    +'<div class="bt2">구인 · 구직 · 퀵을 한곳에서</div></div>';
+}
 function renderMain(){
   var top = document.getElementById('topbar');
-  var titles = { home:'로드잡', jobs:'일자리 찾기', quick:'퀵 일감', active:'진행중', guide:'앱 사용안내', me:'내 정보' };
-  top.innerHTML = '<div class="top"><h1>'+(titles[mainTab]||'로드잡')+'</h1>'
+  top.innerHTML = '<div class="top">' + brandHtml()
     + (mainTab==='jobs' ? '<button class="back" style="font-size:15px;font-weight:800;color:var(--navy);" onclick="openFilter()">필터</button>' : '')
     + '</div>';
   document.getElementById('progbar').style.width='0';
@@ -718,7 +729,7 @@ function renderMain(){
 }
 function tabbar(){
   var t = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['home','','홈'],['guide','📖','안내'],['active','📋','진행중'],['me','👤','내정보']];
-  return '<div style="display:flex;align-items:flex-end;">'
+  return '<div style="display:flex;align-items:flex-end;padding-bottom:15px;">'
   + t.map(function(x){
       var on = mainTab===x[0];
       if(x[0]==='home'){
@@ -727,13 +738,16 @@ function tabbar(){
           +'background:'+(on?'var(--orange)':'var(--navy)')+';color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);">🏠</div>'
           +'<div style="font-size:11px;margin-top:3px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
       }
-      return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;text-align:center;padding:6px 0 4px;cursor:pointer;'
+      /* 내정보 칸 바로 아래에 로그아웃 (탭 줄맞춤을 건드리지 않도록 겹쳐 놓음) */
+      var lg = (x[0]==='me')
+        ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:0;right:0;top:100%;margin-top:2px;'
+          +'font-size:9.5px;font-weight:700;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
+        : '';
+      return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:6px 0 4px;cursor:pointer;'
         +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
-        +'<div style="font-size:18px;">'+x[1]+'</div><div style="font-size:10px;margin-top:2px;">'+x[2]+'</div></div>';
+        +'<div style="font-size:18px;">'+x[1]+'</div><div style="font-size:10px;margin-top:2px;">'+x[2]+'</div>'+lg+'</div>';
     }).join('')
-  +'</div>'
-  +'<div style="text-align:right;padding:0 12px 4px;">'
-  +'<button class="viewmore" style="font-size:11px;" onclick="logout()">로그아웃</button></div>';
+  +'</div>';
 }
 
 var MAIN = {
