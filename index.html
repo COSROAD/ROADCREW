@@ -144,9 +144,11 @@ textarea{min-height:90px;resize:vertical;}
 /* 안내·설치 탭 안 제목 옆 아이콘 (이모지 대체 — 폰마다 다르게 보이던 것) */
 .hi{display:inline-block;vertical-align:-4px;margin-right:6px;}
 .hi .ri{height:20px;display:inline-block;margin:0;}
-/* 홈 카드 왼쪽 큰 아이콘 */
-.ci{flex:none;width:44px;display:flex;align-items:center;justify-content:center;}
-.ci .ri{height:38px;}
+/* 홈 카드 왼쪽 큰 아이콘.
+   SVG 는 그림 둘레에 여백이 있어 같은 높이라도 이모지보다 작아 보인다.
+   (트럭은 세로칸의 65%%만 그림) → 그만큼 키운다. */
+.ci{flex:none;display:flex;align-items:center;justify-content:center;}
+.ci .ri{height:48px;}
 .hi.big .ri{height:24px;}
 .slide .ic{line-height:1;}
 .slide .ic .ri{height:clamp(42px, 8vh, 66px);}
@@ -1378,21 +1380,21 @@ function landingView(){
 
     +'<div style="display:grid;gap:12px;">'
 
-    +'<div onclick="goTab(\'quick\')" style="cursor:pointer;background:var(--orange-soft);border:2px solid var(--orange);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<div onclick="goTab(\'quick\')" style="cursor:pointer;background:var(--orange-soft);border:2px solid var(--orange);border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:12px;">'
     +'<span class="ci"><span class="qk">'+ICO.quick_d+'</span></span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;color:#993C1D;">퀵 일감 받기</div>'
     +'<div style="font-size:13px;color:#993C1D;margin-top:3px;">지금 바로 수입. 먼저 수락하면 배정</div>'
     + (quickOpen.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--orange);margin-top:5px;">지금 대기 중 '+quickOpen.length+'건</div>' : '')
     +'</div><span style="font-size:22px;color:var(--orange);">›</span></div>'
 
-    +'<div onclick="goTab(\'jobs\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<div onclick="goTab(\'jobs\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:12px;">'
     +'<span class="ci">'+ICO.jobs_d+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">일자리 찾기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">셔틀·택배·물류 기사 채용 공고에 지원</div>'
     + (jobs.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--navy);margin-top:5px;">공고 '+jobs.length+'건</div>' : '')
     +'</div><span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
-    +'<div onclick="goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<div onclick="goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:12px;">'
     +'<span class="ci">'+ICO.active+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">진행중 보기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">수행 중인 퀵 · 지원한 공고 상태</div>'
@@ -2761,20 +2763,20 @@ function C_landingView(){
 
     +'<div style="display:grid;gap:12px;">'
 
-    +'<div onclick="C_goTab(\'quick\')" style="cursor:pointer;background:var(--orange-soft);border:2px solid var(--orange);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<div onclick="C_goTab(\'quick\')" style="cursor:pointer;background:var(--orange-soft);border:2px solid var(--orange);border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:12px;">'
     +'<span class="ci"><span class="qk">'+ICO.quick_c+'</span></span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;color:#993C1D;">퀵 보내기</div>'
     +'<div style="font-size:13px;color:#993C1D;margin-top:3px;">서류·소형 박스를 가까운 기사님이 바로 배송</div></div>'
     +'<span style="font-size:22px;color:var(--orange);">›</span></div>'
 
-    +'<div onclick="C_goTab(\'jobs\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<div onclick="C_goTab(\'jobs\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:12px;">'
     +'<span class="ci">'+ICO.jobs_c+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">기사 채용하기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">공고를 올리고 지원자를 받거나, 먼저 제안</div>'
     + (myJobs.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--navy);margin-top:5px;">내 공고 '+myJobs.length+'건</div>' : '')
     +'</div><span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
-    +'<div onclick="C_goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
+    +'<div onclick="C_goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:12px;">'
     +'<span class="ci">'+ICO.active+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">진행중 보기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">보낸 퀵 · 지원자 현황</div></div>'
