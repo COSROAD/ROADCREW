@@ -144,6 +144,9 @@ textarea{min-height:90px;resize:vertical;}
 /* 안내·설치 탭 안 제목 옆 아이콘 (이모지 대체 — 폰마다 다르게 보이던 것) */
 .hi{display:inline-block;vertical-align:-4px;margin-right:6px;}
 .hi .ri{height:20px;display:inline-block;margin:0;}
+/* 홈 카드 왼쪽 큰 아이콘 */
+.ci{flex:none;width:44px;display:flex;align-items:center;justify-content:center;}
+.ci .ri{height:38px;}
 .hi.big .ri{height:24px;}
 .slide .ic{line-height:1;}
 .slide .ic .ri{height:clamp(42px, 8vh, 66px);}
@@ -310,8 +313,8 @@ function next(){ if(step<STEPS.length-1) go(step+1); }
      중앙 = 넘기는 안내 (구인 → 구직 → 퀵)
      하단 = 기사 탭 (누르면 기사 가입 → 그 탭으로)
    ═══════════════════════════════════════════════ */
-var CO_TABS = [['jobs','📢','기사구인'],['quick','📦','퀵발송'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
-var DR_TABS = [['jobs','💼','기사구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
+var CO_TABS = [['jobs','기사구인'],['quick','퀵발송'],['guide','사용법'],['home','홈'],['install','설치'],['active','진행중'],['me','내정보']];
+var DR_TABS = [['jobs','기사구직'],['quick','퀵수락'],['guide','사용법'],['home','홈'],['install','설치'],['active','진행중'],['me','내정보']];
 
 /* 설명은 4장 모두 2줄, 길이를 비슷하게 맞춤 (네모칸이 안 들쭉날쭉하게) */
 var SLIDES = [
@@ -439,7 +442,7 @@ function gateTabHtml(tabs, role, cls){
             +'<div class="n" style="color:'+(role==='company'?'var(--orange)':'var(--navy)')+';">홈</div></div>';
         }
         return '<div class="gi" onclick="gateGo(\''+role+'\',\''+x[0]+'\')">'
-          +'<div class="e">'+icoFor(x[0],role)+'</div><div class="n">'+x[2]+'</div></div>';
+          +'<div class="e">'+icoFor(x[0],role)+'</div><div class="n">'+x[1]+'</div></div>';
       }).join('')
     +'</div>';
 }
@@ -956,7 +959,7 @@ function renderMain(){
   document.getElementById('foot').innerHTML = tabbar();
 }
 function tabbar(){
-  var t = [['jobs','💼','기사구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
+  var t = [['jobs','기사구직'],['quick','퀵수락'],['guide','사용법'],['home','홈'],['install','설치'],['active','진행중'],['me','내정보']];
   return '<div style="display:flex;align-items:flex-end;padding-bottom:21px;">'
   + t.map(function(x){
       var on = mainTab===x[0];
@@ -975,7 +978,7 @@ function tabbar(){
       return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:6px 0 4px;cursor:pointer;'
         +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
         +'<div>'+icoFor(x[0],'driver')+'</div>'
-        +'<div style="font-size:11px;margin-top:4px;letter-spacing:-.8px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
+        +'<div style="font-size:11px;margin-top:4px;letter-spacing:-.8px;white-space:nowrap;">'+x[1]+'</div>'+lg+'</div>';
     }).join('')
   +'</div>';
 }
@@ -1376,21 +1379,21 @@ function landingView(){
     +'<div style="display:grid;gap:12px;">'
 
     +'<div onclick="goTab(\'quick\')" style="cursor:pointer;background:var(--orange-soft);border:2px solid var(--orange);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
-    +'<span style="font-size:34px;">🚚</span>'
+    +'<span class="ci"><span class="qk">'+ICO.quick_d+'</span></span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;color:#993C1D;">퀵 일감 받기</div>'
     +'<div style="font-size:13px;color:#993C1D;margin-top:3px;">지금 바로 수입. 먼저 수락하면 배정</div>'
     + (quickOpen.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--orange);margin-top:5px;">지금 대기 중 '+quickOpen.length+'건</div>' : '')
     +'</div><span style="font-size:22px;color:var(--orange);">›</span></div>'
 
     +'<div onclick="goTab(\'jobs\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
-    +'<span style="font-size:34px;">💼</span>'
+    +'<span class="ci">'+ICO.jobs_d+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">일자리 찾기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">셔틀·택배·물류 기사 채용 공고에 지원</div>'
     + (jobs.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--navy);margin-top:5px;">공고 '+jobs.length+'건</div>' : '')
     +'</div><span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
     +'<div onclick="goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
-    +'<span style="font-size:34px;">📋</span>'
+    +'<span class="ci">'+ICO.active+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">진행중 보기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">수행 중인 퀵 · 지원한 공고 상태</div>'
     + (quickMine.filter(function(o){return o.status==='accepted'||o.status==='picked';}).length
@@ -2352,7 +2355,7 @@ function C_renderMain(){
 
 /* 탭 → 아이콘. 역할에 따라 구직/구인, 퀵수락/퀵발송이 갈린다 */
 function C_tabbar(){
-  var t=[['jobs','📢','기사구인'],['quick','📦','퀵발송'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
+  var t=[['jobs','기사구인'],['quick','퀵발송'],['guide','사용법'],['home','홈'],['install','설치'],['active','진행중'],['me','내정보']];
   return '<div style="display:flex;border-top:1px solid var(--line);padding-bottom:21px;">'
     + t.map(function(x){
         /* find 는 구인의, apps 는 진행중의 하위 화면 — 부모 탭을 켜둔다 */
@@ -2376,7 +2379,7 @@ function C_tabbar(){
           +'border-bottom:3px solid '+(on?'var(--navy)':'transparent')+';'
           +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
           +'<div>'+icoFor(x[0],'company')+'</div>'
-          +'<div style="font-size:11px;margin-top:4px;letter-spacing:-.8px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
+          +'<div style="font-size:11px;margin-top:4px;letter-spacing:-.8px;white-space:nowrap;">'+x[1]+'</div>'+lg+'</div>';
       }).join('')
     +'</div>';
 }
@@ -2759,20 +2762,20 @@ function C_landingView(){
     +'<div style="display:grid;gap:12px;">'
 
     +'<div onclick="C_goTab(\'quick\')" style="cursor:pointer;background:var(--orange-soft);border:2px solid var(--orange);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
-    +'<span style="font-size:34px;">📦</span>'
+    +'<span class="ci"><span class="qk">'+ICO.quick_c+'</span></span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;color:#993C1D;">퀵 보내기</div>'
     +'<div style="font-size:13px;color:#993C1D;margin-top:3px;">서류·소형 박스를 가까운 기사님이 바로 배송</div></div>'
     +'<span style="font-size:22px;color:var(--orange);">›</span></div>'
 
     +'<div onclick="C_goTab(\'jobs\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
-    +'<span style="font-size:34px;">📢</span>'
+    +'<span class="ci">'+ICO.jobs_c+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">기사 채용하기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">공고를 올리고 지원자를 받거나, 먼저 제안</div>'
     + (myJobs.length ? '<div style="font-size:12.5px;font-weight:800;color:var(--navy);margin-top:5px;">내 공고 '+myJobs.length+'건</div>' : '')
     +'</div><span style="font-size:22px;color:#C4CBD6;">›</span></div>'
 
     +'<div onclick="C_goTab(\'active\')" style="cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:15px;">'
-    +'<span style="font-size:34px;">📋</span>'
+    +'<span class="ci">'+ICO.active+'</span>'
     +'<div style="flex:1;"><div style="font-size:17px;font-weight:850;">진행중 보기</div>'
     +'<div style="font-size:13px;color:var(--ink-soft);margin-top:3px;">보낸 퀵 · 지원자 현황</div></div>'
     +'<span style="font-size:22px;color:#C4CBD6;">›</span></div>'
