@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" translate="no">
 <head>
 <meta charset="UTF-8">
+<meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0F2A47">
 <meta name="mobile-web-app-capable" content="yes">
@@ -125,8 +126,9 @@ textarea{min-height:90px;resize:vertical;}
 /* 넘칠 때 위가 잘리지 않는 가운데 정렬 (justify-content:center 는 위를 잘라먹음) */
 .gate-mid{margin:auto 0;width:100%;}
 /* 네모칸은 고정. 안의 설명만 바뀐다 (넘길 때 커졌다 작아졌다 하지 않게) */
-.slide{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 14px;text-align:center;
-  height:186px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+/* 네모칸은 화면 높이에 맞춰 늘고 준다. 좁은 폰 186 · 넓으면 최대 300 */
+.slide{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px 16px;text-align:center;
+  height:clamp(186px, 34vh, 300px);display:flex;flex-direction:column;align-items:center;justify-content:center;
   overflow:hidden;box-sizing:border-box;}
 .slide.in{animation:slide-in .28s ease-out;}
 @keyframes slide-in{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
@@ -139,16 +141,21 @@ textarea{min-height:90px;resize:vertical;}
 .gate-tab .gi .e .qk .ri{height:22px;}
 @keyframes qk-run{0%,100%{transform:translateX(-9px);}50%{transform:translateX(9px);}}
 @media (prefers-reduced-motion:reduce){.qk,.slide.in{animation:none;}}
-.slide .ic{font-size:32px;line-height:1;}
-.slide .ti{font-size:17px;font-weight:850;margin-top:7px;word-break:keep-all;line-height:1.35;}
-.slide .de{font-size:12.5px;color:var(--ink-soft);margin-top:5px;line-height:1.5;word-break:keep-all;}
-.slide .go{margin-top:9px;font-size:12px;font-weight:800;color:var(--orange);word-break:keep-all;}
+/* 안내·설치 탭 안 제목 옆 아이콘 (이모지 대체 — 폰마다 다르게 보이던 것) */
+.hi{display:inline-block;vertical-align:-4px;margin-right:6px;}
+.hi .ri{height:20px;display:inline-block;margin:0;}
+.hi.big .ri{height:24px;}
+.slide .ic{line-height:1;}
+.slide .ic .ri{height:clamp(42px, 8vh, 66px);}
+.slide .ti{font-size:clamp(17px, 2.4vh, 21px);font-weight:850;margin-top:11px;word-break:keep-all;line-height:1.35;}
+.slide .de{font-size:clamp(12.5px, 1.8vh, 15px);color:var(--ink-soft);margin-top:7px;line-height:1.55;word-break:keep-all;}
+.slide .go{margin-top:12px;font-size:clamp(12px, 1.7vh, 14px);font-weight:800;color:var(--orange);word-break:keep-all;}
 /* 슬라이드 점 — 크고 진하게. 누르기 쉽도록 여백까지 클릭 범위 */
 .dots{display:flex;justify-content:center;align-items:center;gap:3px;margin-top:9px;}
 .dots i{width:9px;height:9px;border-radius:50%;background:#A9B2C0;transition:.2s;cursor:pointer;
   box-sizing:content-box;padding:6px 4px;background-clip:content-box;}
 .dots i.on{width:22px;border-radius:20px;background:var(--orange);background-clip:content-box;}
-.arw-btn{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+.arw-btn{flex:none;width:clamp(34px, 5vh, 42px);height:clamp(34px, 5vh, 42px);border-radius:50%;border:1px solid var(--line);
   background:#fff;color:#9AA4B4;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .arw-btn:active{background:var(--bg);}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(20,28,42,.94);color:#fff;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:700;z-index:200;display:none;max-width:88%;text-align:center;}
@@ -308,16 +315,16 @@ var DR_TABS = [['jobs','💼','기사구직'],['quick','🚚','퀵수락'],['gui
 
 /* 설명은 4장 모두 2줄, 길이를 비슷하게 맞춤 (네모칸이 안 들쭉날쭉하게) */
 var SLIDES = [
-  { ic:'📢', ti:'기사구인 — 기사를 뽑아요',
+  { ic:'jobs_c', ti:'기사구인 — 기사를 뽑아요',
     de:'공고를 올리면 기사님이 지원합니다.<br>마음에 드는 기사님께 먼저 제안도 가능.',
     go:'위 「기사구인」을 눌러 시작 ↑', role:'company', tab:'jobs' },
-  { ic:'💼', ti:'기사구직 — 일자리를 찾아요',
+  { ic:'jobs_d', ti:'기사구직 — 일자리를 찾아요',
     de:'셔틀 · 택배 · 물류 · 소형화물 공고.<br>지원하면 업체에 바로 문자가 갑니다.',
     go:'아래 「기사구직」을 눌러 시작 ↓', role:'driver', tab:'jobs' },
-  { ic:'🚚', ti:'퀵 — 보내고, 받아요',
+  { ic:'quick_d', ti:'퀵 — 보내고, 받아요',
     de:'서류 한 장부터 소형 박스까지.<br>거리로 요금 계산 · 가까운 기사님이 바로.',
     go:'보낼 분은 위 ↑ · 기사님은 아래 ↓', role:'', tab:'quick' },
-  { ic:'📖', ti:'처음이신가요?',
+  { ic:'guide', ti:'처음이신가요?',
     de:'쓰는 법과 폰에 앱처럼 설치하는 법을<br>하나하나 그림으로 알려드립니다.',
     go:'「사용법」 · 「설치」를 눌러보세요', role:'', tab:'guide' }
 ];
@@ -389,6 +396,20 @@ active:'<svg viewBox="0 0 26 24" class="ri">'
  +'<rect x="9" y="1.2" width="8" height="4.2" rx="1.6" fill="#6E9AD0"/>'
  +'<path d="M8.8 11.4l2.2 2.2 5.2-5.2" fill="none" stroke="#12B76A" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>'
  +'<path d="M9 16.8h8" stroke="#9AA4B4" stroke-width="1.4" stroke-linecap="round"/></svg>',
+/* 이럴 땐 이렇게 — 공구 */
+fix:'<svg viewBox="0 0 24 24" class="ri">'
+ +'<path d="M14.8 2.4a6 6 0 00-5.3 8.8L2.9 17.8a2 2 0 000 2.9l.4.4a2 2 0 002.9 0l6.6-6.6a6 6 0 007.6-7.7l-3.3 3.3-2.8-.7-.7-2.8 3.3-3.3a6 6 0 00-2.1-.4z" fill="url(#ri-nv)"/>'
+ +'<path d="M14.8 2.4a6 6 0 00-5.3 8.8l1.7-1.7a3.7 3.7 0 014.9-4.9l1.8-1.8a6 6 0 00-3.1-.4z" fill="#6E9AD0"/>'
+ +'<circle cx="4.6" cy="19.3" r="1.1" fill="#BFE0FF"/></svg>',
+/* 면허 인증 — 체크 방패 */
+verify:'<svg viewBox="0 0 24 24" class="ri">'
+ +'<path d="M12 1.8l8.4 3.3v6.4c0 5-3.6 9.6-8.4 10.7-4.8-1.1-8.4-5.7-8.4-10.7V5.1L12 1.8z" fill="url(#ri-nv)"/>'
+ +'<path d="M12 1.8v20.4c-4.8-1.1-8.4-5.7-8.4-10.7V5.1L12 1.8z" fill="#6E9AD0" opacity=".45"/>'
+ +'<path d="M7.8 11.9l2.9 2.9 5.5-5.6" fill="none" stroke="#12B76A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+/* 홈 (진한색 — 흰 배경 위 제목 옆에 쓸 때) */
+home_dark:'<svg viewBox="0 0 24 24" class="ri">'
+ +'<path d="M12 3.2l9 7.6h-2.4v9a1 1 0 01-1 1h-3.2v-5.4h-4.8V20.8H6.4a1 1 0 01-1-1v-9H3l9-7.6z" fill="url(#ri-nv)"/>'
+ +'<path d="M12 3.2l9 7.6h-2.4v9a1 1 0 01-1 1H12V3.2z" fill="#000" opacity=".12"/></svg>',
 /* 내정보 — 사람 */
 me:'<svg viewBox="0 0 24 24" class="ri">'
  +'<circle cx="12" cy="7.6" r="4.6" fill="url(#ri-nvL)"/>'
@@ -396,6 +417,9 @@ me:'<svg viewBox="0 0 24 24" class="ri">'
 };
 
 /* 탭 → 아이콘. 역할에 따라 구직/구인, 퀵수락/퀵발송이 갈린다 */
+/* 제목 옆에 넣는 작은 아이콘 */
+function ico_h(key, big){ return '<span class="hi'+(big?' big':'')+'">'+(ICO[key]||'')+'</span>'; }
+
 function icoFor(tab, role){
   if(tab === 'jobs')  return ICO[role === 'company' ? 'jobs_c'  : 'jobs_d'];
   if(tab === 'quick') return '<span class="qk">' + ICO[role === 'company' ? 'quick_c' : 'quick_d'] + '</span>';
@@ -431,7 +455,11 @@ function gateBar(role){
 /* 슬라이드 안쪽만 따로 — 이름·탭은 건드리지 않고 이것만 갈아끼운다 */
 function slideInner(){
   var sl = SLIDES[slideIdx];
-  return '<div class="ic">'+sl.ic+'</div>'
+  /* ic 에는 아이콘 '이름'만 담겨 있다 — SLIDES 가 ICO 보다 먼저 정의되므로
+     여기서 꺼내 쓴다 (ic:ICO.x 로 하면 실행 즉시 죽는다) */
+  var pic = (ICO[sl.ic] || '');
+  if(sl.ic === 'quick_d') pic = '<span class="qk">' + pic + '</span>';
+  return '<div class="ic">'+pic+'</div>'
        + '<div class="ti">'+sl.ti+'</div>'
        + '<div class="de">'+sl.de+'</div>'
        + '<div class="go">'+sl.go+'</div>';
@@ -1011,7 +1039,7 @@ home:function(){
 install:function(){
   return ''
   +'<div style="background:var(--navy);color:#fff;border-radius:16px;padding:18px;margin-bottom:14px;">'
-  +'<div style="font-size:17px;font-weight:850;margin-bottom:6px;">📲 설치 없이 바로 사용</div>'
+  +'<div style="font-size:17px;font-weight:850;margin-bottom:6px;">'+ico_h('install',1)+'설치 없이 바로 사용</div>'
   +'<div style="font-size:13px;opacity:.85;line-height:1.8;">'
   +'앱스토어에서 <b>내려받지 않아도 됩니다.</b><br>'
   +'주소(roadjob.co.kr)로 접속하면 그 자체가 앱이에요.<br>'
@@ -1019,7 +1047,7 @@ install:function(){
   +'</div></div>'
 
   +'<div class="card" style="margin-top:0;">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🏠 폰 홈 화면에 추가하기</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('home_dark')+'폰 홈 화면에 추가하기</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'추가하면 <b>일반 앱처럼 아이콘</b>이 생겨 바로 실행됩니다.<br><br>'
   +'<b style="color:var(--ink);">📱 안드로이드 (크롬)</b><br>'
@@ -1031,7 +1059,7 @@ install:function(){
   +'</div></div>'
 
   +'<div class="card">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🛠️ 이럴 땐 이렇게</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('fix')+'이럴 땐 이렇게</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'<b style="color:var(--ink);">Q. 글씨가 너무 작게 나와요</b><br>'
   +'크롬 <b>⋮ → 데스크톱 사이트</b> 체크를 해제하고 새로고침하세요.<br><br>'
@@ -1046,7 +1074,7 @@ install:function(){
 guide:function(){
   return ''
   +'<div class="card" style="margin-top:0;">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🚚 퀵 일감 받는 법</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('quick_d')+'퀵 일감 받는 법</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'<b style="color:var(--ink);">1.</b> 홈 또는 <b>퀵수락</b> 탭에서 일감을 봅니다<br>'
   +'<b style="color:var(--ink);">2.</b> <b>먼저 수락</b>하는 기사님이 배정됩니다<br>'
@@ -1057,7 +1085,7 @@ guide:function(){
   +'</div></div>'
 
   +'<div class="card">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">💼 일자리 찾는 법</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('jobs_d')+'일자리 찾는 법</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'<b style="color:var(--ink);">구직</b> 탭에서 공고에 지원하면 업체에 문자가 갑니다.<br>'
   +'업체가 먼저 제안하면 <b>홈</b>에서 수락/거절하세요.<br><br>'
@@ -1066,7 +1094,7 @@ guide:function(){
   +'</div></div>'
 
   +'<div class="card">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">✅ 면허 인증</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('verify')+'면허 인증</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'인증된 기사는 업체가 훨씬 <b>믿고 연락</b>합니다.<br>'
   +'면허증 사진은 <b>확인 즉시 파기</b>하며 보관하지 않습니다.'
@@ -2549,7 +2577,7 @@ quick:function(){
 install:function(){
   return ''
   +'<div style="background:var(--navy);color:#fff;border-radius:16px;padding:18px;margin-bottom:14px;">'
-  +'<div style="font-size:17px;font-weight:850;margin-bottom:6px;">📲 설치 없이 바로 사용</div>'
+  +'<div style="font-size:17px;font-weight:850;margin-bottom:6px;">'+ico_h('install',1)+'설치 없이 바로 사용</div>'
   +'<div style="font-size:13px;opacity:.85;line-height:1.8;">'
   +'앱스토어에서 <b>내려받지 않아도 됩니다.</b><br>'
   +'주소(roadjob.co.kr)로 접속하면 그 자체가 앱이에요.<br>'
@@ -2557,7 +2585,7 @@ install:function(){
   +'</div></div>'
 
   +'<div class="card" style="margin-top:0;">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🏠 폰 홈 화면에 추가하기</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('home_dark')+'폰 홈 화면에 추가하기</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'추가하면 <b>일반 앱처럼 아이콘</b>이 생겨 바로 실행됩니다.<br><br>'
   +'<b style="color:var(--ink);">📱 안드로이드 (크롬)</b><br>'
@@ -2569,7 +2597,7 @@ install:function(){
   +'</div></div>'
 
   +'<div class="card">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">🛠️ 이럴 땐 이렇게</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('fix')+'이럴 땐 이렇게</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'<b style="color:var(--ink);">Q. 글씨가 너무 작게 나와요</b><br>'
   +'크롬 <b>⋮ → 데스크톱 사이트</b> 체크를 해제하고 새로고침하세요.<br><br>'
@@ -2584,7 +2612,7 @@ install:function(){
 guide:function(){
   return ''
   +'<div class="card" style="margin-top:0;">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">📦 퀵 보내는 법</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('quick_c')+'퀵 보내는 법</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'<b style="color:var(--ink);">1.</b> <b>퀵</b> 탭에서 출발지·도착지를 검색합니다<br>'
   +'<b style="color:var(--ink);">2.</b> 거리에 따라 <b>요금이 자동 계산</b>됩니다<br>'
@@ -2595,7 +2623,7 @@ guide:function(){
   +'</div></div>'
 
   +'<div class="card">'
-  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">📢 기사 채용하는 법</div>'
+  +'<div style="font-size:15px;font-weight:850;margin-bottom:10px;">'+ico_h('jobs_c')+'기사 채용하는 법</div>'
   +'<div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">'
   +'<b style="color:var(--ink);">구인</b> 탭 → <b>+ 공고 등록</b><br>'
   +'요일·시간을 버튼으로 고르면 됩니다. 타이핑 안 해도 돼요.<br><br>'
