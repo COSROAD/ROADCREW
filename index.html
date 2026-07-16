@@ -2118,11 +2118,68 @@ function icoDefs(){
 /* ═══ 역할 라우터 ═══ 주소는 roadjob.co.kr 하나. 화면 안에서 기사·업체가 갈립니다. */
 var ROLE = 'driver';
 
+/* ═══ 로그인 감시자는 하나만 ═══
+   전에는 boot() 이 기사용을, C_boot() 이 업체용을 각각 걸어서
+   인증에 성공하면 둘 다 반응했다. 기사 쪽은 "기사 아님" → 기사 화면,
+   업체 쪽은 "업체 맞음" → 업체 화면. 늦게 끝난 쪽이 이겨서
+   업체로 로그인해도 기사 화면으로 가버렸다.
+   이제 감시자는 하나. ROLE 을 보고 갈린다. */
+var authBound = false;
+var bootForceHome = false;
+
+function bindAuth(){
+  if(authBound) return;
+  authBound = true;
+  window._fb.onAuthStateChanged(window._auth, function(u){
+    if(ROLE === 'company') onAuthCompany(u);
+    else                   onAuthDriver(u);
+  });
+}
+
+function onAuthDriver(u){
+  if(!u){ window._mode='signup'; render(); return; }
+  var fb=window._fb;
+  fb.getDoc(fb.doc(window._db,'drivers',u.uid)).then(function(s){
+    if(s.exists()){
+      var p=s.data();
+      D.name=p.name; D.phone=p.phone; D.areas=p.areas||[]; D.license=p.license;
+      D.vehicles=p.vehicles||[]; D.career=p.career; D.worktypes=p.worktypes||[];
+      D.intro=p.intro||''; D.licenseVerify=p.licenseVerify||'none';
+      D.agree1=p.agreePrivacy!==false; D.agree2=p.agreeUniqueId!==false;
+      D.agree3=p.agreeOpenProfile===true;
+      D.insurance=p.insurance===true; D.helmet=p.helmet===true;
+      D.agreeGeo=p.agreeGeo===true;
+      try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
+      save();
+      joined = true;
+      if(bootForceHome){ window._mode='signup'; step=0; render(); }
+      else enterMain();
+    } else {
+      /* 아직 가입 안 한 사람. step 을 건드리면 안 된다 —
+         인증번호를 막 맞춘 사람(step=code)까지 첫 화면으로 튕겨서 가입이 막힌다. */
+      window._mode='signup'; render();
+    }
+  }).catch(function(){ window._mode='signup'; render(); });
+}
+
+function onAuthCompany(u){
+  if(!u){ mode='signup'; C_render(); return; }
+  var fb=window._fb;
+  fb.getDoc(fb.doc(window._db,'companies',u.uid)).then(function(s){
+    if(s.exists()){
+      var p=s.data();
+      C.company=p.company; C.manager=p.manager; C.phone=p.phone; C.bizType=p.bizType; C.area=p.area;
+      try{ localStorage.setItem('rc_role','company'); localStorage.removeItem('rc_driver'); }catch(e){}
+      C_save(); C_enterMain();
+    } else { mode='signup'; C_render(); }
+  }).catch(function(){ mode='signup'; C_render(); });
+}
+
 function boot(){
   icoDefs();
   /* 업체로 '가입까지 마친' 사람만 업체 화면으로. 그냥 눌러본 사람은 첫 화면 유지 */
-  var forceHome = wantHome();      // 한 번만 읽고 즉시 지운다
-  if(!forceHome){
+  bootForceHome = wantHome();      // 한 번만 읽고 즉시 지운다
+  if(!bootForceHome){
     try{
       var _r = localStorage.getItem('rc_role');
       if(_r==='company' && localStorage.getItem('rc_company')){ ROLE='company'; C_boot(); return; }
@@ -2131,32 +2188,7 @@ function boot(){
   ROLE = 'driver';
   if(!live()){ render(); return; }
   D.licenseImg = null;   // 기기에 남은 옛 사진은 절대 쓰지 않는다 (인증 강등 방지)
-  window._fb.onAuthStateChanged(window._auth, function(u){
-    if(!u){ window._mode='signup'; render(); return; }
-    var fb=window._fb;
-    fb.getDoc(fb.doc(window._db,'drivers',u.uid)).then(function(s){
-      if(s.exists()){
-        var p=s.data();
-        D.name=p.name; D.phone=p.phone; D.areas=p.areas||[]; D.license=p.license;
-        D.vehicles=p.vehicles||[]; D.career=p.career; D.worktypes=p.worktypes||[];
-        D.intro=p.intro||''; D.licenseVerify=p.licenseVerify||'none';
-        D.agree1=p.agreePrivacy!==false; D.agree2=p.agreeUniqueId!==false;
-        D.agree3=p.agreeOpenProfile===true;
-        D.insurance=p.insurance===true; D.helmet=p.helmet===true;
-        D.agreeGeo=p.agreeGeo===true;
-        try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
-        save();
-        joined = true;
-        if(forceHome){ window._mode='signup'; step=0; render(); }
-        else enterMain();
-      } else {
-        /* 아직 가입 안 한 사람. step 을 건드리면 안 된다 —
-           인증번호를 막 맞춘 사람(step=code)까지 첫 화면으로 튕겨서 가입이 막힌다.
-           「처음 화면으로」는 location.replace 로 새로 열리므로 step 은 이미 0이다. */
-        window._mode='signup'; render();
-      }
-    }).catch(function(){ window._mode='signup'; render(); });
-  });
+  bindAuth();
 }
 
 
@@ -3428,19 +3460,13 @@ function C_startRealtime(){
 /* 그라데이션 정의를 문서에 한 번만 심는다 (아이콘들이 참조) */
 function C_boot(){
   icoDefs();
+  ROLE = 'company';
   if(!live()){ C_render(); return; }
-  window._fb.onAuthStateChanged(window._auth, function(u){
-    if(!u){ mode='signup'; C_render(); return; }
-    var fb=window._fb;
-    fb.getDoc(fb.doc(window._db,'companies',u.uid)).then(function(s){
-      if(s.exists()){
-        var p=s.data();
-        C.company=p.company; C.manager=p.manager; C.phone=p.phone; C.bizType=p.bizType; C.area=p.area;
-        try{ localStorage.setItem('rc_role','company'); localStorage.removeItem('rc_driver'); }catch(e){}
-        C_save(); C_enterMain();
-      } else { mode='signup'; C_render(); }
-    }).catch(function(){ mode='signup'; C_render(); });
-  });
+  bindAuth();
+  /* 이미 감시자가 걸려 있으면 (기사로 열려 있다가 업체를 누른 경우)
+     지금 로그인 상태를 한 번 다시 봐줘야 한다 — 감시자는 다시 안 울린다 */
+  if(window._auth && window._auth.currentUser) onAuthCompany(window._auth.currentUser);
+  else { mode='signup'; C_render(); }
 }
 /* 업체 화면은 라우터(boot)가 ROLE 을 보고 부른다 */
 
