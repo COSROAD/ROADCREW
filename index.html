@@ -149,6 +149,9 @@ textarea{min-height:90px;resize:vertical;}
    (트럭은 세로칸의 65%%만 그림) → 그만큼 키운다. */
 .ci{flex:none;display:flex;align-items:center;justify-content:center;}
 .ci .ri{height:48px;}
+/* 빈 화면 가운데 큰 아이콘 */
+.bi{display:flex;justify-content:center;}
+.bi .ri{height:62px;opacity:.85;}
 .hi.big .ri{height:24px;}
 .slide .ic{line-height:1;}
 .slide .ic .ri{height:clamp(42px, 8vh, 66px);}
@@ -405,6 +408,17 @@ active:'<svg viewBox="0 0 26 24" class="ri">'
  +'<rect x="9" y="1.2" width="8" height="4.2" rx="1.6" fill="#6E9AD0"/>'
  +'<path d="M8.8 11.4l2.2 2.2 5.2-5.2" fill="none" stroke="#12B76A" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>'
  +'<path d="M9 16.8h8" stroke="#9AA4B4" stroke-width="1.4" stroke-linecap="round"/></svg>',
+/* 기다리는 중 — 시계 */
+wait:'<svg viewBox="0 0 24 24" class="ri">'
+ +'<circle cx="12" cy="12.6" r="9.4" fill="url(#ri-pp)" stroke="#B9C2D0" stroke-width="1.4"/>'
+ +'<path d="M8.6 2.4h6.8" stroke="#9AA4B4" stroke-width="2" stroke-linecap="round"/>'
+ +'<path d="M12 3.2v1.6" stroke="#9AA4B4" stroke-width="2"/>'
+ +'<path d="M12 7.6v5.4l3.6 2.2" fill="none" stroke="url(#ri-nv)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+/* 아직 없음 — 빈 상자 */
+none:'<svg viewBox="0 0 26 24" class="ri">'
+ +'<path d="M3 10.6h5.4l1.6 3h6l1.6-3H23v8.8a1.8 1.8 0 01-1.8 1.8H4.8A1.8 1.8 0 013 19.4v-8.8z" fill="url(#ri-pp)" stroke="#B9C2D0" stroke-width="1.3" stroke-linejoin="round"/>'
+ +'<path d="M6.4 3.6h13.2l3.4 7h-5.4l-1.6 3h-6l-1.6-3H3l3.4-7z" fill="#E8EEF5" stroke="#B9C2D0" stroke-width="1.3" stroke-linejoin="round"/>'
+ +'<path d="M9.6 7.2h6.8" stroke="#9AA4B4" stroke-width="1.4" stroke-linecap="round"/></svg>',
 /* 이럴 땐 이렇게 — 공구 */
 fix:'<svg viewBox="0 0 24 24" class="ri">'
  +'<path d="M14.8 2.4a6 6 0 00-5.3 8.8L2.9 17.8a2 2 0 000 2.9l.4.4a2 2 0 002.9 0l6.6-6.6a6 6 0 007.6-7.7l-3.3 3.3-2.8-.7-.7-2.8 3.3-3.3a6 6 0 00-2.1-.4z" fill="url(#ri-nv)"/>'
@@ -1005,7 +1019,7 @@ home:function(){
 
   if(!feed.length){
     return h + '<div style="text-align:center;padding:50px 20px;color:var(--ink-soft);">'
-      +'<div style="font-size:46px;">🕐</div>'
+      +'<div class="bi">'+ICO.wait+'</div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">아직 새 소식이 없습니다</p>'
       +'<p style="font-size:13.5px;">새 퀵 일감이나 채용 공고가 오면<br>여기에 바로 뜹니다.</p></div>';
   }
@@ -1135,7 +1149,7 @@ quick:function(){
   /* 오토바이 기사인데 보험·안전모 미확인 -> 일감 차단 (법정 의무) */
   if(!canQuick()){
     return '<div style="background:#FEF3F2;border:1.5px solid #FECDCA;border-radius:16px;padding:20px;">'
-      +'<div style="font-size:16px;font-weight:850;color:#B42318;margin-bottom:8px;">🛵 확인이 필요합니다</div>'
+      +'<div style="font-size:16px;font-weight:850;color:#B42318;margin-bottom:8px;">'+ico_h('quick_d')+'확인이 필요합니다</div>'
       +'<div style="font-size:13.5px;color:#B42318;line-height:1.7;">'
       +'2026년 6월부터 <b>유상운송보험 가입이 법으로 의무화</b>되었습니다.<br>'
       +'일반 종합보험으로는 <b>배달 중 사고가 보장되지 않습니다.</b><br><br>'
@@ -1151,7 +1165,7 @@ quick:function(){
 
   if(!quickOpen.length){
     return h + '<div style="text-align:center;padding:50px 20px;color:var(--ink-soft);">'
-      +'<div style="font-size:46px;">🚚</div>'
+      +'<div class="bi"><span class="qk">'+ICO.quick_d+'</span></div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">지금은 일감이 없습니다</p>'
       +'<p style="font-size:13.5px;">새 주문이 들어오면 바로 알려드립니다.</p></div>'
       + quickNotice();
@@ -1195,7 +1209,7 @@ jobs:function(){
   }
   if(!list.length){
     return chips + '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);">'
-      +'<div style="font-size:46px;">📭</div>'
+      +'<div class="bi">'+ICO.none+'</div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">등록된 공고가 없습니다</p>'
       +'<p style="font-size:13.5px;">업체가 공고를 올리면 여기에 표시됩니다.</p>'
       +'</div>';
@@ -1214,7 +1228,7 @@ jobs:function(){
 apps:function(){
   if(!myApps.length){
     return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);">'
-      +'<div style="font-size:46px;">📋</div>'
+      +'<div class="bi">'+ICO.active+'</div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">지원한 공고가 없습니다</p>'
       +'<p style="font-size:13.5px;">일자리 탭에서 마음에 드는 공고에 지원해 보세요.</p></div>';
   }
@@ -2385,8 +2399,9 @@ function C_tabbar(){
       }).join('')
     +'</div>';
 }
+/* icon 은 ICO.xxx (SVG) 를 받는다 */
 function empty(icon,t,d,btn){
-  return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);"><div style="font-size:46px;">'+icon+'</div>'
+  return '<div style="text-align:center;padding:60px 20px;color:var(--ink-soft);"><div class="bi">'+icon+'</div>'
    +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">'+t+'</p>'
    +'<p style="font-size:13.5px;">'+d+'</p>'+(btn||'')+'</div>';
 }
@@ -2420,7 +2435,7 @@ home:function(){
 
   if(!feed.length){
     return h + '<div style="text-align:center;padding:50px 20px;color:var(--ink-soft);">'
-      +'<div style="font-size:46px;">🕐</div>'
+      +'<div class="bi">'+ICO.wait+'</div>'
       +'<p style="font-size:15px;margin:14px 0 6px;font-weight:700;color:var(--ink);">아직 새 소식이 없습니다</p>'
       +'<p style="font-size:13.5px;">공고를 올리거나 퀵을 보내보세요.</p></div>';
   }
@@ -2619,7 +2634,7 @@ jobs:function(){
     +'<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">마음에 드는 기사님께 먼저 제안</div></div>'
     +'<span style="font-size:19px;color:#9AA4B4;">›</span></div>';
 
-  if(!myJobs.length) return findBtn + empty('📢','등록한 공고가 없습니다','첫 채용 공고를 올려보세요.',
+  if(!myJobs.length) return findBtn + empty(ICO.jobs_c,'등록한 공고가 없습니다','첫 채용 공고를 올려보세요.',
     '<button class="btn btn-main" style="margin-top:22px;" onclick="newJob()">+ 공고 등록하기</button>');
   return findBtn + myJobs.map(function(j,i){
     var cnt = apps.filter(function(a){return a.jobId===j.id;}).length;
@@ -2650,7 +2665,7 @@ apps:function(){
     ? '<div onclick="C_goTab(\'jobs\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;'
       +'font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">‹ 구인으로</div>'
     : '';
-  if(!apps.length) return back + empty('📥','아직 지원자가 없습니다','공고를 올리면 기사님들이 지원합니다.');
+  if(!apps.length) return back + empty(ICO.none,'아직 지원자가 없습니다','공고를 올리면 기사님들이 지원합니다.');
   var ST={applied:['새 지원','#1570EF','#EFF8FF'],viewed:['열람함','#7C3AED','#F4EBFF'],
           contact:['연락중','#EA580C','#FFF4ED'],hired:['채용확정','#12B76A','#ECFDF3'],rejected:['미선정','#98A2B3','#F2F4F7'],
           accepted:['제안 수락','#12B76A','#ECFDF3'],declined:['제안 거절','#98A2B3','#F2F4F7']};
@@ -2675,7 +2690,7 @@ find:function(){
   /* find 는 탭이 아니라 구인 탭의 하위 화면 — 돌아갈 길을 반드시 둔다 */
   var back = '<div onclick="C_goTab(\'jobs\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;'
     +'font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">‹ 구인으로</div>';
-  if(!drivers.length) return back + empty('🔎','공개된 기사가 없습니다','프로필 공개에 동의한 기사만 표시됩니다.');
+  if(!drivers.length) return back + empty(ICO.jobs_d,'공개된 기사가 없습니다','프로필 공개에 동의한 기사만 표시됩니다.');
   return back + '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">기사님을 누르면 모집중인 공고로 <b>채용 제안</b>을 보낼 수 있습니다.</div>'
     + drivers.map(function(d,i){
     return '<div class="card" style="margin-top:0;margin-bottom:12px;cursor:pointer;" onclick="openDriver('+i+')">'
