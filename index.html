@@ -105,12 +105,23 @@ textarea{min-height:90px;resize:vertical;}
 .gate-tab .gi.mid{flex:1.15;}
 .gate-tab .gi:active{transform:scale(.94);}
 .gate-tab .gi .e{font-size:24px;line-height:1.1;}
-.gate-tab .gi .n{font-size:12px;margin-top:4px;font-weight:800;letter-spacing:-.5px;white-space:nowrap;}
+.gate-tab .gi .n{font-size:11px;margin-top:4px;font-weight:800;letter-spacing:-.8px;white-space:nowrap;}
 .gate-tab .gi .ball{width:46px;height:46px;margin:0 auto;border-radius:50%;display:flex;
   align-items:center;justify-content:center;font-size:24px;color:#fff;}
 .gate-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 16px;min-height:0;overflow-y:auto;}
 .gate-hint{text-align:center;font-size:13px;font-weight:800;padding:7px 0;}
 .slide{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px 16px;text-align:center;}
+.slide.in{animation:slide-in .28s ease-out;}
+@keyframes slide-in{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
+/* 퀵 = 움직이는 일. 차가 좌우로 다니게 */
+.qk{display:inline-block;animation:qk-run 1.6s ease-in-out infinite;}
+.ri{height:26px;width:auto;display:block;margin:0 auto;}
+.gate-tab .gi .e .ri{height:25px;}
+/* 퀵 트럭은 좌우로 달리므로 조금 작게 — 옆 칸 침범 방지 */
+.qk .ri{height:23px;}
+.gate-tab .gi .e .qk .ri{height:22px;}
+@keyframes qk-run{0%,100%{transform:translateX(-9px);}50%{transform:translateX(9px);}}
+@media (prefers-reduced-motion:reduce){.qk,.slide.in{animation:none;}}
 .slide .ic{font-size:46px;line-height:1;}
 .slide .ti{font-size:20px;font-weight:850;margin-top:11px;}
 .slide .de{font-size:14px;color:var(--ink-soft);margin-top:8px;line-height:1.65;}
@@ -233,8 +244,8 @@ function next(){ if(step<STEPS.length-1) go(step+1); }
      중앙 = 넘기는 안내 (구인 → 구직 → 퀵)
      하단 = 기사 탭 (누르면 기사 가입 → 그 탭으로)
    ═══════════════════════════════════════════════ */
-var CO_TABS = [['jobs','📢','구인'],['quick','📦','퀵발송'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
-var DR_TABS = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
+var CO_TABS = [['jobs','📢','기사구인'],['quick','📦','퀵발송'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
+var DR_TABS = [['jobs','💼','기사구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
 
 var SLIDES = [
   { ic:'📢', ti:'구인 — 기사를 뽑아요', de:'공고를 올리면 기사님이 지원합니다.<br>마음에 드는 기사님께 먼저 제안도 가능.', go:'위 「구인」을 눌러 시작 ↑', role:'company', tab:'jobs' },
@@ -244,13 +255,92 @@ var SLIDES = [
 ];
 var slideIdx = 0;
 
+/* ═══════════ 탭 아이콘 — 입체 SVG (이모지 대체) ═══════════
+   폰마다 다르게 보이던 이모지를 직접 그려 어디서나 똑같이.
+   그라데이션 + 밝은면/어두운면으로 입체감. */
+var ICO_DEF = '<svg width="0" height="0" style="position:absolute;" aria-hidden="true"><defs>'
+  +'<linearGradient id="ri-nv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E6EA8"/><stop offset="1" stop-color="#0F2A47"/></linearGradient>'
+  +'<linearGradient id="ri-nvL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E9AD0"/><stop offset="1" stop-color="#3E6EA8"/></linearGradient>'
+  +'<linearGradient id="ri-or" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FB923C"/><stop offset="1" stop-color="#C2410C"/></linearGradient>'
+  +'<linearGradient id="ri-orL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDBA74"/><stop offset="1" stop-color="#EA580C"/></linearGradient>'
+  +'<linearGradient id="ri-pp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D8DEE8"/></linearGradient>'
+  +'</defs></svg>';
+
+var ICO = {
+/* 구직 — 서류가방 */
+jobs_d:'<svg viewBox="0 0 26 24" class="ri">'
+ +'<path d="M9 5.5V4a2 2 0 012-2h4a2 2 0 012 2v1.5" fill="none" stroke="#7C8798" stroke-width="1.8" stroke-linecap="round"/>'
+ +'<rect x="2" y="5.5" width="22" height="15" rx="2.6" fill="url(#ri-nv)"/>'
+ +'<rect x="2" y="5.5" width="22" height="5" rx="2.6" fill="url(#ri-nvL)"/>'
+ +'<rect x="10.4" y="11.4" width="5.2" height="3.4" rx="1" fill="#FDBA74"/></svg>',
+/* 구인 — 확성기 */
+jobs_c:'<svg viewBox="0 0 26 24" class="ri">'
+ +'<path d="M15 4.5v15L7.5 15.5H4a2 2 0 01-2-2v-3a2 2 0 012-2h3.5L15 4.5z" fill="url(#ri-or)"/>'
+ +'<path d="M15 4.5v6H7.5L15 4.5z" fill="#FDBA74" opacity=".5"/>'
+ +'<rect x="6" y="15" width="3.4" height="6" rx="1.5" fill="#C2410C"/>'
+ +'<path d="M18.5 8.5a5 5 0 010 7" fill="none" stroke="#EA580C" stroke-width="1.9" stroke-linecap="round"/>'
+ +'<path d="M21.5 6a9 9 0 010 12" fill="none" stroke="#FDBA74" stroke-width="1.9" stroke-linecap="round"/></svg>',
+/* 퀵수락 — 트럭 */
+quick_d:'<svg viewBox="0 0 30 24" class="ri">'
+ +'<rect x="1" y="6" width="15" height="11.5" rx="1.6" fill="url(#ri-nv)"/>'
+ +'<rect x="1" y="6" width="15" height="3.6" rx="1.6" fill="url(#ri-nvL)"/>'
+ +'<path d="M16 9h5.2a2 2 0 011.7 1l2.9 4.4a2 2 0 01.3 1.1v2h-10V9z" fill="url(#ri-orL)"/>'
+ +'<rect x="17.4" y="10.4" width="4.4" height="3.3" rx=".8" fill="#BFE0FF"/>'
+ +'<circle cx="7" cy="18.6" r="3.1" fill="#2A3140"/><circle cx="7" cy="18.6" r="1.3" fill="#98A2B3"/>'
+ +'<circle cx="21" cy="18.6" r="3.1" fill="#2A3140"/><circle cx="21" cy="18.6" r="1.3" fill="#98A2B3"/></svg>',
+/* 퀵발송 — 트럭 (업체는 오렌지. 기사 트럭과 색을 뒤집음) */
+quick_c:'<svg viewBox="0 0 30 24" class="ri">'
+ +'<rect x="1" y="6" width="15" height="11.5" rx="1.6" fill="url(#ri-or)"/>'
+ +'<rect x="1" y="6" width="15" height="3.6" rx="1.6" fill="url(#ri-orL)"/>'
+ +'<path d="M4.4 11.2h8.2M4.4 14h8.2" stroke="#FFF" stroke-width="1.1" stroke-linecap="round" opacity=".45"/>'
+ +'<path d="M16 9h5.2a2 2 0 011.7 1l2.9 4.4a2 2 0 01.3 1.1v2h-10V9z" fill="url(#ri-nvL)"/>'
+ +'<rect x="17.4" y="10.4" width="4.4" height="3.3" rx=".8" fill="#BFE0FF"/>'
+ +'<circle cx="7" cy="18.6" r="3.1" fill="#2A3140"/><circle cx="7" cy="18.6" r="1.3" fill="#98A2B3"/>'
+ +'<circle cx="21" cy="18.6" r="3.1" fill="#2A3140"/><circle cx="21" cy="18.6" r="1.3" fill="#98A2B3"/></svg>',
+/* 사용법 — 펼친 책 */
+guide:'<svg viewBox="0 0 26 24" class="ri">'
+ +'<path d="M13 6.5C10.6 4.8 7.6 4.2 3.5 4.4A1.5 1.5 0 002 5.9v11.4a1.5 1.5 0 001.6 1.5c3.6-.2 6.6.3 9.4 2V6.5z" fill="url(#ri-pp)" stroke="#B9C2D0" stroke-width=".9"/>'
+ +'<path d="M13 6.5c2.4-1.7 5.4-2.3 9.5-2.1A1.5 1.5 0 0124 5.9v11.4a1.5 1.5 0 01-1.6 1.5c-3.6-.2-6.6.3-9.4 2V6.5z" fill="#F1F4F9" stroke="#B9C2D0" stroke-width=".9"/>'
+ +'<path d="M13 6.5v14.3" stroke="#0F2A47" stroke-width="1.6" stroke-linecap="round"/>'
+ +'<path d="M5 8.4h5M5 11.2h5M16 8.4h5M16 11.2h5" stroke="#9AA4B4" stroke-width="1.1" stroke-linecap="round"/></svg>',
+/* 홈 — 집 (색 동그라미 안 흰색) */
+home:'<svg viewBox="0 0 24 24" class="ri">'
+ +'<path d="M12 3.2l9 7.6h-2.4v9a1 1 0 01-1 1h-3.2v-5.4h-4.8V20.8H6.4a1 1 0 01-1-1v-9H3l9-7.6z" fill="#fff"/>'
+ +'<path d="M12 3.2l9 7.6h-2.4v9a1 1 0 01-1 1H12V3.2z" fill="#fff" opacity=".72"/></svg>',
+/* 설치 — 폰에 담기 */
+install:'<svg viewBox="0 0 26 24" class="ri">'
+ +'<rect x="6.5" y="1.5" width="13" height="21" rx="2.6" fill="url(#ri-nv)"/>'
+ +'<rect x="8" y="4.2" width="10" height="14.6" rx=".8" fill="#DCE6F2"/>'
+ +'<rect x="10.6" y="20" width="4.8" height="1.1" rx=".55" fill="#6E9AD0"/>'
+ +'<path d="M13 6.6v6.6M13 13.2l-2.6-2.6M13 13.2l2.6-2.6" fill="none" stroke="#EA580C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>'
+ +'<rect x="9.4" y="15" width="7.2" height="1.7" rx=".85" fill="#EA580C"/></svg>',
+/* 진행중 — 클립보드 */
+active:'<svg viewBox="0 0 26 24" class="ri">'
+ +'<rect x="4" y="3.2" width="18" height="19.3" rx="2.2" fill="url(#ri-nv)"/>'
+ +'<rect x="6" y="5.6" width="14" height="14.6" rx="1.2" fill="url(#ri-pp)"/>'
+ +'<rect x="9" y="1.2" width="8" height="4.2" rx="1.6" fill="#6E9AD0"/>'
+ +'<path d="M8.8 11.4l2.2 2.2 5.2-5.2" fill="none" stroke="#12B76A" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>'
+ +'<path d="M9 16.8h8" stroke="#9AA4B4" stroke-width="1.4" stroke-linecap="round"/></svg>',
+/* 내정보 — 사람 */
+me:'<svg viewBox="0 0 24 24" class="ri">'
+ +'<circle cx="12" cy="7.6" r="4.6" fill="url(#ri-nvL)"/>'
+ +'<path d="M12 13.4c4.6 0 8.4 2.8 8.4 6.2a1.4 1.4 0 01-1.4 1.4H5a1.4 1.4 0 01-1.4-1.4c0-3.4 3.8-6.2 8.4-6.2z" fill="url(#ri-nv)"/></svg>'
+};
+
+/* 탭 → 아이콘. 역할에 따라 구직/구인, 퀵수락/퀵발송이 갈린다 */
+function icoFor(tab, role){
+  if(tab === 'jobs')  return ICO[role === 'company' ? 'jobs_c'  : 'jobs_d'];
+  if(tab === 'quick') return '<span class="qk">' + ICO[role === 'company' ? 'quick_c' : 'quick_d'] + '</span>';
+  return ICO[tab] || '';
+}
+
 function gateTabHtml(tabs, role, cls){
   var word = (role==='company') ? '업체 로그인' : '기사 로그인';
   return '<div class="gate-tab '+cls+'">'
     + tabs.map(function(x){
         if(x[0]==='home'){
           return '<div class="gi mid" onclick="gateGo(\''+role+'\',\'home\')">'
-            +'<div class="ball" style="background:'+(role==='company'?'var(--orange)':'var(--navy)')+';">🏠</div>'
+            +'<div class="ball" style="background:'+(role==='company'?'var(--orange)':'var(--navy)')+';">'+ICO.home+'</div>'
             +'<div class="n" style="color:'+(role==='company'?'var(--orange)':'var(--navy)')+';">홈</div></div>';
         }
         /* 내정보 칸에만 라벨 바로 아래 로그인을 붙인다 (탭 줄을 따로 만들지 않음) */
@@ -258,14 +348,27 @@ function gateTabHtml(tabs, role, cls){
           ? '<span class="lg" onclick="event.stopPropagation();gateGo(\''+role+'\',\'home\')">'+word+'</span>'
           : '';
         return '<div class="gi" onclick="gateGo(\''+role+'\',\''+x[0]+'\')">'
-          +'<div class="e">'+x[1]+'</div><div class="n">'+x[2]+'</div>'+lg+'</div>';
+          +'<div class="e">'+icoFor(x[0],role)+'</div><div class="n">'+x[2]+'</div>'+lg+'</div>';
       }).join('')
     +'</div>';
 }
 
 
-function gateView(){
+/* 슬라이드 안쪽만 따로 — 이름·탭은 건드리지 않고 이것만 갈아끼운다 */
+function slideInner(){
   var sl = SLIDES[slideIdx];
+  return '<div class="ic">'+sl.ic+'</div>'
+       + '<div class="ti">'+sl.ti+'</div>'
+       + '<div class="de">'+sl.de+'</div>'
+       + '<div class="go">'+sl.go+'</div>';
+}
+function dotsInner(){
+  return SLIDES.map(function(x,i){
+    return '<i class="'+(i===slideIdx?'on':'')+'" onclick="slideTo('+i+')"></i>';
+  }).join('');
+}
+
+function gateView(){
   return '<div class="gate" id="gate">'
 
     + gateTabHtml(CO_TABS, 'company', 'top')
@@ -278,17 +381,10 @@ function gateView(){
     +   '</div>'
     +   '<div style="display:flex;align-items:center;gap:8px;">'
     +     '<button class="arw-btn" onclick="slideMove(-1)" aria-label="이전">‹</button>'
-    +     '<div class="slide" id="slide" style="flex:1;">'
-    +       '<div class="ic">'+sl.ic+'</div>'
-    +       '<div class="ti">'+sl.ti+'</div>'
-    +       '<div class="de">'+sl.de+'</div>'
-    +       '<div class="go">'+sl.go+'</div>'
-    +     '</div>'
+    +     '<div class="slide" id="slide" style="flex:1;">' + slideInner() + '</div>'
     +     '<button class="arw-btn" onclick="slideMove(1)" aria-label="다음">›</button>'
     +   '</div>'
-    +   '<div class="dots">'
-    +     SLIDES.map(function(x,i){ return '<i class="'+(i===slideIdx?'on':'')+'" onclick="slideTo('+i+')"></i>'; }).join('')
-    +   '</div>'
+    +   '<div class="dots" id="dots">' + dotsInner() + '</div>'
     + '</div>'
 
     + '<div class="gate-hint" style="color:var(--navy);background:var(--navy-soft);">🚚 기사이신가요? 아래 탭을 누르세요</div>'
@@ -312,9 +408,17 @@ function slideStop(){ if(slideTimer){ clearInterval(slideTimer); slideTimer = nu
 
 function slideTo(i, auto){
   slideIdx = (i + SLIDES.length) % SLIDES.length;
-  var g = document.getElementById('gate');
-  if(g && g.parentNode) g.parentNode.innerHTML = gateView();
-  bindSwipe();
+  var el = document.getElementById('slide');
+  if(el){
+    /* 이름·탭은 그대로 두고 설명만 갈아끼운다 (깜빡임 없음, 스와이프 연결도 유지) */
+    el.innerHTML = slideInner();
+    var d = document.getElementById('dots');
+    if(d) d.innerHTML = dotsInner();
+    el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+  } else {
+    var g = document.getElementById('gate');
+    if(g && g.parentNode){ g.parentNode.innerHTML = gateView(); bindSwipe(); }
+  }
   if(!auto) slideAuto();   // 사람이 넘겼으면 타이머를 새로 시작
 }
 function slideMove(d){ slideTo(slideIdx + d); }
@@ -742,15 +846,16 @@ function renderMain(){
   document.getElementById('foot').innerHTML = tabbar();
 }
 function tabbar(){
-  var t = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
+  var t = [['jobs','💼','기사구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
   return '<div style="display:flex;align-items:flex-end;padding-bottom:21px;">'
   + t.map(function(x){
       var on = mainTab===x[0];
       if(x[0]==='home'){
         return '<div onclick="mainTab=\'home\';renderMain()" style="flex:1.15;text-align:center;padding:0 0 2px;cursor:pointer;">'
-          +'<div style="width:54px;height:54px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;'
-          +'background:'+(on?'var(--orange)':'var(--navy)')+';color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);">🏠</div>'
-          +'<div style="font-size:12px;margin-top:4px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
+          +'<div style="width:54px;height:54px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;'
+          +'background:'+(on?'var(--orange)':'var(--navy)')+';box-shadow:0 2px 8px rgba(0,0,0,.15);">'
+          +'<span style="width:28px;height:28px;">'+ICO.home+'</span></div>'
+          +'<div style="font-size:11px;margin-top:4px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
       }
       /* 내정보 칸 바로 아래에 로그아웃 (탭 줄맞춤을 건드리지 않도록 겹쳐 놓음) */
       var lg = (x[0]==='me')
@@ -759,8 +864,8 @@ function tabbar(){
         : '';
       return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:6px 0 4px;cursor:pointer;'
         +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
-        +'<div style="font-size:24px;">'+x[1]+'</div>'
-        +'<div style="font-size:12px;margin-top:4px;letter-spacing:-.5px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
+        +'<div>'+icoFor(x[0],'driver')+'</div>'
+        +'<div style="font-size:11px;margin-top:4px;letter-spacing:-.8px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
     }).join('')
   +'</div>';
 }
@@ -1868,7 +1973,17 @@ function logout(){
   } else { location.replace('index.html'); }
 }
 /* ── 로그인 상태에 따라 진입 분기 ── */
+/* 그라데이션 정의를 문서에 한 번만 심는다 (아이콘들이 참조) */
+function icoDefs(){
+  if(document.getElementById('ri-defs')) return;
+  var d = document.createElement('div');
+  d.id = 'ri-defs'; d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
+  d.innerHTML = ICO_DEF;
+  document.body.appendChild(d);
+}
+
 function boot(){
+  icoDefs();
   /* 업체로 '가입까지 마친' 사람만 업체 화면으로. 그냥 눌러본 사람은 첫 화면 유지 */
   var forceHome = wantHome();      // 한 번만 읽고 즉시 지운다
   if(!forceHome){
