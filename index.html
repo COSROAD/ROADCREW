@@ -128,7 +128,7 @@ textarea{min-height:90px;resize:vertical;}
 /* 네모칸은 고정. 안의 설명만 바뀐다 (넘길 때 커졌다 작아졌다 하지 않게) */
 /* 네모칸은 화면 높이에 맞춰 늘고 준다. 좁은 폰 186 · 넓으면 최대 300 */
 .slide{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px 16px;text-align:center;
-  height:clamp(186px, 34vh, 300px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:clamp(210px, 36vh, 320px);display:flex;flex-direction:column;align-items:center;justify-content:center;
   overflow:hidden;box-sizing:border-box;}
 .slide.in{animation:slide-in .28s ease-out;}
 @keyframes slide-in{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
@@ -316,13 +316,13 @@ var DR_TABS = [['jobs','💼','기사구직'],['quick','🚚','퀵수락'],['gui
 /* 설명은 4장 모두 2줄, 길이를 비슷하게 맞춤 (네모칸이 안 들쭉날쭉하게) */
 var SLIDES = [
   { ic:'jobs_c', ti:'기사구인 — 기사를 뽑아요',
-    de:'공고를 올리면 기사님이 지원합니다.<br>마음에 드는 기사님께 먼저 제안도 가능.',
+    de:'학원 등하원 · 유치원 · 어린이집<br>셔틀 · 택배 · 화물차 · 물류배송 기사<br>공고를 올리면 기사님이 지원합니다.',
     go:'위 「기사구인」을 눌러 시작 ↑', role:'company', tab:'jobs' },
-  { ic:'jobs_d', ti:'기사구직 — 일자리를 찾아요',
-    de:'셔틀 · 택배 · 물류 · 소형화물 공고.<br>지원하면 업체에 바로 문자가 갑니다.',
+  { ic:'jobs_d', ti:'기사구직 — 일자리 찾기',
+    de:'학원 등하원 · 유치원 · 어린이집<br>셔틀 · 택배 · 화물차 · 물류배송 기사<br>지원하면 업체에 바로 문자가 갑니다.',
     go:'아래 「기사구직」을 눌러 시작 ↓', role:'driver', tab:'jobs' },
   { ic:'quick_d', ti:'퀵 — 보내고, 받아요',
-    de:'서류 한 장부터 소형 박스까지.<br>거리로 요금 계산 · 가까운 기사님이 바로.',
+    de:'서류 한 장부터 소형 박스까지.<br>거리로 요금 자동 계산.<br>가까운 기사님이 바로 갑니다.',
     go:'보낼 분은 위 ↑ · 기사님은 아래 ↓', role:'', tab:'quick' },
   { ic:'guide', ti:'처음이신가요?',
     de:'쓰는 법과 폰에 앱처럼 설치하는 법을<br>하나하나 그림으로 알려드립니다.',
