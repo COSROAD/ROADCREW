@@ -96,11 +96,18 @@ textarea{min-height:90px;resize:vertical;}
 .note-mid b{color:var(--ink);}
 .gate{position:fixed;inset:0;max-width:520px;margin:0 auto;background:var(--bg);
   display:flex;flex-direction:column;z-index:30;}
-.gate-tab{background:#fff;display:flex;padding:9px 0 23px;cursor:pointer;}
-.gate-tab.top{border-bottom:1px solid var(--line);padding-top:calc(9px + env(safe-area-inset-top));}
-.gate-tab.bot{border-top:1px solid var(--line);padding-bottom:calc(23px + env(safe-area-inset-bottom));}
-.gate-tab .gi .lg{position:absolute;left:-13px;right:-13px;top:100%;margin-top:4px;font-size:11px;font-weight:800;
-  color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;}
+.gate-tab{background:#fff;display:flex;padding:9px 0 7px;cursor:pointer;}
+.gate-tab.top{padding-top:calc(9px + env(safe-area-inset-top));}
+.gate-tab.bot{border-top:1px solid var(--line);padding-bottom:calc(9px + env(safe-area-inset-bottom));}
+/* 안내 + 로그인 한 줄 */
+.gate-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;font-size:11.5px;font-weight:800;}
+.gate-bar .tx{flex:1;min-width:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gate-bar .lg{flex:none;background:none;border:0;padding:2px 0;font-family:inherit;font-size:11.5px;font-weight:800;
+  cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+.gate-bar.co{background:var(--orange-soft);color:#993C1D;border-bottom:1px solid var(--line);}
+.gate-bar.co .lg{color:#993C1D;}
+.gate-bar.dr{background:var(--navy-soft);color:var(--navy);}
+.gate-bar.dr .lg{color:var(--navy);}
 .gate-tab .gi{flex:1;position:relative;text-align:center;color:#9AA4B4;transition:.15s;}
 .gate-tab .gi.mid{flex:1.15;}
 .gate-tab .gi:active{transform:scale(.94);}
@@ -108,9 +115,19 @@ textarea{min-height:90px;resize:vertical;}
 .gate-tab .gi .n{font-size:11px;margin-top:4px;font-weight:800;letter-spacing:-.8px;white-space:nowrap;}
 .gate-tab .gi .ball{width:46px;height:46px;margin:0 auto;border-radius:50%;display:flex;
   align-items:center;justify-content:center;font-size:24px;color:#fff;}
-.gate-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 16px;min-height:0;overflow-y:auto;}
-.gate-hint{text-align:center;font-size:13px;font-weight:800;padding:7px 0;}
-.slide{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px 16px;text-align:center;}
+/* 앱 이름 — 고정. 문구는 탭 라벨(11px)과 같은 크기 */
+.gate-name{flex:none;text-align:center;padding:10px 14px 8px;}
+.gate-name .brand .cos{font-size:12px;}
+.gate-name .brand .rc{font-size:22px;}
+.gate-name .tag{margin-top:4px;font-size:11px;font-weight:800;color:var(--ink-soft);
+  line-height:1.5;letter-spacing:-.8px;word-break:keep-all;}
+.gate-body{flex:1;display:flex;flex-direction:column;padding:0 14px 8px;min-height:0;overflow-y:auto;}
+/* 넘칠 때 위가 잘리지 않는 가운데 정렬 (justify-content:center 는 위를 잘라먹음) */
+.gate-mid{margin:auto 0;width:100%;}
+/* 네모칸은 고정. 안의 설명만 바뀐다 (넘길 때 커졌다 작아졌다 하지 않게) */
+.slide{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 14px;text-align:center;
+  height:186px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;box-sizing:border-box;}
 .slide.in{animation:slide-in .28s ease-out;}
 @keyframes slide-in{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
 /* 퀵 = 움직이는 일. 차가 좌우로 다니게 */
@@ -122,13 +139,15 @@ textarea{min-height:90px;resize:vertical;}
 .gate-tab .gi .e .qk .ri{height:22px;}
 @keyframes qk-run{0%,100%{transform:translateX(-9px);}50%{transform:translateX(9px);}}
 @media (prefers-reduced-motion:reduce){.qk,.slide.in{animation:none;}}
-.slide .ic{font-size:46px;line-height:1;}
-.slide .ti{font-size:20px;font-weight:850;margin-top:11px;}
-.slide .de{font-size:14px;color:var(--ink-soft);margin-top:8px;line-height:1.65;}
-.slide .go{margin-top:14px;font-size:13.5px;font-weight:800;color:var(--orange);}
-.dots{display:flex;justify-content:center;gap:7px;margin-top:14px;}
-.dots i{width:7px;height:7px;border-radius:50%;background:#D3D1C7;transition:.2s;}
-.dots i.on{width:18px;background:var(--orange);}
+.slide .ic{font-size:32px;line-height:1;}
+.slide .ti{font-size:17px;font-weight:850;margin-top:7px;word-break:keep-all;line-height:1.35;}
+.slide .de{font-size:12.5px;color:var(--ink-soft);margin-top:5px;line-height:1.5;word-break:keep-all;}
+.slide .go{margin-top:9px;font-size:12px;font-weight:800;color:var(--orange);word-break:keep-all;}
+/* 슬라이드 점 — 크고 진하게. 누르기 쉽도록 여백까지 클릭 범위 */
+.dots{display:flex;justify-content:center;align-items:center;gap:3px;margin-top:9px;}
+.dots i{width:9px;height:9px;border-radius:50%;background:#A9B2C0;transition:.2s;cursor:pointer;
+  box-sizing:content-box;padding:6px 4px;background-clip:content-box;}
+.dots i.on{width:22px;border-radius:20px;background:var(--orange);background-clip:content-box;}
 .arw-btn{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
   background:#fff;color:#9AA4B4;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .arw-btn:active{background:var(--bg);}
@@ -247,11 +266,20 @@ function next(){ if(step<STEPS.length-1) go(step+1); }
 var CO_TABS = [['jobs','📢','기사구인'],['quick','📦','퀵발송'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
 var DR_TABS = [['jobs','💼','기사구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
 
+/* 설명은 4장 모두 2줄, 길이를 비슷하게 맞춤 (네모칸이 안 들쭉날쭉하게) */
 var SLIDES = [
-  { ic:'📢', ti:'구인 — 기사를 뽑아요', de:'공고를 올리면 기사님이 지원합니다.<br>마음에 드는 기사님께 먼저 제안도 가능.', go:'위 「구인」을 눌러 시작 ↑', role:'company', tab:'jobs' },
-  { ic:'💼', ti:'구직 — 일자리를 찾아요', de:'셔틀·택배·물류·소형화물 채용 공고.<br>지원하면 업체에 바로 문자가 갑니다.', go:'아래 「구직」을 눌러 시작 ↓', role:'driver', tab:'jobs' },
-  { ic:'🚚', ti:'퀵 — 보내고, 받아요', de:'서류 한 장부터 소형 박스까지.<br>거리로 요금 자동 계산 · 가까운 기사님이 바로.', go:'보낼 분은 위 ↑ · 기사님은 아래 ↓', role:'', tab:'quick' },
-  { ic:'📖', ti:'처음이신가요?', de:'쓰는 법과 폰에 앱처럼 설치하는 법을<br>하나하나 알려드립니다.', go:'「사용법」 · 「설치」를 눌러보세요', role:'', tab:'guide' }
+  { ic:'📢', ti:'기사구인 — 기사를 뽑아요',
+    de:'공고를 올리면 기사님이 지원합니다.<br>마음에 드는 기사님께 먼저 제안도 가능.',
+    go:'위 「기사구인」을 눌러 시작 ↑', role:'company', tab:'jobs' },
+  { ic:'💼', ti:'기사구직 — 일자리를 찾아요',
+    de:'셔틀 · 택배 · 물류 · 소형화물 공고.<br>지원하면 업체에 바로 문자가 갑니다.',
+    go:'아래 「기사구직」을 눌러 시작 ↓', role:'driver', tab:'jobs' },
+  { ic:'🚚', ti:'퀵 — 보내고, 받아요',
+    de:'서류 한 장부터 소형 박스까지.<br>거리로 요금 계산 · 가까운 기사님이 바로.',
+    go:'보낼 분은 위 ↑ · 기사님은 아래 ↓', role:'', tab:'quick' },
+  { ic:'📖', ti:'처음이신가요?',
+    de:'쓰는 법과 폰에 앱처럼 설치하는 법을<br>하나하나 그림으로 알려드립니다.',
+    go:'「사용법」 · 「설치」를 눌러보세요', role:'', tab:'guide' }
 ];
 var slideIdx = 0;
 
@@ -335,7 +363,6 @@ function icoFor(tab, role){
 }
 
 function gateTabHtml(tabs, role, cls){
-  var word = (role==='company') ? '업체 로그인' : '기사 로그인';
   return '<div class="gate-tab '+cls+'">'
     + tabs.map(function(x){
         if(x[0]==='home'){
@@ -343,14 +370,21 @@ function gateTabHtml(tabs, role, cls){
             +'<div class="ball" style="background:'+(role==='company'?'var(--orange)':'var(--navy)')+';">'+ICO.home+'</div>'
             +'<div class="n" style="color:'+(role==='company'?'var(--orange)':'var(--navy)')+';">홈</div></div>';
         }
-        /* 내정보 칸에만 라벨 바로 아래 로그인을 붙인다 (탭 줄을 따로 만들지 않음) */
-        var lg = (x[0]==='me')
-          ? '<span class="lg" onclick="event.stopPropagation();gateGo(\''+role+'\',\'home\')">'+word+'</span>'
-          : '';
         return '<div class="gi" onclick="gateGo(\''+role+'\',\''+x[0]+'\')">'
-          +'<div class="e">'+icoFor(x[0],role)+'</div><div class="n">'+x[2]+'</div>'+lg+'</div>';
+          +'<div class="e">'+icoFor(x[0],role)+'</div><div class="n">'+x[2]+'</div></div>';
       }).join('')
     +'</div>';
+}
+
+/* 안내 문구(왼쪽) + 로그인(오른쪽)을 한 줄에. 안내줄을 따로 두지 않아 높이가 준다 */
+function gateBar(role){
+  var co = (role === 'company');
+  return '<div class="gate-bar '+(co?'co':'dr')+'">'
+    + '<span class="tx">' + (co ? '📦 보내거나 뽑으시나요? 탭을 클릭하세요'
+                                : '🚚 기사님이신가요? 탭을 클릭하세요') + '</span>'
+    + '<button class="lg" onclick="gateGo(\''+role+'\',\'home\')">'
+    + (co ? '업체 로그인' : '기사 로그인') + '</button>'
+    + '</div>';
 }
 
 
@@ -372,22 +406,24 @@ function gateView(){
   return '<div class="gate" id="gate">'
 
     + gateTabHtml(CO_TABS, 'company', 'top')
-    + '<div class="gate-hint" style="color:var(--orange);background:var(--orange-soft);">📦 보내거나 뽑으시나요? 위 탭을 누르세요 (개인 · 사업자)</div>'
+    + gateBar('company')
 
-    + '<div class="gate-body">'
-    +   '<div style="text-align:center;margin-bottom:14px;">'
-    +     '<div class="brand" style="font-size:0;"><span class="cos" style="font-size:15px;">cos</span><span class="rc" style="font-size:27px;">ROADJOB</span></div>'
-    +     '<div style="margin-top:5px;font-size:13.5px;color:var(--ink-soft);line-height:1.5;">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</div>'
-    +   '</div>'
+    /* 앱 이름은 스크롤 영역 밖 — 슬라이드 네모와 별개로 항상 고정 */
+    + '<div class="gate-name">'
+    +   '<div class="brand" style="font-size:0;"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
+    +   '<div class="tag">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</div>'
+    + '</div>'
+
+    + '<div class="gate-body"><div class="gate-mid">'
     +   '<div style="display:flex;align-items:center;gap:8px;">'
     +     '<button class="arw-btn" onclick="slideMove(-1)" aria-label="이전">‹</button>'
     +     '<div class="slide" id="slide" style="flex:1;">' + slideInner() + '</div>'
     +     '<button class="arw-btn" onclick="slideMove(1)" aria-label="다음">›</button>'
     +   '</div>'
     +   '<div class="dots" id="dots">' + dotsInner() + '</div>'
-    + '</div>'
+    + '</div></div>'
 
-    + '<div class="gate-hint" style="color:var(--navy);background:var(--navy-soft);">🚚 기사이신가요? 아래 탭을 누르세요</div>'
+    + gateBar('driver')
     + gateTabHtml(DR_TABS, 'driver', 'bot')
 
     + '</div>';
@@ -859,7 +895,7 @@ function tabbar(){
       }
       /* 내정보 칸 바로 아래에 로그아웃 (탭 줄맞춤을 건드리지 않도록 겹쳐 놓음) */
       var lg = (x[0]==='me')
-        ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:-13px;right:-13px;top:100%;margin-top:4px;'
+        ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:0;right:0;top:100%;margin-top:4px;'
           +'font-size:12px;font-weight:800;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
         : '';
       return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:6px 0 4px;cursor:pointer;'

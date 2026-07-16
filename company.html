@@ -90,10 +90,8 @@ textarea{min-height:90px;resize:vertical;}
 /* 퀵 = 움직이는 일. 차가 좌우로 다니게 */
 .qk{display:inline-block;animation:qk-run 1.6s ease-in-out infinite;}
 .ri{height:26px;width:auto;display:block;margin:0 auto;}
-.gate-tab .gi .e .ri{height:25px;}
 /* 퀵 트럭은 좌우로 달리므로 조금 작게 — 옆 칸 침범 방지 */
 .qk .ri{height:23px;}
-.gate-tab .gi .e .qk .ri{height:22px;}
 @keyframes qk-run{0%,100%{transform:translateX(-9px);}50%{transform:translateX(9px);}}
 @media (prefers-reduced-motion:reduce){.qk{animation:none;}}
 .brand{display:flex;align-items:center;justify-content:center;gap:2px;font-weight:900;letter-spacing:-.02em;}
@@ -510,7 +508,7 @@ function tabbar(){
         }
         /* 내정보 칸 바로 아래에 로그아웃 (탭 줄맞춤을 건드리지 않도록 겹쳐 놓음) */
         var lg = (x[0]==='me')
-          ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:-13px;right:-13px;top:100%;margin-top:4px;'
+          ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:0;right:0;top:100%;margin-top:4px;'
             +'font-size:12px;font-weight:800;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
           : '';
         return '<div onclick="tab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:10px 0 9px;cursor:pointer;'
