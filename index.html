@@ -96,26 +96,26 @@ textarea{min-height:90px;resize:vertical;}
 .note-mid b{color:var(--ink);}
 .gate{position:fixed;inset:0;max-width:520px;margin:0 auto;background:var(--bg);
   display:flex;flex-direction:column;z-index:30;}
-.gate-tab{background:#fff;display:flex;padding:6px 0 17px;cursor:pointer;}
+.gate-tab{background:#fff;display:flex;padding:6px 0 19px;cursor:pointer;}
 .gate-tab.top{border-bottom:1px solid var(--line);padding-top:calc(6px + env(safe-area-inset-top));}
-.gate-tab.bot{border-top:1px solid var(--line);padding-bottom:calc(17px + env(safe-area-inset-bottom));}
-.gate-tab .gi .lg{position:absolute;left:-6px;right:-6px;top:100%;margin-top:2px;font-size:8.5px;font-weight:700;
+.gate-tab.bot{border-top:1px solid var(--line);padding-bottom:calc(19px + env(safe-area-inset-bottom));}
+.gate-tab .gi .lg{position:absolute;left:-8px;right:-8px;top:100%;margin-top:3px;font-size:9.5px;font-weight:800;
   color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;}
 .gate-tab .gi{flex:1;position:relative;text-align:center;color:#9AA4B4;transition:.15s;}
 .gate-tab .gi.mid{flex:1.15;}
 .gate-tab .gi:active{transform:scale(.94);}
-.gate-tab .gi .e{font-size:15px;line-height:1.1;}
-.gate-tab .gi .n{font-size:8.5px;margin-top:2px;font-weight:700;letter-spacing:-.4px;white-space:nowrap;}
-.gate-tab .gi .ball{width:30px;height:30px;margin:0 auto;border-radius:50%;display:flex;
-  align-items:center;justify-content:center;font-size:16px;color:#fff;}
-.gate-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 16px;min-height:0;overflow-y:auto;}
+.gate-tab .gi .e{font-size:19px;line-height:1.1;}
+.gate-tab .gi .n{font-size:10.5px;margin-top:3px;font-weight:800;letter-spacing:-.5px;white-space:nowrap;}
+.gate-tab .gi .ball{width:37px;height:37px;margin:0 auto;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:19px;color:#fff;}
+.gate-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:6px 16px;min-height:0;overflow-y:auto;}
 .gate-hint{text-align:center;font-size:11px;font-weight:800;padding:4px 0;}
-.slide{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 14px;text-align:center;}
-.slide .ic{font-size:32px;line-height:1;}
+.slide{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;text-align:center;}
+.slide .ic{font-size:28px;line-height:1;}
 .slide .ti{font-size:16px;font-weight:850;margin-top:7px;}
 .slide .de{font-size:12.5px;color:var(--ink-soft);margin-top:5px;line-height:1.5;}
 .slide .go{margin-top:9px;font-size:12px;font-weight:800;color:var(--orange);}
-.dots{display:flex;justify-content:center;gap:6px;margin-top:9px;}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:7px;}
 .dots i{width:6px;height:6px;border-radius:50%;background:#D3D1C7;transition:.2s;}
 .dots i.on{width:16px;background:var(--orange);}
 .arw-btn{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);
@@ -272,9 +272,9 @@ function gateView(){
     + '<div class="gate-hint" style="color:var(--orange);background:var(--orange-soft);">📦 보내거나 뽑으시나요? 위 탭을 누르세요 (개인 · 사업자)</div>'
 
     + '<div class="gate-body">'
-    +   '<div style="text-align:center;margin-bottom:9px;">'
-    +     '<div class="brand" style="font-size:0;"><span class="cos" style="font-size:12px;">cos</span><span class="rc" style="font-size:21px;">ROADJOB</span></div>'
-    +     '<div style="margin-top:3px;font-size:12px;color:var(--ink-soft);line-height:1.45;">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</div>'
+    +   '<div style="text-align:center;margin-bottom:7px;">'
+    +     '<div class="brand" style="font-size:0;"><span class="cos" style="font-size:11px;">cos</span><span class="rc" style="font-size:19px;">ROADJOB</span></div>'
+    +     '<div style="margin-top:2px;font-size:11.5px;color:var(--ink-soft);line-height:1.4;">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</div>'
     +   '</div>'
     +   '<div style="display:flex;align-items:center;gap:8px;">'
     +     '<button class="arw-btn" onclick="slideMove(-1)" aria-label="이전">‹</button>'
@@ -743,24 +743,24 @@ function renderMain(){
 }
 function tabbar(){
   var t = [['jobs','💼','구직'],['quick','🚚','퀵수락'],['guide','📖','사용법'],['home','','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
-  return '<div style="display:flex;align-items:flex-end;padding-bottom:15px;">'
+  return '<div style="display:flex;align-items:flex-end;padding-bottom:18px;">'
   + t.map(function(x){
       var on = mainTab===x[0];
       if(x[0]==='home'){
         return '<div onclick="mainTab=\'home\';renderMain()" style="flex:1.15;text-align:center;padding:0 0 2px;cursor:pointer;">'
-          +'<div style="width:40px;height:40px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;'
+          +'<div style="width:46px;height:46px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;'
           +'background:'+(on?'var(--orange)':'var(--navy)')+';color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);">🏠</div>'
-          +'<div style="font-size:10px;margin-top:3px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
+          +'<div style="font-size:11px;margin-top:3px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
       }
       /* 내정보 칸 바로 아래에 로그아웃 (탭 줄맞춤을 건드리지 않도록 겹쳐 놓음) */
       var lg = (x[0]==='me')
-        ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:0;right:0;top:100%;margin-top:2px;'
-          +'font-size:9.5px;font-weight:700;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
+        ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:-8px;right:-8px;top:100%;margin-top:3px;'
+          +'font-size:10.5px;font-weight:800;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
         : '';
       return '<div onclick="mainTab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:6px 0 4px;cursor:pointer;'
         +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
-        +'<div style="font-size:16px;">'+x[1]+'</div>'
-        +'<div style="font-size:9px;margin-top:2px;letter-spacing:-.4px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
+        +'<div style="font-size:20px;">'+x[1]+'</div>'
+        +'<div style="font-size:11px;margin-top:3px;letter-spacing:-.5px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
     }).join('')
   +'</div>';
 }
