@@ -406,29 +406,29 @@ function renderMain(){
 }
 function tabbar(){
   var t=[['jobs','📢','구인'],['quick','📦','퀵발송'],['guide','📖','사용법'],['home','🏠','홈'],['install','📲','설치'],['active','📋','진행중'],['me','👤','내정보']];
-  return '<div style="display:flex;border-top:1px solid var(--line);padding-bottom:18px;">'
+  return '<div style="display:flex;border-top:1px solid var(--line);padding-bottom:21px;">'
     + t.map(function(x){
         /* find 는 구인의, apps 는 진행중의 하위 화면 — 부모 탭을 켜둔다 */
         var on = (tab===x[0])
               || (x[0]==='jobs'   && tab==='find')
               || (x[0]==='active' && tab==='apps');
         if(x[0]==='home'){
-          return '<div onclick="tab=\'home\';renderMain()" style="flex:1.1;text-align:center;padding:9px 0 8px;cursor:pointer;'
+          return '<div onclick="tab=\'home\';renderMain()" style="flex:1.1;text-align:center;padding:10px 0 9px;cursor:pointer;'
             +'border-bottom:3px solid '+(on?'var(--orange)':'transparent')+';">'
-            +'<div style="width:37px;height:37px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;'
+            +'<div style="width:44px;height:44px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:23px;'
             +'background:'+(on?'var(--orange)':'var(--navy)')+';color:#fff;">🏠</div>'
-            +'<div style="font-size:11px;margin-top:3px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
+            +'<div style="font-size:12px;margin-top:4px;font-weight:800;color:'+(on?'var(--orange)':'var(--navy)')+';">홈</div></div>';
         }
         /* 내정보 칸 바로 아래에 로그아웃 (탭 줄맞춤을 건드리지 않도록 겹쳐 놓음) */
         var lg = (x[0]==='me')
-          ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:-8px;right:-8px;top:100%;margin-top:3px;'
-            +'font-size:10.5px;font-weight:800;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
+          ? '<span onclick="event.stopPropagation();logout()" style="position:absolute;left:-13px;right:-13px;top:100%;margin-top:4px;'
+            +'font-size:12px;font-weight:800;color:#9AA4B4;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;">로그아웃</span>'
           : '';
-        return '<div onclick="tab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:9px 0 8px;cursor:pointer;'
+        return '<div onclick="tab=\''+x[0]+'\';renderMain()" style="flex:1;position:relative;text-align:center;padding:10px 0 9px;cursor:pointer;'
           +'border-bottom:3px solid '+(on?'var(--navy)':'transparent')+';'
           +'color:'+(on?'var(--navy)':'#9AA4B4')+';font-weight:'+(on?'800':'600')+';">'
-          +'<div style="font-size:19px;">'+x[1]+'</div>'
-          +'<div style="font-size:11px;margin-top:3px;letter-spacing:-.5px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
+          +'<div style="font-size:23px;">'+x[1]+'</div>'
+          +'<div style="font-size:12px;margin-top:4px;letter-spacing:-.5px;white-space:nowrap;">'+x[2]+'</div>'+lg+'</div>';
       }).join('')
     +'</div>';
 }
