@@ -2164,11 +2164,18 @@ function onAuthDriver(u){
       if(bootForceHome){ window._mode='signup'; step=0; render(); }
       else enterMain();
     } else {
-      /* 아직 가입 안 한 사람. step 을 건드리면 안 된다 —
-         인증번호를 막 맞춘 사람(step=code)까지 첫 화면으로 튕겨서 가입이 막힌다. */
+      /* 아직 가입 안 한 사람.
+         ⚠️ 지금 가입을 진행 중(인증 통과 → 약관·정보 입력 중)이면
+            화면을 건드리면 안 된다. verifyCode→next 가 이미 몰고 가는 중이라,
+            여기서 render() 를 부르면 약관창이 다시 그려지며 깜빡이거나 첫화면으로 튄다.
+         가입 흐름 밖(step=intro)일 때만 첫 화면을 그린다 (앱을 새로 연 미가입자). */
+      if(window._mode !== 'main' && step > 0) return;   // 가입 진행 중 → 감시자는 손 떼기
       window._mode='signup'; render();
     }
-  }).catch(function(){ window._mode='signup'; render(); });
+  }).catch(function(){
+      if(window._mode !== 'main' && step > 0) return;
+      window._mode='signup'; render();
+  });
 }
 
 function onAuthCompany(u){
@@ -2180,8 +2187,15 @@ function onAuthCompany(u){
       C.company=p.company; C.manager=p.manager; C.phone=p.phone; C.bizType=p.bizType; C.area=p.area;
       try{ localStorage.setItem('rc_role','company'); localStorage.removeItem('rc_driver'); }catch(e){}
       C_save(); C_enterMain();
-    } else { mode='signup'; C_render(); }
-  }).catch(function(){ mode='signup'; C_render(); });
+    } else {
+      /* 업체도 가입 진행 중이면 감시자가 화면을 안 건드린다 (기사와 같은 이유) */
+      if(mode !== 'main' && C_step > 0) return;
+      mode='signup'; C_render();
+    }
+  }).catch(function(){
+      if(mode !== 'main' && C_step > 0) return;
+      mode='signup'; C_render();
+  });
 }
 
 function boot(){
