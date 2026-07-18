@@ -61,6 +61,9 @@ textarea{min-height:90px;resize:vertical;}
 .opt.on{border-color:var(--navy);background:var(--navy);color:#fff;}
 .opt .ico{display:block;font-size:22px;margin-bottom:4px;}
 .foot{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--white);border-top:1px solid var(--line);padding:14px 18px calc(14px + env(safe-area-inset-bottom));}
+.grecaptcha-badge{visibility:hidden!important;}
+.recap-note{margin-top:10px;font-size:11px;line-height:1.5;color:#98A2B3;text-align:center;}
+.recap-note a{color:#98A2B3;text-decoration:underline;}
 .btn{width:100%;padding:17px;border:none;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;}
 .btn-main{background:var(--navy);color:#fff;}
 .btn-main:disabled{background:#C4CBD6;cursor:not-allowed;}
@@ -642,7 +645,8 @@ phone:function(){ return demoBar()
   +'<p class="step-desc">본인 확인과 일자리 연락에 사용됩니다.</p>'
   +'<div class="field"><label class="lb">휴대폰 번호 <span class="req">*</span></label>'
   +'<input type="tel" inputmode="numeric" placeholder="01012345678" value="'+D.phone+'" oninput="D.phone=this.value.replace(/[^0-9]/g,\'\');this.value=D.phone;chk()">'
-  +'<div class="hint">숫자만 입력하세요 (- 없이)</div></div>'; },
+  +'<div class="hint">숫자만 입력하세요 (- 없이)</div></div>'
+  +'<div class="recap-note">이 서비스는 reCAPTCHA로 보호되며 Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">개인정보처리방침</a>과 <a href="https://policies.google.com/terms" target="_blank" rel="noopener">약관</a>이 적용됩니다.</div>'; },
 code:function(){ return demoBar()
   +'<h2 class="step-title">인증번호를<br>입력해 주세요</h2>'
   +'<p class="step-desc">'+fmtPhone(D.phone)+' 로 발송했습니다.</p>'
@@ -2314,7 +2318,8 @@ phone:function(){ return C_demoBar()
   +'<p class="C_step-desc">담당자 본인 확인에 사용됩니다.</p>'
   +'<div class="field"><label class="lb">휴대폰 번호 <span class="req">*</span></label>'
   +'<input type="tel" inputmode="numeric" placeholder="01012345678" value="'+C.phone+'" oninput="C.phone=this.value.replace(/[^0-9]/g,\'\');this.value=C.phone;chk()">'
-  +'<div class="hint">숫자만 입력하세요 (- 없이)</div></div>'; },
+  +'<div class="hint">숫자만 입력하세요 (- 없이)</div></div>'
+  +'<div class="recap-note">이 서비스는 reCAPTCHA로 보호되며 Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">개인정보처리방침</a>과 <a href="https://policies.google.com/terms" target="_blank" rel="noopener">약관</a>이 적용됩니다.</div>'; },
 code:function(){ return C_demoBar()
   +'<h2 class="C_step-title">인증번호를<br>입력해 주세요</h2>'
   +'<p class="C_step-desc">'+fmtPhone(C.phone)+' 로 발송했습니다.</p>'
