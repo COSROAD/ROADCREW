@@ -214,9 +214,12 @@ textarea{min-height:90px;resize:vertical;}
 .sr:hover{border-color:var(--navy);background:var(--navy-soft);}
 .sr .n{font-size:14.5px;font-weight:800;}
 .sr .a{font-size:12.5px;color:var(--ink-soft);margin-top:3px;}
+.testbar{background:#7C3AED;color:#fff;text-align:center;font-size:12px;font-weight:800;
+  padding:5px 10px;letter-spacing:.3px;position:sticky;top:0;z-index:100;}
 </style>
 </head>
 <body>
+<div id="testbar"></div>
 <div class="app">
   <div id="topbar"></div>
   <div class="prog"><i id="progbar"></i></div>
@@ -289,7 +292,15 @@ var WORKTYPE = ['정규직','계약직','일용직','파트타임','스팟(1회�
 
 var STEPS = ['intro','phone','code','agree','p1','p2','p3','p4','done'];
 var step = 0, busy = false, confirmResult = null, recaptcha = null;
-var D = JSON.parse(localStorage.getItem('rc_driver')||'null') || {
+/* ═══ 테스트 버전 분리 ═══ COSROAD 방식(?org=..._test).
+   데이터가 Firestore 에 있으므로 컬렉션 이름에 test_ 를 붙여 나눈다.
+   파일은 하나 — 실사용·테스트가 같은 코드를 쓴다. */
+var RJ_ORG  = (function(){ try{ return (new URLSearchParams(location.search).get('org')||'').replace(/[^a-z0-9_]/gi,''); }catch(e){ return ''; } })();
+var RJ_TEST = /_test$/.test(RJ_ORG);
+function col(name){ return RJ_TEST ? 'test_' + name : name; }        // Firestore 컬렉션
+function lk(key){ return RJ_TEST ? key + '_test' : key; }            // localStorage 키
+
+var D = JSON.parse(localStorage.getItem(lk('rc_driver'))||'null') || {
   phone:'', name:'', areas:[], license:'', vehicles:[], career:'',
   worktypes:[], pay:'협의', intro:'', licenseImg:null,
   insurance:false, helmet:false,          // 퀵(이륜차) 법정 확인 항목
@@ -309,7 +320,7 @@ function save(){
   try{
     var copy = {};
     for(var k in D){ if(k !== 'licenseImg') copy[k] = D[k]; }
-    localStorage.setItem('rc_driver', JSON.stringify(copy));
+    localStorage.setItem(lk('rc_driver'), JSON.stringify(copy));
   }catch(e){ console.warn('저장 실패(무시하고 계속):', e); }
 }
 function live(){ return window._live === true; }
@@ -575,7 +586,7 @@ function bindSwipe(){
 /* 탭을 누르면 그 역할로 가입/로그인 → 끝나면 그 탭이 열린다 */
 function gateGo(role, tab){
   slideStop();
-  try{ localStorage.setItem('rj_goto', tab); }catch(e){}
+  try{ localStorage.setItem(lk('rj_goto'), tab); }catch(e){}
   if(role === 'company'){ pickCompany(); return; }
   pickDriver();
 }
@@ -586,11 +597,11 @@ var joined = false;   // 이미 기사 가입을 마친 사람인가
 /* '처음 화면으로'를 눌러서 온 것인지 (한 번만 유효) */
 function wantHome(){
   var v=false;
-  try{ v = localStorage.getItem('rc_home')==='1'; localStorage.removeItem('rc_home'); }catch(e){}
+  try{ v = localStorage.getItem(lk('rc_home'))==='1'; localStorage.removeItem(lk('rc_home')); }catch(e){}
   return v;
 }
 function pickDriver(){
-  try{ localStorage.setItem('rc_role','driver'); }catch(e){}
+  try{ localStorage.setItem(lk('rc_role'),'driver'); }catch(e){}
   if(joined){ enterMain(); return; }   // 이미 가입한 기사면 바로 메인으로
   /* 새 가입은 동의를 무조건 처음부터. 기기에 남은 옛 rc_driver 의 동의값을 지운다
      (안 지우면 체크 안 해도 valid() 통과 → 약관 화면이 그냥 넘어감. 법적으로도 매번 받아야) */
@@ -598,7 +609,7 @@ function pickDriver(){
   next();
 }
 function pickCompany(){
-  try{ localStorage.setItem('rc_role','company'); }catch(e){}
+  try{ localStorage.setItem(lk('rc_role'),'company'); }catch(e){}
   slideStop();
   ROLE = 'company';
   C_boot();          // 페이지를 옮기지 않는다 — 주소 그대로
@@ -805,7 +816,7 @@ function finish(){
   }
   task.then(function(){
       setBusy(true,'저장 중...');
-      return fb.setDoc(fb.doc(window._db,'drivers',u.uid), profile, {merge:true});
+      return fb.setDoc(fb.doc(window._db, col('drivers'),u.uid), profile, {merge:true});
     })
     .then(function(){
       D.licenseImg = null;                 // 올렸으니 이 기기에서는 즉시 버린다
@@ -954,7 +965,7 @@ function isMain(){ return window._mode === 'main'; }
 /* 첫 화면에서 누른 탭으로 (한 번만) */
 function wantTab(){
   var t = null;
-  try{ t = localStorage.getItem('rj_goto'); localStorage.removeItem('rj_goto'); }catch(e){}
+  try{ t = localStorage.getItem(lk('rj_goto')); localStorage.removeItem(lk('rj_goto')); }catch(e){}
   var ok = ['jobs','quick','home','guide','install','active','me'];
   return (t && ok.indexOf(t) >= 0) ? t : null;
 }
@@ -1602,7 +1613,7 @@ function askGeoDriver(){
   var u = window._auth && window._auth.currentUser;
   if(u && live()){
     var fb=window._fb;
-    fb.setDoc(fb.doc(window._db,'drivers',u.uid), { agreeGeo:true }, {merge:true}).catch(function(){});
+    fb.setDoc(fb.doc(window._db, col('drivers'),u.uid), { agreeGeo:true }, {merge:true}).catch(function(){});
   }
   findMe();
 }
@@ -1771,11 +1782,11 @@ function acceptOrder(i){
   var u = window._auth.currentUser, fb = window._fb;
 
   /* 선착순 — 이미 다른 기사가 가져갔는지 다시 확인 */
-  fb.getDoc(fb.doc(window._db,'orders',o.id))
+  fb.getDoc(fb.doc(window._db, col('orders'),o.id))
     .then(function(snap){
       if(!snap.exists()) throw new Error('주문이 사라졌습니다.');
       if(snap.data().status !== 'open') throw new Error('이미 다른 기사님이 수락했습니다.');
-      return fb.updateDoc(fb.doc(window._db,'orders',o.id), {
+      return fb.updateDoc(fb.doc(window._db, col('orders'),o.id), {
         status:'accepted', driverId:u.uid, driverName:D.name, driverPhone:D.phone,
         driverVehicle:o.vehicle, acceptedAt:new Date().toISOString()
       });
@@ -1801,7 +1812,7 @@ function orderPicked(i){
   if(!confirm('물품을 픽업하셨나요?\n\n고객에게 「픽업 완료」 문자가 갑니다.')) return;
   qBusy = true;
   var fb = window._fb;
-  fb.updateDoc(fb.doc(window._db,'orders',o.id), { status:'picked', pickedAt:new Date().toISOString() })
+  fb.updateDoc(fb.doc(window._db, col('orders'),o.id), { status:'picked', pickedAt:new Date().toISOString() })
     .then(function(){
       toast('📦 픽업 처리했습니다.');
       notifySMS(o.id, 'order_picked');
@@ -1835,7 +1846,7 @@ function orderDone(i){
   if(!confirm('배송을 완료하셨나요?\n\n요금 '+won(o.fare)+'을 받으셨는지 확인해 주세요.\n고객에게 「배송 완료」 문자가 갑니다.')) return;
   qBusy = true;
   var fb = window._fb;
-  fb.updateDoc(fb.doc(window._db,'orders',o.id), { status:'done', doneAt:new Date().toISOString() })
+  fb.updateDoc(fb.doc(window._db, col('orders'),o.id), { status:'done', doneAt:new Date().toISOString() })
     .then(function(){
       toast('✅ 배송 완료!');
       notifySMS(o.id, 'order_done');
@@ -1869,7 +1880,7 @@ function acceptOffer(i){
   if(!confirm('「'+(a.company||'업체')+'」의 제안을 수락할까요?\n\n수락하면 업체에 내 연락처가 전달되고,\n업체가 곧 연락드립니다.')) return;
   offerBusy = true;
   var fb=window._fb;
-  fb.updateDoc(fb.doc(window._db,'applications',a.id), { status:'accepted', respondedAt:new Date().toISOString() })
+  fb.updateDoc(fb.doc(window._db, col('applications'),a.id), { status:'accepted', respondedAt:new Date().toISOString() })
     .then(function(){
       toast('✅ 제안을 수락했습니다!');
       notifySMS(a.id,'accepted').then(function(j){
@@ -1887,7 +1898,7 @@ function declineOffer(i){
   if(!confirm('「'+(a.company||'업체')+'」의 제안을 거절할까요?')) return;
   offerBusy = true;
   var fb=window._fb;
-  fb.updateDoc(fb.doc(window._db,'applications',a.id), { status:'declined', respondedAt:new Date().toISOString() })
+  fb.updateDoc(fb.doc(window._db, col('applications'),a.id), { status:'declined', respondedAt:new Date().toISOString() })
     .then(function(){ toast('제안을 거절했습니다.'); return loadMyApps(); })
     .then(renderMain)
     .catch(function(e){ toast('실패: '+(e.code||e.message)); })
@@ -1932,7 +1943,7 @@ function toggleGeo(){
   var u = window._auth && window._auth.currentUser;
   if(u && live()){
     var fb=window._fb;
-    fb.setDoc(fb.doc(window._db,'drivers',u.uid), { agreeGeo: next }, {merge:true}).catch(function(){});
+    fb.setDoc(fb.doc(window._db, col('drivers'),u.uid), { agreeGeo: next }, {merge:true}).catch(function(){});
   }
   renderMain();
   toast(next ? '✅ 위치정보 이용에 동의했습니다.' : '위치정보 이용을 껐습니다.');
@@ -1946,7 +1957,7 @@ function toggleOpenProfile(){
   if(!u){ D.agree3=next; save(); renderMain(); return; }
   openBusy = true;
   var fb=window._fb;
-  fb.setDoc(fb.doc(window._db,'drivers',u.uid), { agreeOpenProfile: next }, {merge:true})
+  fb.setDoc(fb.doc(window._db, col('drivers'),u.uid), { agreeOpenProfile: next }, {merge:true})
     .then(function(){
       D.agree3 = next; save(); renderMain();
       toast(next ? '✅ 이제 업체가 제안을 보낼 수 있습니다.' : '프로필을 비공개로 바꿨습니다.');
@@ -1995,7 +2006,7 @@ function isExpired(j){
 function loadJobs(){
   if(!live()){ jobs=[]; myApps=[]; renderMain(); return; }
   var fb=window._fb;
-  fb.getDocs(fb.query(fb.collection(window._db,'jobs'), fb.where('status','==','open')))
+  fb.getDocs(fb.query(fb.collection(window._db, col('jobs')), fb.where('status','==','open')))
     .then(function(snap){
       jobs=[];
       snap.forEach(function(d){ var o=d.data(); o.id=d.id; if(!isExpired(o)) jobs.push(o); });
@@ -2007,7 +2018,7 @@ function loadJobs(){
 function loadMyApps(){
   var u=window._auth.currentUser; if(!u) return Promise.resolve();
   var fb=window._fb;
-  return fb.getDocs(fb.query(fb.collection(window._db,'applications'), fb.where('driverId','==',u.uid)))
+  return fb.getDocs(fb.query(fb.collection(window._db, col('applications')), fb.where('driverId','==',u.uid)))
     .then(function(snap){ myApps=[]; snap.forEach(function(d){ var o=d.data(); o.id=d.id; myApps.push(o); }); });
 }
 
@@ -2037,7 +2048,7 @@ function applyJob(){
   if(!live()){ toast('시안 모드에서는 지원할 수 없습니다.'); return; }
   var u=window._auth.currentUser; if(!u||!curJob) return;
   var fb=window._fb;
-  fb.addDoc(fb.collection(window._db,'applications'), {
+  fb.addDoc(fb.collection(window._db, col('applications')), {
     jobId:curJob.id, jobTitle:curJob.title, company:curJob.company, companyId:curJob.companyId,
     driverId:u.uid, driverName:D.name, driverPhone:D.phone,
     direction:'apply', status:'applied', createdAt: fb.serverTimestamp()
@@ -2059,7 +2070,7 @@ function notifySMS(appId, kind){
     .then(function(t){
       return fetch('https://cosroad.vercel.app/api/rc-notify', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ idToken:t, appId:appId, kind:kind })
+        body: JSON.stringify({ idToken:t, appId:appId, kind:kind, test:RJ_TEST })
       });
     })
     .then(function(r){ return r.json(); })
@@ -2090,12 +2101,12 @@ function editProfile(){ window._mode='signup'; step=4; render(); }
 /* 이 기기에 남은 개인정보를 전부 지운다 (남의 정보가 섞이지 않게) */
 function clearLocal(){
   try{
-    localStorage.removeItem('rc_role');
-    localStorage.removeItem('rc_driver');
-    localStorage.removeItem('rc_company');
+    localStorage.removeItem(lk('rc_role'));
+    localStorage.removeItem(lk('rc_driver'));
+    localStorage.removeItem(lk('rc_company'));
     localStorage.removeItem('rc_order');
-    localStorage.removeItem('rc_home');
-    localStorage.removeItem('rj_goto');
+    localStorage.removeItem(lk('rc_home'));
+    localStorage.removeItem(lk('rj_goto'));
   }catch(e){}
 }
 function goHome(){
@@ -2103,7 +2114,7 @@ function goHome(){
   slideStop();
   ROLE = 'driver';
   window._mode = 'signup'; step = 0;
-  try{ localStorage.removeItem('rc_home'); }catch(e){}
+  try{ localStorage.removeItem(lk('rc_home')); }catch(e){}
   render(); window.scrollTo(0,0);
 }
 function logout(){
@@ -2151,7 +2162,7 @@ function bindAuth(){
 function onAuthDriver(u){
   if(!u){ window._mode='signup'; render(); return; }
   var fb=window._fb;
-  fb.getDoc(fb.doc(window._db,'drivers',u.uid)).then(function(s){
+  fb.getDoc(fb.doc(window._db, col('drivers'),u.uid)).then(function(s){
     if(s.exists()){
       var p=s.data();
       D.name=p.name; D.phone=p.phone; D.areas=p.areas||[]; D.license=p.license;
@@ -2161,7 +2172,7 @@ function onAuthDriver(u){
       D.agree3=p.agreeOpenProfile===true;
       D.insurance=p.insurance===true; D.helmet=p.helmet===true;
       D.agreeGeo=p.agreeGeo===true;
-      try{ localStorage.setItem('rc_role','driver'); localStorage.removeItem('rc_company'); }catch(e){}
+      try{ localStorage.setItem(lk('rc_role'),'driver'); localStorage.removeItem(lk('rc_company')); }catch(e){}
       save();
       joined = true;
       if(bootForceHome){ window._mode='signup'; step=0; render(); }
@@ -2184,11 +2195,11 @@ function onAuthDriver(u){
 function onAuthCompany(u){
   if(!u){ mode='signup'; C_render(); return; }
   var fb=window._fb;
-  fb.getDoc(fb.doc(window._db,'companies',u.uid)).then(function(s){
+  fb.getDoc(fb.doc(window._db, col('companies'),u.uid)).then(function(s){
     if(s.exists()){
       var p=s.data();
       C.company=p.company; C.manager=p.manager; C.phone=p.phone; C.bizType=p.bizType; C.area=p.area;
-      try{ localStorage.setItem('rc_role','company'); localStorage.removeItem('rc_driver'); }catch(e){}
+      try{ localStorage.setItem(lk('rc_role'),'company'); localStorage.removeItem(lk('rc_driver')); }catch(e){}
       C_save(); C_enterMain();
     } else {
       /* 업체도 가입 진행 중이면 감시자가 화면을 안 건드린다 (기사와 같은 이유) */
@@ -2205,12 +2216,14 @@ function onAuthCompany(u){
 
 function boot(){
   icoDefs();
+  if(RJ_TEST){ var tb=document.getElementById('testbar');
+    if(tb) tb.innerHTML='<div class="testbar">🧪 테스트 모드 — 데이터가 실사용과 분리됩니다 ('+RJ_ORG+')</div>'; }
   /* 업체로 '가입까지 마친' 사람만 업체 화면으로. 그냥 눌러본 사람은 첫 화면 유지 */
   bootForceHome = wantHome();      // 한 번만 읽고 즉시 지운다
   if(!bootForceHome){
     try{
-      var _r = localStorage.getItem('rc_role');
-      if(_r==='company' && localStorage.getItem('rc_company')){ ROLE='company'; C_boot(); return; }
+      var _r = localStorage.getItem(lk('rc_role'));
+      if(_r==='company' && localStorage.getItem(lk('rc_company'))){ ROLE='company'; C_boot(); return; }
     }catch(e){}
   }
   ROLE = 'driver';
@@ -2260,11 +2273,11 @@ var C_step = 0, C_busy = false, C_confirmResult = null, C_recaptcha = null;
 var mode = 'signup', tab = 'home';
 var myJobs = [], apps = [], drivers = [], C_curJob = null, curApp = null;
 
-var C = JSON.parse(localStorage.getItem('rc_company')||'null') || {
+var C = JSON.parse(localStorage.getItem(lk('rc_company'))||'null') || {
   phone:'', company:'', manager:'', bizType:'', area:'', agree1:false, agreeGeo:false
 };
 if(C.agreeGeo===undefined) C.agreeGeo=false;
-function C_save(){ try{ localStorage.setItem('rc_company', JSON.stringify(C)); }catch(e){ console.warn('저장 실패(무시):', e); } }
+function C_save(){ try{ localStorage.setItem(lk('rc_company'), JSON.stringify(C)); }catch(e){ console.warn('저장 실패(무시):', e); } }
 /* ── 렌더 ── */
 function C_render(){
   if(mode==='main'){ C_renderMain(); return; }
@@ -2398,7 +2411,7 @@ function C_finish(){
   if(!u){ toast('인증 정보가 없습니다. 다시 시도해 주세요.'); return; }
   setBusy(true,'저장 중...');
   var fb=window._fb;
-  fb.setDoc(fb.doc(window._db,'companies',u.uid), {
+  fb.setDoc(fb.doc(window._db, col('companies'),u.uid), {
     uid:u.uid, phone:C.phone, company:C.company, manager:C.manager,
     bizType:C.bizType, area:C.area, agreePrivacy:C.agree1, createdAt: fb.serverTimestamp()
   }).then(function(){ setBusy(false); next(); })
@@ -2780,11 +2793,11 @@ function loadAll(){
   if(!live()){ C_renderMain(); return; }
   var u=window._auth.currentUser; if(!u) return;
   var fb=window._fb;
-  fb.getDocs(fb.query(fb.collection(window._db,'jobs'), fb.where('companyId','==',u.uid)))
+  fb.getDocs(fb.query(fb.collection(window._db, col('jobs')), fb.where('companyId','==',u.uid)))
    .then(function(s){ myJobs=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; myJobs.push(o); });
-     return fb.getDocs(fb.query(fb.collection(window._db,'applications'), fb.where('companyId','==',u.uid))); })
+     return fb.getDocs(fb.query(fb.collection(window._db, col('applications')), fb.where('companyId','==',u.uid))); })
    .then(function(s){ apps=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; apps.push(o); });
-     return fb.getDocs(fb.query(fb.collection(window._db,'drivers'), fb.where('agreeOpenProfile','==',true))); })
+     return fb.getDocs(fb.query(fb.collection(window._db, col('drivers')), fb.where('agreeOpenProfile','==',true))); })
    .then(function(s){ drivers=[]; s.forEach(function(d){ var o=d.data(); o.id=d.id; drivers.push(o); }); C_renderMain(); })
    .catch(function(e){ toast('불러오기 실패: '+(e.code||e.message)); C_renderMain(); });
 }
@@ -2981,7 +2994,7 @@ function submitQuick(){
   var u = window._auth.currentUser; if(!u) return;
   var fb = window._fb;
   toast('주문 중입니다...');
-  fb.addDoc(fb.collection(window._db,'orders'), {
+  fb.addDoc(fb.collection(window._db, col('orders')), {
     customerId: u.uid,
     customerName: C.company || C.manager,
     customerPhone: C.phone,
@@ -3009,7 +3022,7 @@ function cancelOrder(i){
   if(o.status!=='open'){ toast('이미 기사님이 배정되었습니다. 기사님과 협의해 주세요.'); return; }
   if(!confirm('이 퀵을 취소할까요?\n\n'+o.fromName+' → '+o.toName)) return;
   var fb=window._fb;
-  fb.updateDoc(fb.doc(window._db,'orders',o.id), { status:'canceled', canceledAt:new Date().toISOString() })
+  fb.updateDoc(fb.doc(window._db, col('orders'),o.id), { status:'canceled', canceledAt:new Date().toISOString() })
     .then(function(){ toast('취소했습니다.'); })
     .catch(function(e){ toast('취소 실패: '+(e.code||e.message)); });
 }
@@ -3214,11 +3227,11 @@ function saveJob(){
   var task, isEdit = !!editingJobId;
   if(isEdit){
     data.updatedAt = fb.serverTimestamp();
-    task = fb.updateDoc(fb.doc(window._db,'jobs',editingJobId), data);
+    task = fb.updateDoc(fb.doc(window._db, col('jobs'),editingJobId), data);
   } else {
     data.status = 'open';
     data.createdAt = fb.serverTimestamp();
-    task = fb.addDoc(fb.collection(window._db,'jobs'), data);
+    task = fb.addDoc(fb.collection(window._db, col('jobs')), data);
   }
 
   task.then(function(){
@@ -3237,14 +3250,14 @@ function resetJobForm(){
 function closeJob(id){
   if(!confirm('이 공고를 마감할까요?\n\n마감해도 「다시 모집」으로 되돌릴 수 있습니다.')) return;
   var fb=window._fb;
-  fb.updateDoc(fb.doc(window._db,'jobs',id), { status:'closed' })
+  fb.updateDoc(fb.doc(window._db, col('jobs'),id), { status:'closed' })
     .then(function(){ toast('공고를 마감했습니다.'); loadAll(); })
     .catch(function(e){ toast('실패: '+(e.code||e.message)); });
 }
 function reopenJob(id){
   if(!confirm('이 공고를 다시 모집중으로 바꿀까요?')) return;
   var fb=window._fb;
-  fb.updateDoc(fb.doc(window._db,'jobs',id), { status:'open' })
+  fb.updateDoc(fb.doc(window._db, col('jobs'),id), { status:'open' })
     .then(function(){ toast('다시 모집중입니다.'); loadAll(); })
     .catch(function(e){ toast('실패: '+(e.code||e.message)); });
 }
@@ -3290,7 +3303,7 @@ function openApp(i){
   /* 처음 열면 자동으로 '열람함' — 기사가 진행 상황을 알 수 있게 */
   if(curApp && curApp.status==='applied' && curApp.direction!=='offer'){
     var _fb=window._fb;
-    _fb.updateDoc(_fb.doc(window._db,'applications',curApp.id), { status:'viewed' })
+    _fb.updateDoc(_fb.doc(window._db, col('applications'),curApp.id), { status:'viewed' })
       .then(function(){ curApp.status='viewed'; loadAll(); })
       .catch(function(){});
   }
@@ -3315,7 +3328,7 @@ function openApp(i){
 function setAppStatus(s){
   if(!curApp) return;
   var fb=window._fb;
-  fb.updateDoc(fb.doc(window._db,'applications',curApp.id), { status:s })
+  fb.updateDoc(fb.doc(window._db, col('applications'),curApp.id), { status:s })
     .then(function(){
       if(s==='hired'||s==='contact'||s==='rejected'){
         notifySMS(curApp.id, s).then(function(j){
@@ -3363,7 +3376,7 @@ function sendOffer(jobIdx, driverIdx){
   var jobId = j.id, driverId = d.uid, driverName = d.name, driverPhone = d.phone;
   var dup = apps.some(function(a){ return a.jobId===jobId && a.driverId===driverId; });
   if(dup){ toast('이미 지원/제안된 기사입니다.'); return; }
-  fb.addDoc(fb.collection(window._db,'applications'), {
+  fb.addDoc(fb.collection(window._db, col('applications')), {
     jobId:jobId, jobTitle:j.title, company:C.company, companyId:u.uid,
     driverId:driverId, driverName:driverName, driverPhone:driverPhone,
     direction:'offer', status:'applied', createdAt: fb.serverTimestamp()
@@ -3411,11 +3424,11 @@ function C_withdraw(){
 
 function C_clearLocal(){
   try{
-    localStorage.removeItem('rc_role');
-    localStorage.removeItem('rc_driver');
-    localStorage.removeItem('rc_company');
-    localStorage.removeItem('rc_home');
-    localStorage.removeItem('rj_goto');
+    localStorage.removeItem(lk('rc_role'));
+    localStorage.removeItem(lk('rc_driver'));
+    localStorage.removeItem(lk('rc_company'));
+    localStorage.removeItem(lk('rc_home'));
+    localStorage.removeItem(lk('rj_goto'));
   }catch(e){}
 }
 function switchRole(){ C_clearLocal(); location.replace('index.html'); }
@@ -3445,7 +3458,7 @@ function C_startRealtime(){
   firstApps = true;
   /* 내가 보낸 퀵 — 실시간 */
   unsubOrders = fb.onSnapshot(
-    fb.query(fb.collection(window._db,'orders'), fb.where('customerId','==',u.uid)),
+    fb.query(fb.collection(window._db, col('orders')), fb.where('customerId','==',u.uid)),
     function(snap){
       myOrders = [];
       var changed = null;
@@ -3466,7 +3479,7 @@ function C_startRealtime(){
   );
 
   unsubApps = fb.onSnapshot(
-    fb.query(fb.collection(window._db,'applications'), fb.where('companyId','==',u.uid)),
+    fb.query(fb.collection(window._db, col('applications')), fb.where('companyId','==',u.uid)),
     function(snap){
       var fresh = 0;
       apps = [];
@@ -3488,6 +3501,8 @@ function C_startRealtime(){
 /* 그라데이션 정의를 문서에 한 번만 심는다 (아이콘들이 참조) */
 function C_boot(){
   icoDefs();
+  if(RJ_TEST){ var tb=document.getElementById('testbar');
+    if(tb) tb.innerHTML='<div class="testbar">🧪 테스트 모드 — 데이터가 실사용과 분리됩니다 ('+RJ_ORG+')</div>'; }
   ROLE = 'company';
   if(!live()){ C_render(); return; }
   bindAuth();
