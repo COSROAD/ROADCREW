@@ -31,12 +31,20 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Appl
 .top{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:10px 16px;}
 .back{border:none;background:none;font-size:22px;color:var(--ink-soft);cursor:pointer;padding:0 4px;}
 .top h1{font-size:16px;font-weight:800;margin:0;flex:1;}
-.hbrand{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.hbrand{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+/* 로고 그림 — 글자 왼쪽. 자리를 미리 잡아둬야(width/height) 뜰 때 안 덜컥거린다 */
+.hbrand .hlogo{flex:none;height:30px;width:auto;display:block;}
 .hbrand .bn{flex:none;font-size:16px;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.1;}
 .hbrand .bn .hcos{font-size:10px;font-weight:800;color:var(--orange);vertical-align:2px;}
-.hbrand .tx{min-width:0;text-align:right;}
+.hbrand .tx{min-width:0;flex:1;text-align:right;overflow:hidden;}
 .hbrand .bt{font-size:11px;font-weight:700;color:var(--ink-soft);line-height:1.3;}
 .hbrand .bt2{font-size:10px;font-weight:600;color:#9AA4B4;line-height:1.3;}
+@media (max-width:420px){
+  .hbrand .bt{font-size:10px;}
+  .hbrand .bt2{font-size:9px;}
+  /* 아주 좁으면 문구가 로고·이름·버튼을 밀지 않게 한 줄로 줄임 */
+  .hbrand .bt,.hbrand .bt2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+}
 .prog{height:4px;background:var(--line);}
 .prog i{display:block;height:100%;background:var(--orange);width:0;transition:.3s;}
 .wrap{flex:1;padding:22px 18px 120px;}
@@ -960,6 +968,7 @@ function enterMain(){
 function brandHtml(){
   /* 탭을 누르면 어디인지 사용자가 아니까, 바뀌는 제목 대신 브랜드를 고정으로 둔다 */
   return '<div class="hbrand">'
+    +'<img class="hlogo" src="logo-mark.png?v=2" alt="" width="67" height="30">'
     +'<div class="bn"><span class="hcos">cos</span>ROADJOB</div>'
     +'<div class="tx">'
     +'<div class="bt">기사와 일자리를 잇는 곳</div>'
