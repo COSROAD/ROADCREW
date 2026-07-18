@@ -1331,7 +1331,7 @@ function withdraw(){
 
   /* 1) 면허증 사진 파기 → 2) 지원 내역 삭제 → 3) 프로필 삭제 → 4) 로그아웃 */
   var imgLeft = false;
-  fb.getDoc(fb.doc(db,'drivers',u.uid))
+  fb.getDoc(fb.doc(db,col('drivers'),u.uid))
     .then(function(snap){
       var p = snap.exists() ? snap.data() : {};
       if(!p.licenseImgPath) return;
@@ -1344,21 +1344,21 @@ function withdraw(){
         });
     })
     .then(function(){
-      return fb.getDocs(fb.query(fb.collection(db,'applications'), fb.where('driverId','==',u.uid)));
+      return fb.getDocs(fb.query(fb.collection(db,col('applications')), fb.where('driverId','==',u.uid)));
     })
     .then(function(snap){
-      var jobs=[]; snap.forEach(function(d){ jobs.push(fb.deleteDoc(fb.doc(db,'applications',d.id))); });
+      var jobs=[]; snap.forEach(function(d){ jobs.push(fb.deleteDoc(fb.doc(db,col('applications'),d.id))); });
       return Promise.all(jobs);
     })
     .then(function(){
       /* 면허증을 못 지웠으면, 관리자가 파기하도록 기록만 남기고 프로필은 지운다 */
       if(imgLeft){
-        return fb.setDoc(fb.doc(db,'purge_requests',u.uid), {
+        return fb.setDoc(fb.doc(db,col('purge_requests'),u.uid), {
           uid:u.uid, reason:'withdraw', requestedAt:new Date().toISOString()
         }).catch(function(){});
       }
     })
-    .then(function(){ return fb.deleteDoc(fb.doc(db,'drivers',u.uid)); })
+    .then(function(){ return fb.deleteDoc(fb.doc(db,col('drivers'),u.uid)); })
     .then(function(){
       clearLocal();
       alert('탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.');
@@ -1704,7 +1704,7 @@ function startRealtime(){
 
   /* 대기 중인 일감 — 실시간 */
   unsubOpen = fb.onSnapshot(
-    fb.query(fb.collection(db,'orders'), fb.where('status','==','open')),
+    fb.query(fb.collection(db,col('orders')), fb.where('status','==','open')),
     function(snap){
       var myVeh = (D.vehicles||[]);
       var fresh = [];
@@ -1733,7 +1733,7 @@ function startRealtime(){
 
   /* 내가 수행 중인 일감 — 실시간 */
   unsubMine = fb.onSnapshot(
-    fb.query(fb.collection(db,'orders'), fb.where('driverId','==',u.uid)),
+    fb.query(fb.collection(db,col('orders')), fb.where('driverId','==',u.uid)),
     function(snap){
       quickMine = [];
       snap.forEach(function(d){ var o=d.data(); o.id=d.id; quickMine.push(o); });
@@ -1750,7 +1750,7 @@ function loadQuick(){
   var fb = window._fb, db = window._db;
   var myVeh = (D.vehicles||[]);
 
-  return fb.getDocs(fb.query(fb.collection(db,'orders'), fb.where('status','==','open')))
+  return fb.getDocs(fb.query(fb.collection(db,col('orders')), fb.where('status','==','open')))
     .then(function(snap){
       quickOpen = [];
       snap.forEach(function(d){
@@ -1760,7 +1760,7 @@ function loadQuick(){
       });
       quickOpen.sort(function(a,b){ return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0); });
       sortQuick();
-      return fb.getDocs(fb.query(fb.collection(db,'orders'), fb.where('driverId','==',u.uid)));
+      return fb.getDocs(fb.query(fb.collection(db,col('orders')), fb.where('driverId','==',u.uid)));
     })
     .then(function(snap){
       quickMine = [];
@@ -3269,12 +3269,12 @@ function deleteJob(i){
   if(!confirm(msg)) return;
   var fb=window._fb, db=window._db;
   /* 공고에 딸린 지원·제안 내역도 함께 지운다 (안 지우면 유령 지원서가 남는다) */
-  fb.getDocs(fb.query(fb.collection(db,'applications'), fb.where('jobId','==',j.id)))
+  fb.getDocs(fb.query(fb.collection(db,col('applications')), fb.where('jobId','==',j.id)))
     .then(function(snap){
-      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,'applications',d.id))); });
+      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,col('applications'),d.id))); });
       return Promise.all(t);
     })
-    .then(function(){ return fb.deleteDoc(fb.doc(db,'jobs',j.id)); })
+    .then(function(){ return fb.deleteDoc(fb.doc(db,col('jobs'),j.id)); })
     .then(function(){ toast('공고를 삭제했습니다.'); loadAll(); })
     .catch(function(e){ toast('삭제 실패: '+(e.code||e.message)); });
 }
@@ -3400,19 +3400,19 @@ function C_withdraw(){
   var fb = window._fb, db = window._db;
   toast('탈퇴 처리 중입니다...');
 
-  fb.getDocs(fb.query(fb.collection(db,'jobs'), fb.where('companyId','==',u.uid)))
+  fb.getDocs(fb.query(fb.collection(db,col('jobs')), fb.where('companyId','==',u.uid)))
     .then(function(snap){
-      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,'jobs',d.id))); });
+      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,col('jobs'),d.id))); });
       return Promise.all(t);
     })
     .then(function(){
-      return fb.getDocs(fb.query(fb.collection(db,'applications'), fb.where('companyId','==',u.uid)));
+      return fb.getDocs(fb.query(fb.collection(db,col('applications')), fb.where('companyId','==',u.uid)));
     })
     .then(function(snap){
-      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,'applications',d.id))); });
+      var t=[]; snap.forEach(function(d){ t.push(fb.deleteDoc(fb.doc(db,col('applications'),d.id))); });
       return Promise.all(t);
     })
-    .then(function(){ return fb.deleteDoc(fb.doc(db,'companies',u.uid)); })
+    .then(function(){ return fb.deleteDoc(fb.doc(db,col('companies'),u.uid)); })
     .then(function(){
       C_clearLocal();
       alert('탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.');
