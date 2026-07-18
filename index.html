@@ -31,20 +31,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','Appl
 .top{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:10px 16px;}
 .back{border:none;background:none;font-size:22px;color:var(--ink-soft);cursor:pointer;padding:0 4px;}
 .top h1{font-size:16px;font-weight:800;margin:0;flex:1;}
-.hbrand{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;}
-/* 로고 그림 — 글자 왼쪽. 자리를 미리 잡아둬야(width/height) 뜰 때 안 덜컥거린다 */
-.hbrand .hlogo{flex:none;height:30px;width:auto;display:block;}
-.hbrand .bn{flex:none;font-size:16px;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.1;}
-.hbrand .bn .hcos{font-size:10px;font-weight:800;color:var(--orange);vertical-align:2px;}
-.hbrand .tx{min-width:0;flex:1;text-align:right;overflow:hidden;}
-.hbrand .bt{font-size:11px;font-weight:700;color:var(--ink-soft);line-height:1.3;}
-.hbrand .bt2{font-size:10px;font-weight:600;color:#9AA4B4;line-height:1.3;}
-@media (max-width:420px){
-  .hbrand .bt{font-size:10px;}
-  .hbrand .bt2{font-size:9px;}
-  /* 아주 좁으면 문구가 로고·이름·버튼을 밀지 않게 한 줄로 줄임 */
-  .hbrand .bt,.hbrand .bt2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-}
+.hbrand{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;}
+.hbrand .hlogo{height:40px;width:auto;display:block;max-width:100%;object-fit:contain;}
 .prog{height:4px;background:var(--line);}
 .prog i{display:block;height:100%;background:var(--orange);width:0;transition:.3s;}
 .wrap{flex:1;padding:22px 18px 120px;}
@@ -126,17 +114,16 @@ textarea{min-height:90px;resize:vertical;}
   align-items:center;justify-content:center;font-size:24px;color:#fff;}
 /* 앱 이름 — 고정. 문구는 탭 라벨(11px)과 같은 크기 */
 .gate-name{flex:none;text-align:center;padding:10px 14px 8px;}
-.gate-name .brand .cos{font-size:12px;}
-.gate-name .brand .rc{font-size:22px;}
-.gate-name .tag{margin-top:4px;font-size:11px;font-weight:800;color:var(--ink-soft);
-  line-height:1.5;letter-spacing:-.8px;word-break:keep-all;}
+.gate-name .glogo{height:78px;width:auto;max-width:88%;object-fit:contain;display:block;margin:0 auto;}
+.gate-name .tag{margin-top:6px;font-size:11px;font-weight:800;color:var(--ink-soft);
+  line-height:1.5;letter-spacing:-.5px;word-break:keep-all;}
 .gate-body{flex:1;display:flex;flex-direction:column;padding:0 14px 8px;min-height:0;overflow-y:auto;}
 /* 넘칠 때 위가 잘리지 않는 가운데 정렬 (justify-content:center 는 위를 잘라먹음) */
 .gate-mid{margin:auto 0;width:100%;}
 /* 네모칸은 고정. 안의 설명만 바뀐다 (넘길 때 커졌다 작아졌다 하지 않게) */
 /* 네모칸은 화면 높이에 맞춰 늘고 준다. 좁은 폰 186 · 넓으면 최대 300 */
 .slide{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px 16px;text-align:center;
-  height:clamp(210px, 36vh, 320px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:clamp(190px, 33vh, 300px);display:flex;flex-direction:column;align-items:center;justify-content:center;
   overflow:hidden;box-sizing:border-box;}
 .slide.in{animation:slide-in .28s ease-out;}
 @keyframes slide-in{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
@@ -507,10 +494,10 @@ function gateView(){
     + gateTabHtml(CO_TABS, 'company', 'top')
     + gateBar('company')
 
-    /* 앱 이름은 스크롤 영역 밖 — 슬라이드 네모와 별개로 항상 고정 */
+    /* 앱 로고는 스크롤 영역 밖 — 슬라이드 네모와 별개로 항상 고정 */
     + '<div class="gate-name">'
-    +   '<div class="brand" style="font-size:0;"><span class="cos">cos</span><span class="rc">ROADJOB</span></div>'
-    +   '<div class="tag">기사와 일자리를 잇는 곳<br>구인 · 구직 · 퀵을 한곳에서</div>'
+    +   '<img class="glogo" src="logo-full-big.png?v=3" alt="ROADJOB" height="78">'
+    +   '<div class="tag">기사와 일자리를 잇는 곳 · 구인 · 구직 · 퀵을 한곳에서</div>'
     + '</div>'
 
     + '<div class="gate-body"><div class="gate-mid">'
@@ -966,13 +953,8 @@ function enterMain(){
 }
 
 function brandHtml(){
-  /* 탭을 누르면 어디인지 사용자가 아니까, 바뀌는 제목 대신 브랜드를 고정으로 둔다 */
-  return '<div class="hbrand">'
-    +'<img class="hlogo" src="logo-mark.png?v=2" alt="" width="67" height="30">'
-    +'<div class="bn"><span class="hcos">cos</span>ROADJOB</div>'
-    +'<div class="tx">'
-    +'<div class="bt">기사와 일자리를 잇는 곳</div>'
-    +'<div class="bt2">구인 · 구직 · 퀵을 한곳에서</div></div></div>';
+  /* 로고 하나만 가운데. 로고에 ROADJOB 이 이미 있어 글자·문구는 뺀다 (겹침 방지) */
+  return '<div class="hbrand"><img class="hlogo" src="logo-full-head.png?v=3" alt="ROADJOB" height="40"></div>';
 }
 function renderMain(){
   var top = document.getElementById('topbar');
