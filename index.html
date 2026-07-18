@@ -592,6 +592,9 @@ function wantHome(){
 function pickDriver(){
   try{ localStorage.setItem('rc_role','driver'); }catch(e){}
   if(joined){ enterMain(); return; }   // 이미 가입한 기사면 바로 메인으로
+  /* 새 가입은 동의를 무조건 처음부터. 기기에 남은 옛 rc_driver 의 동의값을 지운다
+     (안 지우면 체크 안 해도 valid() 통과 → 약관 화면이 그냥 넘어감. 법적으로도 매번 받아야) */
+  D.agree1 = D.agree2 = D.agree3 = D.agreeGeo = false;
   next();
 }
 function pickCompany(){
@@ -2190,6 +2193,8 @@ function onAuthCompany(u){
     } else {
       /* 업체도 가입 진행 중이면 감시자가 화면을 안 건드린다 (기사와 같은 이유) */
       if(mode !== 'main' && C_step > 0) return;
+      /* 새 가입은 동의를 처음부터 (옛 값 제거) */
+      C.agree1 = false; C.agreeGeo = false;
       mode='signup'; C_render();
     }
   }).catch(function(){
