@@ -1368,7 +1368,7 @@ function withdraw(){
       alert('탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.');
       return window._fb.signOut(window._auth).catch(function(){});
     })
-    .then(function(){ location.replace('index.html'); })
+    .then(function(){ location.replace('index.html' + location.search); })
     .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
 }
 
@@ -2129,8 +2129,8 @@ function logout(){
   if(live()){
     window._fb.signOut(window._auth)
       .catch(function(){})
-      .then(function(){ location.replace('index.html'); });
-  } else { location.replace('index.html'); }
+      .then(function(){ location.replace('index.html' + location.search); });
+  } else { location.replace('index.html' + location.search); }
 }
 /* ── 로그인 상태에 따라 진입 분기 ── */
 /* 그라데이션 정의를 문서에 한 번만 심는다 (아이콘들이 참조) */
@@ -3423,7 +3423,7 @@ function C_withdraw(){
       alert('탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.');
       return window._fb.signOut(window._auth).catch(function(){});
     })
-    .then(function(){ location.replace('index.html'); })
+    .then(function(){ location.replace('index.html' + location.search); })
     .catch(function(e){ toast('탈퇴 실패: '+((e&&e.code)||e.message)); });
 }
 
@@ -3436,7 +3436,7 @@ function C_clearLocal(){
     localStorage.removeItem(lk('rj_goto'));
   }catch(e){}
 }
-function switchRole(){ C_clearLocal(); location.replace('index.html'); }
+function switchRole(){ C_clearLocal(); location.replace('index.html' + location.search); }
 function C_logout(){
   C_stopRealtime();
   C_clearLocal();
@@ -3444,8 +3444,8 @@ function C_logout(){
   if(live()){
     window._fb.signOut(window._auth)
       .catch(function(){})
-      .then(function(){ location.replace('index.html'); });
-  } else { location.replace('index.html'); }
+      .then(function(){ location.replace('index.html' + location.search); });
+  } else { location.replace('index.html' + location.search); }
 }
 
 /* ── 부팅 ── */
