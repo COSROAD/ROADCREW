@@ -767,10 +767,10 @@ function sendCode(){
       .then(function(res){ confirmResult=res; setBusy(false,'인증번호 받기'); next(); })
       .catch(function(e){
         setBusy(false,'인증번호 받기');
-        toast('발송 실패: '+(e.code||e.message));
+        var _c=(e&&e.code)||(e&&e.message)||'';alert('문자 발송에 실패했습니다.\n\n사유 코드: '+_c+'\n\n이 코드를 클로드에게 알려주세요.');toast('발송 실패: '+_c);
         try{ verifier.clear(); }catch(_){} recaptcha=null;
       });
-  }catch(e){ setBusy(false,'인증번호 받기'); toast('오류: '+e.message); recaptcha=null; }
+  }catch(e){ setBusy(false,'인증번호 받기'); alert('문자 요청 중 오류\n\n'+(e&&e.message||e)+'\n\n이 내용을 클로드에게 알려주세요.'); recaptcha=null; }
 }
 function verifyCode(){
   if(!valid()||busy) return;
@@ -2398,8 +2398,8 @@ function C_sendCode(){
     var v=C_makeRecaptcha();
     window._fb.signInWithPhoneNumber(window._auth, '+82'+C.phone.replace(/^0/,''), v)
       .then(function(r){ C_confirmResult=r; setBusy(false,'인증번호 받기'); next(); })
-      .catch(function(e){ setBusy(false,'인증번호 받기'); toast('발송 실패: '+(e.code||e.message)); try{v.clear();}catch(_){} C_recaptcha=null; });
-  }catch(e){ setBusy(false,'인증번호 받기'); toast('오류: '+e.message); C_recaptcha=null; }
+      .catch(function(e){ setBusy(false,'인증번호 받기'); var _c=(e&&e.code)||(e&&e.message)||'';alert('문자 발송에 실패했습니다.\n\n사유 코드: '+_c+'\n\n이 코드를 클로드에게 알려주세요.');toast('발송 실패: '+_c); try{v.clear();}catch(_){} C_recaptcha=null; });
+  }catch(e){ setBusy(false,'인증번호 받기'); alert('문자 요청 중 오류\n\n'+(e&&e.message||e)+'\n\n이 내용을 클로드에게 알려주세요.'); C_recaptcha=null; }
 }
 function C_verifyCode(){
   if(!C_valid()||C_busy) return;
