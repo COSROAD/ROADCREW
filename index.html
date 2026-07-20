@@ -695,16 +695,25 @@ p3:function(){ return ''
   +'<div class="hint">급여는 업체와 협의로 진행됩니다.</div></div>'
   +'<div class="field"><label class="lb">자기소개 <span style="font-weight:400;color:var(--ink-soft);font-size:12.5px;">(선택)</span></label>'
   +'<textarea placeholder="예) 택배 2년, 학원 셔틀 1년 경험 있습니다." maxlength="500" oninput="D.intro=this.value;save()">'+esc(D.intro||'')+'</textarea></div>'; },
-p4:function(){ return ''
+p4:function(){
+  var submitted = joined && !D.licenseImg && (D.licenseVerify==='pending' || D.licenseVerify==='verified');
+  var uploadLabel = '<label class="upload"><span class="big">📄</span><p><b>운전면허증 사진</b>을 올려주세요<br>탭해서 촬영 또는 선택</p>'
+      +'<input type="file" accept="image/*" style="display:none" onchange="upImg(event)"></label>';
+  return ''
   +'<h2 class="step-title">면허 인증</h2>'
   +'<p class="step-desc">면허증을 확인하면 <b>✅ 인증 배지</b>가 붙어요.<br>업체가 훨씬 믿고 연락합니다.</p>'
   +(D.licenseImg
     ? '<div class="preview"><img src="'+D.licenseImg+'"><button class="del" onclick="D.licenseImg=null;save();render()">삭제</button></div>'
-    : '<label class="upload"><span class="big">📄</span><p><b>운전면허증 사진</b>을 올려주세요<br>탭해서 촬영 또는 선택</p>'
-      +'<input type="file" accept="image/*" style="display:none" onchange="upImg(event)"></label>')
+    : (submitted
+        ? '<div style="background:#ECFDF3;border:1px solid #A6F4C5;border-radius:14px;padding:18px;text-align:center;">'
+          +'<div style="font-size:15px;font-weight:800;color:#027A48;">면허증을 이미 제출했습니다</div>'
+          +'<div style="font-size:13.5px;color:#039855;margin-top:4px;">현재 상태: '+(D.licenseVerify==='verified'?'✅ 인증됨':'검수중')+'</div>'
+          +'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:10px;">보안을 위해 제출한 사진은 이 기기에 남기지 않습니다.<br>바꾸시려면 아래에서 새 사진을 올리세요.</div></div>'
+          +'<div style="margin-top:12px;">'+uploadLabel+'</div>'
+        : uploadLabel))
   +'<div style="background:var(--navy-soft);border-radius:14px;padding:16px;margin-top:18px;font-size:13.5px;color:var(--navy);line-height:1.75;">'
   +'<b>🔒 안전하게 처리합니다</b><br>면허증 사본은 <b>진위 확인 용도로만</b> 사용되며, <b>인증 완료 즉시 파기</b>합니다. 사본을 보관하지 않습니다.</div>'
-  +'<button class="viewmore" style="margin-top:12px;" onclick="skipLicense()">나중에 인증할래요 →</button>'; },
+  +(submitted ? '' : '<button class="viewmore" style="margin-top:12px;" onclick="skipLicense()">나중에 인증할래요 →</button>'); },
 done:function(){ return ''
   +'<div class="done"><div class="mark">✓</div>'
   +'<h2 class="step-title" style="text-align:center;">가입 완료!</h2>'
